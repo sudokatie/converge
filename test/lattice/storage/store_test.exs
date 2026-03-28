@@ -13,7 +13,8 @@ defmodule Lattice.Storage.StoreTest do
 
     on_exit(fn ->
       # Clean up
-      if Process.whereis(Store), do: GenServer.stop(Store)
+      pid = Process.whereis(Store)
+      if pid && Process.alive?(pid), do: GenServer.stop(Store)
       File.rm_rf!(tmp_dir)
     end)
 

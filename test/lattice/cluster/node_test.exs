@@ -10,7 +10,8 @@ defmodule Lattice.Cluster.NodeTest do
     {:ok, _pid} = Node.start_link(data_dir: tmp_dir)
 
     on_exit(fn ->
-      if Process.whereis(Node), do: GenServer.stop(Node)
+      pid = Process.whereis(Node)
+      if pid && Process.alive?(pid), do: GenServer.stop(Node)
       File.rm_rf!(tmp_dir)
     end)
 

@@ -10,7 +10,8 @@ defmodule Lattice.Storage.SnapshotTest do
     {:ok, _pid} = Snapshot.start_link(data_dir: tmp_dir)
 
     on_exit(fn ->
-      if Process.whereis(Snapshot), do: GenServer.stop(Snapshot)
+      pid = Process.whereis(Snapshot)
+      if pid && Process.alive?(pid), do: GenServer.stop(Snapshot)
       File.rm_rf!(tmp_dir)
     end)
 
