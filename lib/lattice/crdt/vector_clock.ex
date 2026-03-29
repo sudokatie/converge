@@ -16,8 +16,8 @@ defmodule Lattice.CRDT.VectorClock do
   """
 
   @type t :: %__MODULE__{
-    clocks: %{String.t() => non_neg_integer()}
-  }
+          clocks: %{String.t() => non_neg_integer()}
+        }
 
   defstruct clocks: %{}
 
@@ -81,18 +81,21 @@ defmodule Lattice.CRDT.VectorClock do
   - For at least one node, A[node] > B[node]
   """
   def dominates?(%__MODULE__{} = a, %__MODULE__{} = b) do
-    all_nodes = MapSet.union(
-      MapSet.new(Map.keys(a.clocks)),
-      MapSet.new(Map.keys(b.clocks))
-    )
+    all_nodes =
+      MapSet.union(
+        MapSet.new(Map.keys(a.clocks)),
+        MapSet.new(Map.keys(b.clocks))
+      )
 
-    has_greater = Enum.any?(all_nodes, fn node ->
-      get(a, node) > get(b, node)
-    end)
+    has_greater =
+      Enum.any?(all_nodes, fn node ->
+        get(a, node) > get(b, node)
+      end)
 
-    all_gte = Enum.all?(all_nodes, fn node ->
-      get(a, node) >= get(b, node)
-    end)
+    all_gte =
+      Enum.all?(all_nodes, fn node ->
+        get(a, node) >= get(b, node)
+      end)
 
     has_greater and all_gte
   end

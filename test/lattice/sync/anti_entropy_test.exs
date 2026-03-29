@@ -94,7 +94,8 @@ defmodule Lattice.Sync.AntiEntropyTest do
       Process.sleep(10)
 
       state = AntiEntropy.get_state()
-      assert state.last_sync == nil  # Only full sync updates last_sync
+      # Only full sync updates last_sync
+      assert state.last_sync == nil
     end
   end
 

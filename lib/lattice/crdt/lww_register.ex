@@ -13,10 +13,10 @@ defmodule Lattice.CRDT.LWWRegister do
   """
 
   @type t :: %__MODULE__{
-    value: any(),
-    timestamp: integer(),
-    node_id: String.t()
-  }
+          value: any(),
+          timestamp: integer(),
+          node_id: String.t()
+        }
 
   defstruct value: nil, timestamp: 0, node_id: nil
 
@@ -46,22 +46,14 @@ defmodule Lattice.CRDT.LWWRegister do
   Set the register value (auto-timestamps).
   """
   def set(%__MODULE__{node_id: node_id} = reg, value) do
-    %{reg |
-      value: value,
-      timestamp: System.os_time(:nanosecond),
-      node_id: node_id
-    }
+    %{reg | value: value, timestamp: System.os_time(:nanosecond), node_id: node_id}
   end
 
   @doc """
   Set the register value with explicit timestamp.
   """
   def set(%__MODULE__{} = reg, value, timestamp, node_id) do
-    %{reg |
-      value: value,
-      timestamp: timestamp,
-      node_id: node_id
-    }
+    %{reg | value: value, timestamp: timestamp, node_id: node_id}
   end
 
   @doc """

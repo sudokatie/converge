@@ -53,6 +53,10 @@ defmodule Lattice.CLI.Main do
     Commands.cluster_join(seed)
   end
 
+  defp run_command(["cluster", "leave" | _rest], _opts) do
+    Commands.cluster_leave()
+  end
+
   defp run_command(["counter", "get", path | _rest], _opts) do
     {ns, key} = parse_path(path)
     Commands.counter_get(ns, key)
@@ -136,6 +140,7 @@ defmodule Lattice.CLI.Main do
       start                     Start the Lattice node
       cluster status            Show cluster status
       cluster join <seed>       Join cluster via seed node
+      cluster leave             Leave the cluster gracefully
 
       counter get <ns/key>      Get counter value
       counter inc <ns/key> [n]  Increment counter

@@ -14,9 +14,10 @@ defmodule Lattice.CRDT.LWWRegisterTest do
   end
 
   test "set updates value" do
-    reg = LWWRegister.new("node1")
-    |> LWWRegister.set("first")
-    |> LWWRegister.set("second")
+    reg =
+      LWWRegister.new("node1")
+      |> LWWRegister.set("first")
+      |> LWWRegister.set("second")
 
     assert LWWRegister.get(reg) == "second"
   end

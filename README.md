@@ -21,6 +21,8 @@ Plus:
 - Merkle tree sync (efficient diffing)
 - SWIM-based cluster membership (gossip that works)
 - mDNS discovery (zero-config clustering)
+- Health checks and metrics endpoints
+- Session and quorum consistency levels
 
 ## Quick Start
 
@@ -61,11 +63,61 @@ mix escript.build
 ./lattice set add myapp/tags elixir
 ./lattice set members myapp/tags
 
-# Cluster status
+# Cluster operations
 ./lattice cluster status
+./lattice cluster join 192.168.1.10:4000
+./lattice cluster leave
+
+# Namespace management
+./lattice namespace list
+./lattice namespace create myapp
 
 # Trigger sync
 ./lattice sync
+```
+
+## Monitoring
+
+Lattice exposes HTTP endpoints for health checks and metrics:
+
+```bash
+# Liveness check
+curl http://localhost:8080/health
+# {"status":"ok"}
+
+# Readiness check (storage + cluster)
+curl http://localhost:8080/ready
+# {"status":"ready","storage":"ok","cluster":"ok"}
+
+# Prometheus-style metrics
+curl http://localhost:8080/metrics
+```
+
+Metrics tracked:
+- Sync operations per second
+- Merge conflicts per type
+- Data size per namespace
+- Network bytes in/out
+- Node membership changes
+
+## Consistency Levels
+
+Lattice supports three consistency levels:
+
+- **Eventual** (default) - Highest availability. Reads may return stale data.
+- **Session** - Reads see own writes within the session.
+- **Quorum** - Read/write to majority of nodes before returning.
+
+```elixir
+# Set default consistency level
+Lattice.Consistency.set_default_level(:session)
+
+# Create a session for session consistency
+session = Lattice.Consistency.new_session()
+
+# Quorum read/write
+Lattice.Consistency.quorum_read("myapp", "key")
+Lattice.Consistency.quorum_write("myapp", "key", "value")
 ```
 
 ## How It Works
@@ -85,13 +137,22 @@ config :lattice,
   data_dir: "/var/lib/lattice",
   node_id: "node-1",
   sync_interval_ms: 5_000,
-  enable_discovery: true
+  seed_nodes: ["192.168.1.10:4000", "192.168.1.11:4000"],
+  listen_port: 4000,
+  enable_mdns: true,
+  snapshot_interval_ms: 60_000,
+  enable_monitoring: true,
+  health_port: 8080,
+  default_consistency: :eventual
 ```
 
 ## Architecture
 
 ```
 Lattice.Supervisor
+  ├── Lattice.Monitoring.Metrics # Metrics collection
+  ├── Lattice.Monitoring.Health  # HTTP health endpoints
+  ├── Lattice.Consistency        # Consistency level manager
   ├── Lattice.Cluster.Node       # Identity & peer tracking
   ├── Lattice.Storage.Store      # ETS/DETS backend
   ├── Lattice.Storage.WAL        # Write-ahead log

@@ -19,9 +19,9 @@ defmodule Lattice.CRDT.ORSet do
 
   @type tag :: {String.t(), integer()}
   @type t :: %__MODULE__{
-    node_id: String.t(),
-    elements: %{any() => MapSet.t(tag)}
-  }
+          node_id: String.t(),
+          elements: %{any() => MapSet.t(tag)}
+        }
 
   defstruct node_id: nil, elements: %{}
 

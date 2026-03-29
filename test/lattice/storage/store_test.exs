@@ -6,7 +6,7 @@ defmodule Lattice.Storage.StoreTest do
 
   setup do
     # Use a temp directory for tests
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_test_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _pid} = Store.start_link(data_dir: tmp_dir)

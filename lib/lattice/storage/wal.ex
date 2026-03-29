@@ -154,7 +154,8 @@ defmodule Lattice.Storage.WAL do
 
   defp parse_entries(<<>>, _current_pos, _from_pos, acc), do: Enum.reverse(acc)
 
-  defp parse_entries(<<size::32, rest::binary>>, current_pos, from_pos, acc) when byte_size(rest) >= size do
+  defp parse_entries(<<size::32, rest::binary>>, current_pos, from_pos, acc)
+       when byte_size(rest) >= size do
     <<entry::binary-size(size), remaining::binary>> = rest
     next_pos = current_pos + 4 + size
 

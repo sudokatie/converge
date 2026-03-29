@@ -33,7 +33,8 @@ defmodule Lattice.CRDT.GCounterTest do
     b = %{GCounter.new("node1") | counts: %{"node1" => 3, "node2" => 4}}
 
     merged = GCounter.merge(a, b)
-    assert GCounter.value(merged) == 9  # max(5,3) + 4
+    # max(5,3) + 4
+    assert GCounter.value(merged) == 9
   end
 
   test "merge with concurrent updates converges" do

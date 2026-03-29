@@ -10,7 +10,10 @@ defmodule Lattice.Config do
     seed_nodes: [],
     listen_port: 4000,
     enable_mdns: true,
-    snapshot_interval_ms: 60_000
+    snapshot_interval_ms: 60_000,
+    enable_monitoring: true,
+    health_port: 8080,
+    default_consistency: :eventual
   }
 
   @doc """

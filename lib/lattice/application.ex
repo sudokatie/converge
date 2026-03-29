@@ -4,13 +4,15 @@ defmodule Lattice.Application do
 
   Starts all services in dependency order:
   1. Config - configuration management
-  2. Node - node identity
-  3. Store - data storage
-  4. WAL - write-ahead log
-  5. Snapshot - periodic snapshots
-  6. AntiEntropy - sync coordination
-  7. Discovery - peer discovery
-  8. Membership - cluster membership
+  2. Metrics - metrics collection
+  3. Node - node identity
+  4. Store - data storage
+  5. WAL - write-ahead log
+  6. Snapshot - periodic snapshots
+  7. AntiEntropy - sync coordination
+  8. Discovery - peer discovery
+  9. Membership - cluster membership
+  10. Health - health check HTTP server
   """
   use Application
 
@@ -33,46 +35,54 @@ defmodule Lattice.Application do
     node_id = get_config(:node_id, nil)
     sync_interval = get_config(:sync_interval_ms, 5_000)
     enable_discovery = get_config(:enable_discovery, true)
+    enable_monitoring = get_config(:enable_monitoring, true)
+    health_port = get_config(:health_port, 8080)
 
     # Ensure data directory exists
     File.mkdir_p!(data_dir)
 
-    children = [
-      # Node identity (must start first)
-      {Lattice.Cluster.Node,
-       [
-         data_dir: data_dir,
-         node_id: node_id
-       ]},
+    children =
+      [
+        # Monitoring (start early)
+        monitoring_child(enable_monitoring),
+        health_child(enable_monitoring, health_port),
 
-      # Storage layer
-      {Lattice.Storage.Store,
-       [
-         data_dir: data_dir
-       ]},
+        # Consistency manager
+        {Lattice.Consistency, []},
 
-      {Lattice.Storage.WAL,
-       [
-         data_dir: data_dir
-       ]},
+        # Node identity (must start first)
+        {Lattice.Cluster.Node,
+         [
+           data_dir: data_dir,
+           node_id: node_id
+         ]},
 
-      {Lattice.Storage.Snapshot,
-       [
-         data_dir: data_dir
-       ]},
+        # Storage layer
+        {Lattice.Storage.Store,
+         [
+           data_dir: data_dir
+         ]},
+        {Lattice.Storage.WAL,
+         [
+           data_dir: data_dir
+         ]},
+        {Lattice.Storage.Snapshot,
+         [
+           data_dir: data_dir
+         ]},
 
-      # Sync layer
-      {Lattice.Sync.AntiEntropy,
-       [
-         interval_ms: sync_interval
-       ]},
+        # Sync layer
+        {Lattice.Sync.AntiEntropy,
+         [
+           interval_ms: sync_interval
+         ]},
 
-      # Cluster layer (optional based on config)
-      discovery_child(data_dir, enable_discovery),
-      membership_child()
-    ]
-    |> List.flatten()
-    |> Enum.reject(&is_nil/1)
+        # Cluster layer (optional based on config)
+        discovery_child(data_dir, enable_discovery),
+        membership_child()
+      ]
+      |> List.flatten()
+      |> Enum.reject(&is_nil/1)
 
     opts = [strategy: :one_for_one, name: Lattice.Supervisor]
     Supervisor.start_link(children, opts)
@@ -82,6 +92,18 @@ defmodule Lattice.Application do
   def stop(_state) do
     :ok
   end
+
+  defp monitoring_child(true) do
+    {Lattice.Monitoring.Metrics, []}
+  end
+
+  defp monitoring_child(false), do: nil
+
+  defp health_child(true, port) do
+    {Lattice.Monitoring.Health, [port: port, enabled: true]}
+  end
+
+  defp health_child(false, _port), do: nil
 
   defp discovery_child(data_dir, true) do
     {Lattice.Cluster.Discovery,

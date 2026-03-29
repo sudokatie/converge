@@ -10,7 +10,7 @@ defmodule Lattice.Integration.ConvergenceTest do
 
   setup do
     # Create isolated test environment
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_integration_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_integration_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _} = Store.start_link(data_dir: tmp_dir)
@@ -102,7 +102,8 @@ defmodule Lattice.Integration.ConvergenceTest do
 
     test "later timestamp wins for same key" do
       map1 = LWWMap.new("node1") |> LWWMap.put("status", "old")
-      Process.sleep(1)  # Ensure different timestamp
+      # Ensure different timestamp
+      Process.sleep(1)
       map2 = LWWMap.new("node2") |> LWWMap.put("status", "new")
 
       merged = LWWMap.merge(map1, map2)

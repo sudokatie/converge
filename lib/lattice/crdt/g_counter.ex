@@ -15,9 +15,9 @@ defmodule Lattice.CRDT.GCounter do
   """
 
   @type t :: %__MODULE__{
-    node_id: String.t(),
-    counts: %{String.t() => non_neg_integer()}
-  }
+          node_id: String.t(),
+          counts: %{String.t() => non_neg_integer()}
+        }
 
   defstruct node_id: nil, counts: %{}
 

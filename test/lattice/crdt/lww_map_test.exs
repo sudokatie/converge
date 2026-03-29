@@ -15,36 +15,40 @@ defmodule Lattice.CRDT.LWWMapTest do
   end
 
   test "put overwrites value" do
-    map = LWWMap.new("node1")
-    |> LWWMap.put("name", "Alice")
-    |> LWWMap.put("name", "Bob")
+    map =
+      LWWMap.new("node1")
+      |> LWWMap.put("name", "Alice")
+      |> LWWMap.put("name", "Bob")
 
     assert LWWMap.get(map, "name") == "Bob"
   end
 
   test "delete removes key" do
-    map = LWWMap.new("node1")
-    |> LWWMap.put("name", "Alice")
-    |> LWWMap.delete("name")
+    map =
+      LWWMap.new("node1")
+      |> LWWMap.put("name", "Alice")
+      |> LWWMap.delete("name")
 
     assert LWWMap.get(map, "name") == nil
     refute LWWMap.has_key?(map, "name")
   end
 
   test "re-put after delete works" do
-    map = LWWMap.new("node1")
-    |> LWWMap.put("name", "Alice")
-    |> LWWMap.delete("name")
-    |> LWWMap.put("name", "Bob")
+    map =
+      LWWMap.new("node1")
+      |> LWWMap.put("name", "Alice")
+      |> LWWMap.delete("name")
+      |> LWWMap.put("name", "Bob")
 
     assert LWWMap.get(map, "name") == "Bob"
   end
 
   test "keys returns all keys" do
-    map = LWWMap.new("node1")
-    |> LWWMap.put("a", 1)
-    |> LWWMap.put("b", 2)
-    |> LWWMap.put("c", 3)
+    map =
+      LWWMap.new("node1")
+      |> LWWMap.put("a", 1)
+      |> LWWMap.put("b", 2)
+      |> LWWMap.put("c", 3)
 
     keys = LWWMap.keys(map) |> Enum.sort()
     assert keys == ["a", "b", "c"]
@@ -64,12 +68,17 @@ defmodule Lattice.CRDT.LWWMapTest do
     # Create maps with controlled timestamps
     a = %LWWMap{
       node_id: "node1",
-      entries: %{"name" => %Lattice.CRDT.LWWRegister{value: "old", timestamp: 100, node_id: "node1"}},
+      entries: %{
+        "name" => %Lattice.CRDT.LWWRegister{value: "old", timestamp: 100, node_id: "node1"}
+      },
       tombstones: %{}
     }
+
     b = %LWWMap{
       node_id: "node2",
-      entries: %{"name" => %Lattice.CRDT.LWWRegister{value: "new", timestamp: 200, node_id: "node2"}},
+      entries: %{
+        "name" => %Lattice.CRDT.LWWRegister{value: "new", timestamp: 200, node_id: "node2"}
+      },
       tombstones: %{}
     }
 
@@ -78,9 +87,10 @@ defmodule Lattice.CRDT.LWWMapTest do
   end
 
   test "serialization roundtrip" do
-    map = LWWMap.new("node1")
-    |> LWWMap.put("name", "Alice")
-    |> LWWMap.put("age", 30)
+    map =
+      LWWMap.new("node1")
+      |> LWWMap.put("name", "Alice")
+      |> LWWMap.put("age", 30)
 
     binary = LWWMap.to_binary(map)
     restored = LWWMap.from_binary(binary)

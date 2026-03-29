@@ -17,10 +17,10 @@ defmodule Lattice.CRDT.PNCounter do
   alias Lattice.CRDT.GCounter
 
   @type t :: %__MODULE__{
-    node_id: String.t(),
-    p: GCounter.t(),
-    n: GCounter.t()
-  }
+          node_id: String.t(),
+          p: GCounter.t(),
+          n: GCounter.t()
+        }
 
   defstruct node_id: nil, p: nil, n: nil
 
@@ -29,6 +29,7 @@ defmodule Lattice.CRDT.PNCounter do
   """
   def new(node_id \\ nil) do
     id = node_id || Lattice.Config.node_id()
+
     %__MODULE__{
       node_id: id,
       p: GCounter.new(id),
@@ -75,10 +76,7 @@ defmodule Lattice.CRDT.PNCounter do
   Merge two PN-Counters.
   """
   def merge(%__MODULE__{} = a, %__MODULE__{} = b) do
-    %{a |
-      p: GCounter.merge(a.p, b.p),
-      n: GCounter.merge(a.n, b.n)
-    }
+    %{a | p: GCounter.merge(a.p, b.p), n: GCounter.merge(a.n, b.n)}
   end
 
   @doc """
@@ -93,6 +91,7 @@ defmodule Lattice.CRDT.PNCounter do
   """
   def from_binary(binary) when is_binary(binary) do
     {node_id, p_bin, n_bin} = :erlang.binary_to_term(binary)
+
     %__MODULE__{
       node_id: node_id,
       p: GCounter.from_binary(p_bin),

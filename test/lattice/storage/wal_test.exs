@@ -4,7 +4,7 @@ defmodule Lattice.Storage.WALTest do
   alias Lattice.Storage.WAL
 
   setup do
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_wal_test_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_wal_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _pid} = WAL.start_link(data_dir: tmp_dir)
@@ -14,6 +14,7 @@ defmodule Lattice.Storage.WALTest do
         WAL.close()
         GenServer.stop(WAL)
       end
+
       File.rm_rf!(tmp_dir)
     end)
 

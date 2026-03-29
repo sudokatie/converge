@@ -87,7 +87,9 @@ defmodule Lattice.Storage.Store do
   def handle_call({:get, namespace, key}, _from, state) do
     result =
       case Map.get(state.tables, namespace) do
-        nil -> nil
+        nil ->
+          nil
+
         table ->
           case :ets.lookup(table, key) do
             [{^key, crdt}] -> crdt
@@ -128,7 +130,9 @@ defmodule Lattice.Storage.Store do
   def handle_call({:list_keys, namespace}, _from, state) do
     keys =
       case Map.get(state.tables, namespace) do
-        nil -> []
+        nil ->
+          []
+
         table ->
           :ets.tab2list(table) |> Enum.map(fn {k, _v} -> k end)
       end
@@ -157,9 +161,10 @@ defmodule Lattice.Storage.Store do
           dets_path = dets_path(state.data_dir, namespace)
           File.rm(dets_path)
 
-          %{state |
-            tables: Map.delete(state.tables, namespace),
-            dets_tables: Map.delete(state.dets_tables, namespace)
+          %{
+            state
+            | tables: Map.delete(state.tables, namespace),
+              dets_tables: Map.delete(state.dets_tables, namespace)
           }
       end
 
@@ -182,10 +187,12 @@ defmodule Lattice.Storage.Store do
 
       # Open DETS file
       dets_path = dets_path(state.data_dir, namespace)
-      {:ok, dets} = :dets.open_file(:"lattice_dets_#{namespace}", [
-        file: String.to_charlist(dets_path),
-        type: :set
-      ])
+
+      {:ok, dets} =
+        :dets.open_file(:"lattice_dets_#{namespace}",
+          file: String.to_charlist(dets_path),
+          type: :set
+        )
 
       # Load existing data from DETS
       :dets.traverse(dets, fn {key, value} ->
@@ -193,9 +200,10 @@ defmodule Lattice.Storage.Store do
         :continue
       end)
 
-      %{state |
-        tables: Map.put(state.tables, namespace, table),
-        dets_tables: Map.put(state.dets_tables, namespace, dets)
+      %{
+        state
+        | tables: Map.put(state.tables, namespace, table),
+          dets_tables: Map.put(state.dets_tables, namespace, dets)
       }
     end
   end

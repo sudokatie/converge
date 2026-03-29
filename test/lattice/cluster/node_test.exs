@@ -4,7 +4,7 @@ defmodule Lattice.Cluster.NodeTest do
   alias Lattice.Cluster.Node
 
   setup do
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_node_test_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_node_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _pid} = Node.start_link(data_dir: tmp_dir)
@@ -131,7 +131,7 @@ defmodule Lattice.Cluster.NodeTest do
     test "uses provided node_id instead of generating", %{data_dir: _data_dir} do
       Node.stop()
 
-      tmp = System.tmp_dir!() |> Path.join("lattice_explicit_#{:rand.uniform(100000)}")
+      tmp = System.tmp_dir!() |> Path.join("lattice_explicit_#{:rand.uniform(100_000)}")
       File.mkdir_p!(tmp)
 
       {:ok, _} = Node.start_link(node_id: "my-custom-id", data_dir: tmp)

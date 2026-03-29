@@ -4,7 +4,7 @@ defmodule Lattice.Storage.SnapshotTest do
   alias Lattice.Storage.Snapshot
 
   setup do
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_snap_test_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_snap_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _pid} = Snapshot.start_link(data_dir: tmp_dir)

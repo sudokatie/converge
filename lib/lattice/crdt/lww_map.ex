@@ -17,10 +17,10 @@ defmodule Lattice.CRDT.LWWMap do
   alias Lattice.CRDT.LWWRegister
 
   @type t :: %__MODULE__{
-    node_id: String.t(),
-    entries: %{any() => LWWRegister.t()},
-    tombstones: %{any() => {integer(), String.t()}}
-  }
+          node_id: String.t(),
+          entries: %{any() => LWWRegister.t()},
+          tombstones: %{any() => {integer(), String.t()}}
+        }
 
   defstruct node_id: nil, entries: %{}, tombstones: %{}
 
@@ -38,7 +38,11 @@ defmodule Lattice.CRDT.LWWMap do
   @doc """
   Put a key-value pair.
   """
-  def put(%__MODULE__{node_id: node_id, entries: entries, tombstones: tombstones} = map, key, value) do
+  def put(
+        %__MODULE__{node_id: node_id, entries: entries, tombstones: tombstones} = map,
+        key,
+        value
+      ) do
     timestamp = System.os_time(:nanosecond)
     register = %LWWRegister{value: value, timestamp: timestamp, node_id: node_id}
 
@@ -47,6 +51,7 @@ defmodule Lattice.CRDT.LWWMap do
       {tomb_ts, _} when tomb_ts >= timestamp ->
         # Tombstone is newer, don't add
         map
+
       _ ->
         # Add/update the entry
         %{map | entries: Map.put(entries, key, register)}
@@ -64,10 +69,12 @@ defmodule Lattice.CRDT.LWWMap do
       %LWWRegister{timestamp: entry_ts} when entry_ts > timestamp ->
         # Entry is newer, don't delete
         map
+
       _ ->
-        %{map |
-          entries: Map.delete(entries, key),
-          tombstones: Map.put(tombstones, key, {timestamp, node_id})
+        %{
+          map
+          | entries: Map.delete(entries, key),
+            tombstones: Map.put(tombstones, key, {timestamp, node_id})
         }
     end
   end
@@ -114,10 +121,11 @@ defmodule Lattice.CRDT.LWWMap do
       end)
 
     # Merge entries (keep newer, respecting tombstones)
-    all_keys = MapSet.union(
-      MapSet.new(Map.keys(a.entries)),
-      MapSet.new(Map.keys(b.entries))
-    )
+    all_keys =
+      MapSet.union(
+        MapSet.new(Map.keys(a.entries)),
+        MapSet.new(Map.keys(b.entries))
+      )
 
     merged_entries =
       Enum.reduce(all_keys, %{}, fn key, acc ->

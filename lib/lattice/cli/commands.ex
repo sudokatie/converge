@@ -97,6 +97,22 @@ defmodule Lattice.CLI.Commands do
   end
 
   @doc """
+  Leaves the cluster gracefully.
+  """
+  def cluster_leave do
+    ensure_started()
+
+    case Lattice.Cluster.Membership.leave() do
+      :ok ->
+        IO.puts("Left cluster successfully")
+
+      {:error, reason} ->
+        IO.puts("Failed to leave: #{inspect(reason)}")
+        System.halt(1)
+    end
+  end
+
+  @doc """
   Gets a counter value.
   """
   def counter_get(namespace, key) do
@@ -245,7 +261,8 @@ defmodule Lattice.CLI.Commands do
   # Private
 
   defp ensure_started do
-    unless Application.started_applications() |> Enum.any?(fn {app, _, _} -> app == :lattice end) do
+    unless Application.started_applications()
+           |> Enum.any?(fn {app, _, _} -> app == :lattice end) do
       # Start minimal services for CLI
       {:ok, _} = Lattice.Storage.Store.start_link([])
       {:ok, _} = Lattice.Cluster.Node.start_link([])

@@ -10,23 +10,26 @@ defmodule Lattice.CRDT.VectorClockTest do
   end
 
   test "increment advances time for node" do
-    clock = VectorClock.new()
-    |> VectorClock.increment("node1")
-    |> VectorClock.increment("node1")
+    clock =
+      VectorClock.new()
+      |> VectorClock.increment("node1")
+      |> VectorClock.increment("node1")
 
     assert VectorClock.get(clock, "node1") == 2
     assert VectorClock.get(clock, "node2") == 0
   end
 
   test "merge takes component-wise max" do
-    a = VectorClock.new()
-    |> VectorClock.increment("node1")
-    |> VectorClock.increment("node1")
+    a =
+      VectorClock.new()
+      |> VectorClock.increment("node1")
+      |> VectorClock.increment("node1")
 
-    b = VectorClock.new()
-    |> VectorClock.increment("node1")
-    |> VectorClock.increment("node2")
-    |> VectorClock.increment("node2")
+    b =
+      VectorClock.new()
+      |> VectorClock.increment("node1")
+      |> VectorClock.increment("node2")
+      |> VectorClock.increment("node2")
 
     merged = VectorClock.merge(a, b)
     assert VectorClock.get(merged, "node1") == 2
@@ -57,9 +60,10 @@ defmodule Lattice.CRDT.VectorClockTest do
   end
 
   test "serialization roundtrip" do
-    clock = VectorClock.new()
-    |> VectorClock.increment("node1")
-    |> VectorClock.increment("node2")
+    clock =
+      VectorClock.new()
+      |> VectorClock.increment("node1")
+      |> VectorClock.increment("node2")
 
     binary = VectorClock.to_binary(clock)
     restored = VectorClock.from_binary(binary)

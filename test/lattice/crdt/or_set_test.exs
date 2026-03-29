@@ -16,19 +16,21 @@ defmodule Lattice.CRDT.ORSetTest do
   end
 
   test "remove makes element absent" do
-    set = ORSet.new("node1")
-    |> ORSet.add("apple")
-    |> ORSet.remove("apple")
+    set =
+      ORSet.new("node1")
+      |> ORSet.add("apple")
+      |> ORSet.remove("apple")
 
     refute ORSet.contains?(set, "apple")
     assert ORSet.members(set) == []
   end
 
   test "add after remove re-adds element" do
-    set = ORSet.new("node1")
-    |> ORSet.add("apple")
-    |> ORSet.remove("apple")
-    |> ORSet.add("apple")
+    set =
+      ORSet.new("node1")
+      |> ORSet.add("apple")
+      |> ORSet.remove("apple")
+      |> ORSet.add("apple")
 
     assert ORSet.contains?(set, "apple")
   end
@@ -49,10 +51,11 @@ defmodule Lattice.CRDT.ORSetTest do
   end
 
   test "multiple elements" do
-    set = ORSet.new("node1")
-    |> ORSet.add("apple")
-    |> ORSet.add("banana")
-    |> ORSet.add("cherry")
+    set =
+      ORSet.new("node1")
+      |> ORSet.add("apple")
+      |> ORSet.add("banana")
+      |> ORSet.add("cherry")
 
     members = ORSet.members(set) |> Enum.sort()
     assert members == ["apple", "banana", "cherry"]
@@ -69,9 +72,10 @@ defmodule Lattice.CRDT.ORSetTest do
   end
 
   test "serialization roundtrip" do
-    set = ORSet.new("node1")
-    |> ORSet.add("apple")
-    |> ORSet.add("banana")
+    set =
+      ORSet.new("node1")
+      |> ORSet.add("apple")
+      |> ORSet.add("banana")
 
     binary = ORSet.to_binary(set)
     restored = ORSet.from_binary(binary)

@@ -80,7 +80,9 @@ defmodule Lattice.Storage.Snapshot do
   def handle_call(:restore, _from, state) do
     result =
       case list_snapshots(state.data_dir) do
-        [] -> {:error, :no_snapshots}
+        [] ->
+          {:error, :no_snapshots}
+
         snapshots ->
           latest = List.last(snapshots)
           restore_snapshot(state.data_dir, latest)
@@ -129,6 +131,7 @@ defmodule Lattice.Storage.Snapshot do
 
         Enum.reduce(namespaces, %{}, fn ns, acc ->
           keys = Lattice.Storage.Store.list_keys(ns)
+
           entries =
             Enum.map(keys, fn key ->
               {key, Lattice.Storage.Store.get(ns, key)}

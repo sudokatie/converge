@@ -23,6 +23,7 @@ defmodule Lattice.ConfigTest do
   test "node_id generates UUID if not set" do
     id = Config.node_id()
     assert is_binary(id)
-    assert String.length(id) == 36  # UUID format
+    # UUID format
+    assert String.length(id) == 36
   end
 end

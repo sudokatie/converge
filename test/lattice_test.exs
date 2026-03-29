@@ -5,7 +5,7 @@ defmodule LatticeTest do
   alias Lattice.Cluster.Node
 
   setup do
-    tmp_dir = System.tmp_dir!() |> Path.join("lattice_api_test_#{:rand.uniform(100000)}")
+    tmp_dir = System.tmp_dir!() |> Path.join("lattice_api_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
 
     {:ok, _} = Store.start_link(data_dir: tmp_dir)
