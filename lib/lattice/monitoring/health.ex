@@ -226,7 +226,7 @@ defmodule Lattice.Monitoring.Health do
       Process.whereis(Lattice.Cluster.Node) == nil ->
         {:error, :node_not_running}
 
-      Process.whereis(Lattice.Cluster.Membership) == nil ->
+      Process.whereis(Lattice.Sync.Membership) == nil ->
         {:error, :membership_not_running}
 
       true ->

@@ -116,7 +116,7 @@ defmodule Lattice.Application do
   defp discovery_child(_data_dir, false), do: nil
 
   defp membership_child do
-    {Lattice.Cluster.Membership,
+    {Lattice.Sync.Membership,
      [
        enabled: true
      ]}

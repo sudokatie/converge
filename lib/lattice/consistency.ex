@@ -277,8 +277,8 @@ defmodule Lattice.Consistency do
   end
 
   defp get_members do
-    if Process.whereis(Lattice.Cluster.Membership) do
-      Lattice.Cluster.Membership.alive_members()
+    if Process.whereis(Lattice.Sync.Membership) do
+      Lattice.Sync.Membership.alive_members()
     else
       []
     end

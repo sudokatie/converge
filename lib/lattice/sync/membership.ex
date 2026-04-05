@@ -1,4 +1,4 @@
-defmodule Lattice.Cluster.Membership do
+defmodule Lattice.Sync.Membership do
   @moduledoc """
   SWIM-based cluster membership protocol.
 

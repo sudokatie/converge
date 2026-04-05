@@ -1,7 +1,7 @@
-defmodule Lattice.Cluster.MembershipTest do
+defmodule Lattice.Sync.MembershipTest do
   use ExUnit.Case
 
-  alias Lattice.Cluster.Membership
+  alias Lattice.Sync.Membership
 
   setup do
     test_pid = self()

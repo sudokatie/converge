@@ -8,7 +8,7 @@ defmodule Lattice.ConsistencyTest do
     tmp_dir = System.tmp_dir!() |> Path.join("consistency_test_#{:rand.uniform(100_000)}")
     File.mkdir_p!(tmp_dir)
     {:ok, store} = Lattice.Storage.Store.start_link(data_dir: tmp_dir)
-    {:ok, membership} = Lattice.Cluster.Membership.start_link(enabled: false)
+    {:ok, membership} = Lattice.Sync.Membership.start_link(enabled: false)
     {:ok, consistency} = Consistency.start_link([])
 
     on_exit(fn ->

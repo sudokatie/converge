@@ -86,7 +86,7 @@ defmodule Lattice.CLI.Commands do
       port: port
     }
 
-    case Lattice.Cluster.Membership.join(seed_node) do
+    case Lattice.Sync.Membership.join(seed_node) do
       :ok ->
         IO.puts("Joined cluster via #{seed}")
 
@@ -102,7 +102,7 @@ defmodule Lattice.CLI.Commands do
   def cluster_leave do
     ensure_started()
 
-    case Lattice.Cluster.Membership.leave() do
+    case Lattice.Sync.Membership.leave() do
       :ok ->
         IO.puts("Left cluster successfully")
 

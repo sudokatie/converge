@@ -14,7 +14,7 @@ defmodule Lattice.Monitoring.HealthTest do
       # Start dependencies for ready check
       {:ok, store} = Lattice.Storage.Store.start_link(data_dir: System.tmp_dir!())
       {:ok, node} = Lattice.Cluster.Node.start_link([])
-      {:ok, membership} = Lattice.Cluster.Membership.start_link(enabled: false)
+      {:ok, membership} = Lattice.Sync.Membership.start_link(enabled: false)
 
       on_exit(fn ->
         Process.alive?(store) && GenServer.stop(store)
