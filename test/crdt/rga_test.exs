@@ -1,7 +1,7 @@
-defmodule Lattice.CRDT.RGATest do
+defmodule Converge.CRDT.RGATest do
   use ExUnit.Case, async: true
 
-  alias Lattice.CRDT.RGA
+  alias Converge.CRDT.RGA
 
   describe "new/1" do
     test "creates empty RGA" do

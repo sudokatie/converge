@@ -1,4 +1,4 @@
-# Lattice
+# Converge
 
 A CRDT database that actually works. Eventually consistent, conflict-free, and surprisingly pleasant to use.
 
@@ -6,7 +6,7 @@ A CRDT database that actually works. Eventually consistent, conflict-free, and s
 
 Distributed systems are hard. Coordination is expensive. What if your data structures just... figured it out?
 
-Lattice implements Conflict-free Replicated Data Types (CRDTs) - mathematical structures that merge automatically without coordination. Two nodes can make concurrent updates, sync whenever they feel like it, and always converge to the same state. No locks. No consensus protocols. Just math.
+Converge implements Conflict-free Replicated Data Types (CRDTs) - mathematical structures that merge automatically without coordination. Two nodes can make concurrent updates, sync whenever they feel like it, and always converge to the same state. No locks. No consensus protocols. Just math.
 
 ## Features
 
@@ -28,24 +28,24 @@ Plus:
 
 ```elixir
 # Counters
-Lattice.counter_inc("myapp", "page_views")
-Lattice.counter_value("myapp", "page_views")
+Converge.counter_inc("myapp", "page_views")
+Converge.counter_value("myapp", "page_views")
 # => 1
 
 # Sets
-Lattice.set_add("myapp", "tags", "elixir")
-Lattice.set_add("myapp", "tags", "crdt")
-Lattice.set_members("myapp", "tags")
+Converge.set_add("myapp", "tags", "elixir")
+Converge.set_add("myapp", "tags", "crdt")
+Converge.set_members("myapp", "tags")
 # => ["elixir", "crdt"]
 
 # Maps
-Lattice.map_put("myapp", "user:1", "name", "Alice")
-Lattice.map_get("myapp", "user:1", "name")
+Converge.map_put("myapp", "user:1", "name", "Alice")
+Converge.map_get("myapp", "user:1", "name")
 # => "Alice"
 
 # Registers
-Lattice.register_set("myapp", "config", %{theme: "dark"})
-Lattice.register_get("myapp", "config")
+Converge.register_set("myapp", "config", %{theme: "dark"})
+Converge.register_get("myapp", "config")
 # => %{theme: "dark"}
 ```
 
@@ -56,29 +56,29 @@ Lattice.register_get("myapp", "config")
 mix escript.build
 
 # Counter operations
-./lattice counter inc myapp/visits
-./lattice counter get myapp/visits
+./converge counter inc myapp/visits
+./converge counter get myapp/visits
 
 # Set operations
-./lattice set add myapp/tags elixir
-./lattice set members myapp/tags
+./converge set add myapp/tags elixir
+./converge set members myapp/tags
 
 # Cluster operations
-./lattice cluster status
-./lattice cluster join 192.168.1.10:4000
-./lattice cluster leave
+./converge cluster status
+./converge cluster join 192.168.1.10:4000
+./converge cluster leave
 
 # Namespace management
-./lattice namespace list
-./lattice namespace create myapp
+./converge namespace list
+./converge namespace create myapp
 
 # Trigger sync
-./lattice sync
+./converge sync
 ```
 
 ## Monitoring
 
-Lattice exposes HTTP endpoints for health checks and metrics:
+Converge exposes HTTP endpoints for health checks and metrics:
 
 ```bash
 # Liveness check
@@ -102,7 +102,7 @@ Metrics tracked:
 
 ## Consistency Levels
 
-Lattice supports three consistency levels:
+Converge supports three consistency levels:
 
 - **Eventual** (default) - Highest availability. Reads may return stale data.
 - **Session** - Reads see own writes within the session.
@@ -110,14 +110,14 @@ Lattice supports three consistency levels:
 
 ```elixir
 # Set default consistency level
-Lattice.Consistency.set_default_level(:session)
+Converge.Consistency.set_default_level(:session)
 
 # Create a session for session consistency
-session = Lattice.Consistency.new_session()
+session = Converge.Consistency.new_session()
 
 # Quorum read/write
-Lattice.Consistency.quorum_read("myapp", "key")
-Lattice.Consistency.quorum_write("myapp", "key", "value")
+Converge.Consistency.quorum_read("myapp", "key")
+Converge.Consistency.quorum_write("myapp", "key", "value")
 ```
 
 ## How It Works
@@ -133,8 +133,8 @@ Lattice.Consistency.quorum_write("myapp", "key", "value")
 ## Configuration
 
 ```elixir
-config :lattice,
-  data_dir: "/var/lib/lattice",
+config :converge,
+  data_dir: "/var/lib/converge",
   node_id: "node-1",
   sync_interval_ms: 5_000,
   seed_nodes: ["192.168.1.10:4000", "192.168.1.11:4000"],
@@ -149,22 +149,22 @@ config :lattice,
 ## Architecture
 
 ```
-Lattice.Supervisor
-  ├── Lattice.Monitoring.Metrics # Metrics collection
-  ├── Lattice.Monitoring.Health  # HTTP health endpoints
-  ├── Lattice.Consistency        # Consistency level manager
-  ├── Lattice.Cluster.Node       # Identity & peer tracking
-  ├── Lattice.Storage.Store      # ETS/DETS backend
-  ├── Lattice.Storage.WAL        # Write-ahead log
-  ├── Lattice.Storage.Snapshot   # Periodic snapshots
-  ├── Lattice.Sync.AntiEntropy   # Merkle-based sync
-  ├── Lattice.Cluster.Discovery  # mDNS peer discovery
-  └── Lattice.Cluster.Membership # SWIM protocol
+Converge.Supervisor
+  ├── Converge.Monitoring.Metrics # Metrics collection
+  ├── Converge.Monitoring.Health  # HTTP health endpoints
+  ├── Converge.Consistency        # Consistency level manager
+  ├── Converge.Cluster.Node       # Identity & peer tracking
+  ├── Converge.Storage.Store      # ETS/DETS backend
+  ├── Converge.Storage.WAL        # Write-ahead log
+  ├── Converge.Storage.Snapshot   # Periodic snapshots
+  ├── Converge.Sync.AntiEntropy   # Merkle-based sync
+  ├── Converge.Cluster.Discovery  # mDNS peer discovery
+  └── Converge.Cluster.Membership # SWIM protocol
 ```
 
 ## The Math (briefly)
 
-CRDTs work because they're join-semilattices. Fancy term, simple idea:
+CRDTs work because they're join-semiconverges. Fancy term, simple idea:
 - There's a partial order on states
 - Any two states have a least upper bound (the merge)
 - Merging is associative, commutative, and idempotent

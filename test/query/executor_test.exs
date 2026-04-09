@@ -1,8 +1,8 @@
-defmodule Lattice.Query.ExecutorTest do
+defmodule Converge.Query.ExecutorTest do
   use ExUnit.Case, async: true
 
-  alias Lattice.Query
-  alias Lattice.CRDT.LWWMap
+  alias Converge.Query
+  alias Converge.CRDT.LWWMap
 
   setup do
     # Create test data

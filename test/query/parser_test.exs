@@ -1,7 +1,7 @@
-defmodule Lattice.Query.ParserTest do
+defmodule Converge.Query.ParserTest do
   use ExUnit.Case, async: true
 
-  alias Lattice.Query.Parser
+  alias Converge.Query.Parser
 
   describe "parse/1" do
     test "parses simple SELECT *" do

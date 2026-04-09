@@ -1,13 +1,13 @@
-defmodule Lattice.MixProject do
+defmodule Converge.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :lattice,
+      app: :converge,
       version: "0.1.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
-      escript: [main_module: Lattice.CLI.Main],
+      escript: [main_module: Converge.CLI.Main],
       deps: deps()
     ]
   end
@@ -15,7 +15,7 @@ defmodule Lattice.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Lattice.Application, []}
+      mod: {Converge.Application, []}
     ]
   end
 
