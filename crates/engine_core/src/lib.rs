@@ -1,7 +1,8 @@
 //! Core utilities for the Lattice game engine.
 //!
-//! Provides math primitives, logging, coordinate types, and common utilities.
+//! Provides math primitives, logging, coordinate types, memory utilities, and more.
 
 pub mod coords;
 pub mod logging;
 pub mod math;
+pub mod memory;
