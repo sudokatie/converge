@@ -1,6 +1,6 @@
 //! Terrain noise generation using Perlin noise.
 
-use noise::{NoiseFn, Perlin, Seedable};
+use noise::{NoiseFn, Perlin};
 
 /// FBM (Fractal Brownian Motion) octaves.
 const OCTAVES: u32 = 5;
