@@ -5,5 +5,6 @@
 pub mod backend;
 pub mod camera;
 mod renderer;
+pub mod voxel;
 
 pub use renderer::{TriangleRenderer, Vertex};

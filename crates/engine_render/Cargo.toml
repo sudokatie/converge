@@ -8,6 +8,7 @@ description = "Rendering system for the Lattice game engine"
 
 [dependencies]
 engine_core = { path = "../engine_core" }
+engine_world = { path = "../engine_world" }
 wgpu.workspace = true
 winit.workspace = true
 bytemuck.workspace = true
