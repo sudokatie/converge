@@ -1,0 +1,19 @@
+[package]
+name = "engine_network"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Networking system for the Lattice game engine"
+
+[dependencies]
+engine_core = { path = "../engine_core" }
+renet.workspace = true
+serde.workspace = true
+bincode.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

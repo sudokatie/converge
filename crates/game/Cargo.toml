@@ -1,0 +1,26 @@
+[package]
+name = "lattice_game"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Lattice survival game client"
+
+[[bin]]
+name = "lattice"
+path = "src/main.rs"
+
+[dependencies]
+engine_core = { path = "../engine_core" }
+engine_render = { path = "../engine_render" }
+engine_world = { path = "../engine_world" }
+engine_physics = { path = "../engine_physics" }
+engine_network = { path = "../engine_network" }
+engine_audio = { path = "../engine_audio" }
+engine_ai = { path = "../engine_ai" }
+engine_ui = { path = "../engine_ui" }
+anyhow.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

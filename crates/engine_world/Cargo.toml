@@ -1,0 +1,19 @@
+[package]
+name = "engine_world"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Voxel world system for the Lattice game engine"
+
+[dependencies]
+engine_core = { path = "../engine_core" }
+glam.workspace = true
+noise.workspace = true
+serde.workspace = true
+bincode.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
