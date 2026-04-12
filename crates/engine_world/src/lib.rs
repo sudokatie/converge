@@ -3,3 +3,4 @@
 //! Provides chunk management, terrain generation, and world persistence.
 
 pub mod chunk;
+pub mod generation;
