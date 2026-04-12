@@ -28,7 +28,7 @@ tracing-appender = "0.2"
 
 # Graphics
 wgpu = "24"
-winit = "0.30"
+winit = { version = "0.30", features = ["serde"] }
 bytemuck = { version = "1", features = ["derive"] }
 
 # ECS
@@ -56,6 +56,9 @@ approx = "0.5"
 
 # Memory
 bumpalo = "3"
+
+# Config
+ron = "0.8"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
