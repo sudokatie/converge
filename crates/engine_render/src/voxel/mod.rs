@@ -6,8 +6,10 @@ mod ambient_occlusion;
 mod chunk_mesh;
 mod greedy_mesh;
 mod mesh_builder;
+mod voxel_pipeline;
 
 pub use ambient_occlusion::calculate_ao;
 pub use chunk_mesh::{ChunkMesh, ChunkMeshCache};
 pub use greedy_mesh::{greedy_mesh, ChunkNeighbors};
 pub use mesh_builder::{MeshBuilder, Vertex};
+pub use voxel_pipeline::{CameraUniform, ChunkUniform, VoxelPipeline};
