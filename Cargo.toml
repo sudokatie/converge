@@ -30,6 +30,7 @@ tracing-appender = "0.2"
 wgpu = "24"
 winit = { version = "0.30", features = ["serde"] }
 bytemuck = { version = "1", features = ["derive"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 # ECS
 hecs = "0.10"
