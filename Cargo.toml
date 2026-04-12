@@ -50,6 +50,7 @@ noise = "0.9"
 
 # Async
 tokio = { version = "1", features = ["full"] }
+pollster = "0.4"
 
 # Testing
 approx = "0.5"
