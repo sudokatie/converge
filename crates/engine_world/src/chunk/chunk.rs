@@ -15,6 +15,14 @@ pub struct Chunk {
     non_air_count: u32,
 }
 
+impl std::fmt::Debug for Chunk {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Chunk")
+            .field("non_air_count", &self.non_air_count)
+            .finish_non_exhaustive()
+    }
+}
+
 impl Chunk {
     /// Create a new chunk filled with air.
     #[must_use]
