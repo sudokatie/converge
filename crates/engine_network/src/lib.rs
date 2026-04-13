@@ -63,5 +63,8 @@ pub mod transport;
 
 pub use prediction::{InputRecord, MovementPredictor, PredictedState};
 pub use protocol::{ClientMessage, EntityKind, ServerMessage, WorldSnapshot};
-pub use sync::{InterpolatedState, InterpolationBuffer};
+pub use sync::{
+    ChunkPriority, ChunkRequest, ClientChunkSync, InterpolatedState, InterpolationBuffer,
+    ServerChunkSync,
+};
 pub use transport::{ClientId, GameClient, GameServer, DEFAULT_PORT};
