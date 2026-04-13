@@ -1,7 +1,7 @@
 //! Network transport layer using renet.
 
-mod client;
-mod server;
+pub mod client;
+pub mod server;
 
 pub use client::GameClient;
 pub use renet::ClientId;

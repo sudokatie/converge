@@ -15,6 +15,7 @@ engine_core = { path = "../engine_core" }
 engine_world = { path = "../engine_world" }
 engine_network = { path = "../engine_network" }
 engine_ai = { path = "../engine_ai" }
+glam.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
 tokio.workspace = true
