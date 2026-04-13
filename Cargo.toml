@@ -66,6 +66,10 @@ bumpalo = "3"
 # Config
 ron = "0.8"
 
+# Compression
+lz4_flex = "0.11"
+crc32fast = "1.4"
+
 [workspace.lints.rust]
 unsafe_code = "forbid"
 

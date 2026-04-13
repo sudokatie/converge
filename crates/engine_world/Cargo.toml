@@ -17,6 +17,9 @@ thiserror.workspace = true
 tracing.workspace = true
 rayon.workspace = true
 crossbeam-channel.workspace = true
+lz4_flex.workspace = true
+crc32fast.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 approx.workspace = true

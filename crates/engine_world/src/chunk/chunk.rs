@@ -1,6 +1,7 @@
 //! Chunk storage for voxel data.
 
 use engine_core::coords::{LocalPos, CHUNK_SIZE};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use super::BlockId;
 use super::AIR;
@@ -13,6 +14,66 @@ pub const CHUNK_VOLUME: usize = (CHUNK_SIZE as usize).pow(3);
 pub struct Chunk {
     blocks: Box<[BlockId; CHUNK_VOLUME]>,
     non_air_count: u32,
+}
+
+impl Serialize for Chunk {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // Serialize as slice + count
+        use serde::ser::SerializeTuple;
+        let mut tuple = serializer.serialize_tuple(2)?;
+        tuple.serialize_element(self.blocks.as_slice())?;
+        tuple.serialize_element(&self.non_air_count)?;
+        tuple.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Chunk {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::{SeqAccess, Visitor};
+
+        struct ChunkVisitor;
+
+        impl<'de> Visitor<'de> for ChunkVisitor {
+            type Value = Chunk;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a chunk with blocks and count")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                let blocks_vec: Vec<BlockId> = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+
+                let non_air_count: u32 = seq
+                    .next_element()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+
+                if blocks_vec.len() != CHUNK_VOLUME {
+                    return Err(serde::de::Error::invalid_length(blocks_vec.len(), &"4096 blocks"));
+                }
+
+                let mut blocks = Box::new([AIR; CHUNK_VOLUME]);
+                blocks.copy_from_slice(&blocks_vec);
+
+                Ok(Chunk {
+                    blocks,
+                    non_air_count,
+                })
+            }
+        }
+
+        deserializer.deserialize_tuple(2, ChunkVisitor)
+    }
 }
 
 impl std::fmt::Debug for Chunk {
