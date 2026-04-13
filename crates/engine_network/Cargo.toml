@@ -9,6 +9,7 @@ description = "Networking system for the Lattice game engine"
 [dependencies]
 engine_core = { path = "../engine_core" }
 renet.workspace = true
+glam.workspace = true
 serde.workspace = true
 bincode.workspace = true
 thiserror.workspace = true
