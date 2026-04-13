@@ -20,6 +20,7 @@ engine_audio = { path = "../engine_audio" }
 engine_ai = { path = "../engine_ai" }
 engine_ui = { path = "../engine_ui" }
 anyhow.workspace = true
+thiserror.workspace = true
 tracing.workspace = true
 glam.workspace = true
 hecs.workspace = true
