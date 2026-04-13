@@ -5,3 +5,4 @@
 pub mod building;
 pub mod ecs;
 pub mod entities;
+pub mod inventory;
