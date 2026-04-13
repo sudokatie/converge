@@ -36,7 +36,9 @@
 //! ```
 
 pub mod protocol;
+pub mod sync;
 pub mod transport;
 
 pub use protocol::{ClientMessage, EntityKind, ServerMessage, WorldSnapshot};
+pub use sync::{InterpolatedState, InterpolationBuffer};
 pub use transport::{ClientId, GameClient, GameServer, DEFAULT_PORT};
