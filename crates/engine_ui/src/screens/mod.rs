@@ -1,5 +1,7 @@
 //! Game screens and menus.
 
+mod chat;
 mod crafting;
 
-pub use crafting::{CraftingScreen, CraftingAction};
+pub use chat::{ChatAction, ChatMessage, ChatScreen};
+pub use crafting::{CraftingAction, CraftingScreen};
