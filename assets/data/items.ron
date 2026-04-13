@@ -1,0 +1,300 @@
+// Lattice Item Definitions
+// Format: RON (Rusty Object Notation)
+
+[
+    // ============ BLOCK ITEMS ============
+    // Block items place blocks in the world
+
+    (
+        id: 1,
+        name: "Stone",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(1),
+    ),
+    (
+        id: 2,
+        name: "Dirt",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(2),
+    ),
+    (
+        id: 3,
+        name: "Grass Block",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(3),
+    ),
+    (
+        id: 4,
+        name: "Sand",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(4),
+    ),
+    (
+        id: 5,
+        name: "Gravel",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(5),
+    ),
+    (
+        id: 6,
+        name: "Cobblestone",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(6),
+    ),
+    (
+        id: 7,
+        name: "Oak Log",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(7),
+    ),
+    (
+        id: 8,
+        name: "Oak Planks",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(8),
+    ),
+    (
+        id: 9,
+        name: "Oak Leaves",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(9),
+    ),
+    (
+        id: 10,
+        name: "Glass",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(10),
+    ),
+    (
+        id: 11,
+        name: "Coal Ore",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(11),
+    ),
+    (
+        id: 12,
+        name: "Iron Ore",
+        stack_size: 64,
+        category: Block,
+        block_id: Some(12),
+    ),
+
+    // ============ MATERIALS ============
+    // Crafting materials
+
+    (
+        id: 50,
+        name: "Stick",
+        stack_size: 64,
+        category: Material,
+    ),
+    (
+        id: 51,
+        name: "Coal",
+        stack_size: 64,
+        category: Material,
+    ),
+    (
+        id: 52,
+        name: "Iron Ingot",
+        stack_size: 64,
+        category: Material,
+    ),
+    (
+        id: 53,
+        name: "String",
+        stack_size: 64,
+        category: Material,
+    ),
+
+    // ============ TOOLS - PICKAXES ============
+
+    (
+        id: 100,
+        name: "Wooden Pickaxe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Pickaxe),
+        durability: Some(60),
+        damage: 2.0,
+        mining_speed: 2.0,
+    ),
+    (
+        id: 101,
+        name: "Stone Pickaxe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Pickaxe),
+        durability: Some(132),
+        damage: 3.0,
+        mining_speed: 4.0,
+    ),
+    (
+        id: 102,
+        name: "Iron Pickaxe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Pickaxe),
+        durability: Some(251),
+        damage: 4.0,
+        mining_speed: 6.0,
+    ),
+
+    // ============ TOOLS - AXES ============
+
+    (
+        id: 110,
+        name: "Wooden Axe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Axe),
+        durability: Some(60),
+        damage: 3.0,
+        mining_speed: 2.0,
+    ),
+    (
+        id: 111,
+        name: "Stone Axe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Axe),
+        durability: Some(132),
+        damage: 4.0,
+        mining_speed: 4.0,
+    ),
+    (
+        id: 112,
+        name: "Iron Axe",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Axe),
+        durability: Some(251),
+        damage: 5.0,
+        mining_speed: 6.0,
+    ),
+
+    // ============ TOOLS - SHOVELS ============
+
+    (
+        id: 120,
+        name: "Wooden Shovel",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Shovel),
+        durability: Some(60),
+        damage: 1.0,
+        mining_speed: 2.0,
+    ),
+    (
+        id: 121,
+        name: "Stone Shovel",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Shovel),
+        durability: Some(132),
+        damage: 2.0,
+        mining_speed: 4.0,
+    ),
+    (
+        id: 122,
+        name: "Iron Shovel",
+        stack_size: 1,
+        category: Tool,
+        tool_type: Some(Shovel),
+        durability: Some(251),
+        damage: 3.0,
+        mining_speed: 6.0,
+    ),
+
+    // ============ WEAPONS - SWORDS ============
+
+    (
+        id: 150,
+        name: "Wooden Sword",
+        stack_size: 1,
+        category: Weapon,
+        tool_type: Some(Sword),
+        durability: Some(60),
+        damage: 4.0,
+    ),
+    (
+        id: 151,
+        name: "Stone Sword",
+        stack_size: 1,
+        category: Weapon,
+        tool_type: Some(Sword),
+        durability: Some(132),
+        damage: 5.0,
+    ),
+    (
+        id: 152,
+        name: "Iron Sword",
+        stack_size: 1,
+        category: Weapon,
+        tool_type: Some(Sword),
+        durability: Some(251),
+        damage: 6.0,
+    ),
+
+    // ============ FOOD ============
+
+    (
+        id: 200,
+        name: "Apple",
+        stack_size: 64,
+        category: Food,
+        food_value: 4.0,
+        saturation_value: 2.4,
+    ),
+    (
+        id: 201,
+        name: "Bread",
+        stack_size: 64,
+        category: Food,
+        food_value: 5.0,
+        saturation_value: 6.0,
+    ),
+    (
+        id: 202,
+        name: "Raw Porkchop",
+        stack_size: 64,
+        category: Food,
+        food_value: 3.0,
+        saturation_value: 1.8,
+    ),
+    (
+        id: 203,
+        name: "Cooked Porkchop",
+        stack_size: 64,
+        category: Food,
+        food_value: 8.0,
+        saturation_value: 12.8,
+    ),
+    (
+        id: 204,
+        name: "Raw Beef",
+        stack_size: 64,
+        category: Food,
+        food_value: 3.0,
+        saturation_value: 1.8,
+    ),
+    (
+        id: 205,
+        name: "Cooked Beef",
+        stack_size: 64,
+        category: Food,
+        food_value: 8.0,
+        saturation_value: 12.8,
+    ),
+]
