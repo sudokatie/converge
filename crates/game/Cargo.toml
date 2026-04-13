@@ -21,6 +21,9 @@ engine_ai = { path = "../engine_ai" }
 engine_ui = { path = "../engine_ui" }
 anyhow.workspace = true
 tracing.workspace = true
+glam.workspace = true
+hecs.workspace = true
+serde.workspace = true
 
 [lints]
 workspace = true
