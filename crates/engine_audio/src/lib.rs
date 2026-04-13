@@ -4,6 +4,7 @@
 
 mod effects;
 mod manager;
+mod music;
 mod sound;
 
 pub use effects::{
@@ -11,4 +12,5 @@ pub use effects::{
     SurfaceType, UiSoundEvent,
 };
 pub use manager::{AudioManager, VolumeCategory};
+pub use music::{MusicPlayRequest, MusicPlayer, MusicRegistry, MusicState, MusicTrack, TrackId};
 pub use sound::{SoundId, SoundRegistry};
