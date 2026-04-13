@@ -1,182 +1,134 @@
-# Converge
+# Lattice
 
-A CRDT database that actually works. Eventually consistent, conflict-free, and surprisingly pleasant to use.
+A survival game engine built from scratch in Rust. Voxel world, building, creatures, multiplayer - the whole deal.
 
 ## Why This Exists
 
-Distributed systems are hard. Coordination is expensive. What if your data structures just... figured it out?
+Because sometimes you want to understand how the sausage is made. No Unity. No Unreal. No Godot. Just raw Rust and too much ambition.
 
-Converge implements Conflict-free Replicated Data Types (CRDTs) - mathematical structures that merge automatically without coordination. Two nodes can make concurrent updates, sync whenever they feel like it, and always converge to the same state. No locks. No consensus protocols. Just math.
+Lattice is a from-scratch game engine targeting the survival/voxel genre. Think Minecraft meets Valheim, but we actually understand every line of code. Whether that's a feature or a bug depends on the day.
 
-## Features
+## Current Status
 
-- **G-Counter** - Grow-only counter. Simple, fast, gets the job done.
-- **PN-Counter** - Increment and decrement. Because sometimes you need to go backwards.
-- **LWW-Register** - Last-writer-wins. Timestamps settle disputes.
-- **OR-Set** - Add/remove elements. Add wins over concurrent remove (the sane choice).
-- **LWW-Map** - Key-value with LWW semantics. Your distributed config store.
+**Milestones Complete: 4/7**
 
-Plus:
-- ETS/DETS storage (fast reads, durable writes)
-- Merkle tree sync (efficient diffing)
-- SWIM-based cluster membership (gossip that works)
-- mDNS discovery (zero-config clustering)
-- Health checks and metrics endpoints
-- Session and quorum consistency levels
-
-## Quick Start
-
-```elixir
-# Counters
-Converge.counter_inc("myapp", "page_views")
-Converge.counter_value("myapp", "page_views")
-# => 1
-
-# Sets
-Converge.set_add("myapp", "tags", "elixir")
-Converge.set_add("myapp", "tags", "crdt")
-Converge.set_members("myapp", "tags")
-# => ["elixir", "crdt"]
-
-# Maps
-Converge.map_put("myapp", "user:1", "name", "Alice")
-Converge.map_get("myapp", "user:1", "name")
-# => "Alice"
-
-# Registers
-Converge.register_set("myapp", "config", %{theme: "dark"})
-Converge.register_get("myapp", "config")
-# => %{theme: "dark"}
-```
-
-## CLI
-
-```bash
-# Build the CLI
-mix escript.build
-
-# Counter operations
-./converge counter inc myapp/visits
-./converge counter get myapp/visits
-
-# Set operations
-./converge set add myapp/tags elixir
-./converge set members myapp/tags
-
-# Cluster operations
-./converge cluster status
-./converge cluster join 192.168.1.10:4000
-./converge cluster leave
-
-# Namespace management
-./converge namespace list
-./converge namespace create myapp
-
-# Trigger sync
-./converge sync
-```
-
-## Monitoring
-
-Converge exposes HTTP endpoints for health checks and metrics:
-
-```bash
-# Liveness check
-curl http://localhost:8080/health
-# {"status":"ok"}
-
-# Readiness check (storage + cluster)
-curl http://localhost:8080/ready
-# {"status":"ready","storage":"ok","cluster":"ok"}
-
-# Prometheus-style metrics
-curl http://localhost:8080/metrics
-```
-
-Metrics tracked:
-- Sync operations per second
-- Merge conflicts per type
-- Data size per namespace
-- Network bytes in/out
-- Node membership changes
-
-## Consistency Levels
-
-Converge supports three consistency levels:
-
-- **Eventual** (default) - Highest availability. Reads may return stale data.
-- **Session** - Reads see own writes within the session.
-- **Quorum** - Read/write to majority of nodes before returning.
-
-```elixir
-# Set default consistency level
-Converge.Consistency.set_default_level(:session)
-
-# Create a session for session consistency
-session = Converge.Consistency.new_session()
-
-# Quorum read/write
-Converge.Consistency.quorum_read("myapp", "key")
-Converge.Consistency.quorum_write("myapp", "key", "value")
-```
-
-## How It Works
-
-1. **Local-first writes** - Every operation hits local storage immediately. No network round-trips.
-
-2. **Background sync** - Anti-entropy process periodically compares Merkle roots with peers. Different? Exchange the deltas.
-
-3. **Automatic merge** - CRDTs have mathematically-defined merge functions. Concurrent updates? Merge handles it.
-
-4. **Eventual consistency** - Given enough time and network connectivity, all nodes converge. Guaranteed.
-
-## Configuration
-
-```elixir
-config :converge,
-  data_dir: "/var/lib/converge",
-  node_id: "node-1",
-  sync_interval_ms: 5_000,
-  seed_nodes: ["192.168.1.10:4000", "192.168.1.11:4000"],
-  listen_port: 4000,
-  enable_mdns: true,
-  snapshot_interval_ms: 60_000,
-  enable_monitoring: true,
-  health_port: 8080,
-  default_consistency: :eventual
-```
+- [x] M1: Foundation - Workspace, math, platform, basic rendering
+- [x] M2: Voxel World - Chunks, generation, meshing, persistence
+- [x] M3: Player - Movement, collision, inventory
+- [x] M4: Gameplay - Items, crafting, survival, creatures
+- [ ] M5: Multiplayer - Networking, sync, prediction
+- [ ] M6: Content - Biomes, hostile AI, combat
+- [ ] M7: Polish - Audio, menus, optimization
 
 ## Architecture
 
 ```
-Converge.Supervisor
-  ├── Converge.Monitoring.Metrics # Metrics collection
-  ├── Converge.Monitoring.Health  # HTTP health endpoints
-  ├── Converge.Consistency        # Consistency level manager
-  ├── Converge.Cluster.Node       # Identity & peer tracking
-  ├── Converge.Storage.Store      # ETS/DETS backend
-  ├── Converge.Storage.WAL        # Write-ahead log
-  ├── Converge.Storage.Snapshot   # Periodic snapshots
-  ├── Converge.Sync.AntiEntropy   # Merkle-based sync
-  ├── Converge.Cluster.Discovery  # mDNS peer discovery
-  └── Converge.Cluster.Membership # SWIM protocol
+lattice/
+├── crates/
+│   ├── engine_core/     # Math, memory, platform
+│   ├── engine_render/   # wgpu graphics, voxel rendering
+│   ├── engine_world/    # Chunk generation, persistence
+│   ├── engine_physics/  # Collision, movement
+│   ├── engine_network/  # Multiplayer (WIP)
+│   ├── engine_audio/    # Sound (WIP)
+│   ├── engine_ai/       # Creature behavior
+│   ├── engine_ui/       # egui-based HUD and menus
+│   ├── game/            # Game logic, ECS
+│   └── server/          # Dedicated server
+└── assets/
+    └── data/            # RON config files
 ```
 
-## The Math (briefly)
+## Features
 
-CRDTs work because they're join-semiconverges. Fancy term, simple idea:
-- There's a partial order on states
-- Any two states have a least upper bound (the merge)
-- Merging is associative, commutative, and idempotent
+### World
+- 16x16x16 chunks with greedy meshing
+- Procedural terrain with caves
+- Region-based persistence (lz4 compressed)
+- Frustum culling and ambient occlusion
 
-Translation: merge order doesn't matter, re-merging is harmless, and everything converges.
+### Gameplay
+- Data-driven items and recipes (RON files)
+- Crafting with station requirements
+- Health with damage/healing/invincibility
+- Hunger with saturation buffer
+- 36-slot inventory with hotbar
 
-## Limitations
+### Creatures
+- Passive animals (pig, cow, sheep, chicken)
+- Hostile mobs (zombie, skeleton, spider, creeper)
+- State machine AI (idle, wander, flee)
 
-- **Memory** - Everything lives in ETS. Huge datasets need more RAM.
-- **Tombstones** - OR-Set keeps deleted element tags around. Clean them periodically.
-- **Clock drift** - LWW types assume reasonable clock sync. NTP is your friend.
-- **No transactions** - This is AP, not ACID. Design accordingly.
+### UI
+- Health bar with damage flash
+- Hunger bar with low-hunger shake
+- Hotbar with item icons
+- Crafting screen with filtering
+
+## Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+
+# Run tests
+cargo test --workspace
+
+# Run the game
+cargo run
+```
+
+## Configuration
+
+Items and recipes are data-driven via RON files in `assets/data/`:
+
+```ron
+// items.ron
+(
+    id: 100,
+    name: "Wooden Pickaxe",
+    stack_size: 1,
+    category: Tool,
+    tool_type: Some(Pickaxe),
+    durability: Some(60),
+)
+
+// recipes.ron
+(
+    id: "wooden_pickaxe",
+    inputs: [(item: "Oak Planks", count: 3), (item: "Stick", count: 2)],
+    output: (item: "Wooden Pickaxe", count: 1),
+    station: Some(CraftingTable),
+)
+```
+
+## Dependencies
+
+- **wgpu** - Cross-platform graphics
+- **winit** - Window management
+- **glam** - Math (vectors, matrices, quaternions)
+- **hecs** - Entity Component System
+- **egui** - Immediate mode UI
+- **noise** - Terrain generation
+- **serde/ron** - Configuration
+
+## Performance Targets
+
+- 60 FPS at 1080p
+- 12 chunk view distance
+- <2GB RAM
+- 10 players (when multiplayer lands)
+
+## Philosophy
+
+1. **Understand everything** - No magic black boxes
+2. **Data-driven** - RON files over hardcoded values
+3. **Test everything** - 100+ tests and counting
+4. **One component, one file** - Clean architecture
+5. **Build incrementally** - Task by task, milestone by milestone
 
 ## License
 
@@ -184,4 +136,4 @@ MIT
 
 ---
 
-*Built by Katie. Because distributed systems should be less painful.*
+*Built by Katie. Because game engines are just really ambitious side projects.*
