@@ -1,0 +1,150 @@
+// Lattice Crafting Recipes
+// Format: RON (Rusty Object Notation)
+//
+// station: None = hand crafting
+// station: Some(CraftingTable) = requires crafting table
+// station: Some(Furnace) = requires furnace
+
+[
+    // ============ BASIC PROCESSING ============
+    
+    (
+        id: "oak_planks",
+        inputs: [(item: "Oak Log", count: 1)],
+        output: (item: "Oak Planks", count: 4),
+        category: Some("building"),
+    ),
+    (
+        id: "sticks",
+        inputs: [(item: "Oak Planks", count: 2)],
+        output: (item: "Stick", count: 4),
+        category: Some("materials"),
+    ),
+
+    // ============ TOOLS - PICKAXES ============
+    
+    (
+        id: "wooden_pickaxe",
+        inputs: [(item: "Oak Planks", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Wooden Pickaxe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "stone_pickaxe",
+        inputs: [(item: "Cobblestone", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Stone Pickaxe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "iron_pickaxe",
+        inputs: [(item: "Iron Ingot", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Iron Pickaxe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+
+    // ============ TOOLS - AXES ============
+    
+    (
+        id: "wooden_axe",
+        inputs: [(item: "Oak Planks", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Wooden Axe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "stone_axe",
+        inputs: [(item: "Cobblestone", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Stone Axe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "iron_axe",
+        inputs: [(item: "Iron Ingot", count: 3), (item: "Stick", count: 2)],
+        output: (item: "Iron Axe", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+
+    // ============ TOOLS - SHOVELS ============
+    
+    (
+        id: "wooden_shovel",
+        inputs: [(item: "Oak Planks", count: 1), (item: "Stick", count: 2)],
+        output: (item: "Wooden Shovel", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "stone_shovel",
+        inputs: [(item: "Cobblestone", count: 1), (item: "Stick", count: 2)],
+        output: (item: "Stone Shovel", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+    (
+        id: "iron_shovel",
+        inputs: [(item: "Iron Ingot", count: 1), (item: "Stick", count: 2)],
+        output: (item: "Iron Shovel", count: 1),
+        station: Some(CraftingTable),
+        category: Some("tools"),
+    ),
+
+    // ============ WEAPONS - SWORDS ============
+    
+    (
+        id: "wooden_sword",
+        inputs: [(item: "Oak Planks", count: 2), (item: "Stick", count: 1)],
+        output: (item: "Wooden Sword", count: 1),
+        station: Some(CraftingTable),
+        category: Some("weapons"),
+    ),
+    (
+        id: "stone_sword",
+        inputs: [(item: "Cobblestone", count: 2), (item: "Stick", count: 1)],
+        output: (item: "Stone Sword", count: 1),
+        station: Some(CraftingTable),
+        category: Some("weapons"),
+    ),
+    (
+        id: "iron_sword",
+        inputs: [(item: "Iron Ingot", count: 2), (item: "Stick", count: 1)],
+        output: (item: "Iron Sword", count: 1),
+        station: Some(CraftingTable),
+        category: Some("weapons"),
+    ),
+
+    // ============ SMELTING ============
+    
+    (
+        id: "smelt_iron",
+        inputs: [(item: "Iron Ore", count: 1)],
+        output: (item: "Iron Ingot", count: 1),
+        station: Some(Furnace),
+        category: Some("smelting"),
+    ),
+    (
+        id: "smelt_glass",
+        inputs: [(item: "Sand", count: 1)],
+        output: (item: "Glass", count: 1),
+        station: Some(Furnace),
+        category: Some("smelting"),
+    ),
+    (
+        id: "cook_porkchop",
+        inputs: [(item: "Raw Porkchop", count: 1)],
+        output: (item: "Cooked Porkchop", count: 1),
+        station: Some(Furnace),
+        category: Some("food"),
+    ),
+    (
+        id: "cook_beef",
+        inputs: [(item: "Raw Beef", count: 1)],
+        output: (item: "Cooked Beef", count: 1),
+        station: Some(Furnace),
+        category: Some("food"),
+    ),
+]
