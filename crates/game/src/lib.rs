@@ -7,4 +7,5 @@ pub mod crafting;
 pub mod ecs;
 pub mod entities;
 pub mod inventory;
+pub mod networking;
 pub mod survival;
