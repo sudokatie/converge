@@ -66,6 +66,9 @@ bumpalo = "3"
 # Config
 ron = "0.8"
 
+# Profiling
+puffin = "0.19"
+
 # Compression
 lz4_flex = "0.11"
 crc32fast = "1.4"

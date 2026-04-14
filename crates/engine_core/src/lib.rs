@@ -7,3 +7,4 @@ pub mod logging;
 pub mod math;
 pub mod memory;
 pub mod platform;
+pub mod profiling;
