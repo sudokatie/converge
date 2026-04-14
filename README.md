@@ -10,15 +10,15 @@ Lattice is a from-scratch game engine targeting the survival/voxel genre. Think 
 
 ## Current Status
 
-**Milestones Complete: 4/7**
+**Milestones Complete: 7/7** - v0.1.0 Complete!
 
 - [x] M1: Foundation - Workspace, math, platform, basic rendering
 - [x] M2: Voxel World - Chunks, generation, meshing, persistence
 - [x] M3: Player - Movement, collision, inventory
 - [x] M4: Gameplay - Items, crafting, survival, creatures
-- [ ] M5: Multiplayer - Networking, sync, prediction
-- [ ] M6: Content - Biomes, hostile AI, combat
-- [ ] M7: Polish - Audio, menus, optimization
+- [x] M5: Multiplayer - Networking, sync, prediction, chat
+- [x] M6: Content - Biomes, trees, hostile AI, combat
+- [x] M7: Polish - Audio, menus, settings, profiling
 
 ## Architecture
 
@@ -29,8 +29,8 @@ lattice/
 │   ├── engine_render/   # wgpu graphics, voxel rendering
 │   ├── engine_world/    # Chunk generation, persistence
 │   ├── engine_physics/  # Collision, movement
-│   ├── engine_network/  # Multiplayer (WIP)
-│   ├── engine_audio/    # Sound (WIP)
+│   ├── engine_network/  # Multiplayer networking
+│   ├── engine_audio/    # Sound and music
 │   ├── engine_ai/       # Creature behavior
 │   ├── engine_ui/       # egui-based HUD and menus
 │   ├── game/            # Game logic, ECS
