@@ -5,6 +5,17 @@ use serde::{Deserialize, Serialize};
 
 use super::{Aabb, Plane, Sphere};
 
+/// Result of a containment test.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Containment {
+    /// Completely outside the frustum.
+    Outside,
+    /// Partially inside (intersecting the frustum boundary).
+    Intersecting,
+    /// Completely inside the frustum.
+    Inside,
+}
+
 /// A view frustum defined by 6 planes.
 ///
 /// Used for culling objects outside the camera's view.
@@ -121,6 +132,76 @@ impl Frustum {
         }
         true
     }
+
+    /// Test sphere containment with full classification.
+    ///
+    /// Returns whether the sphere is completely outside, intersecting,
+    /// or completely inside the frustum.
+    #[must_use]
+    pub fn contains_sphere(&self, sphere: &Sphere) -> Containment {
+        let mut all_inside = true;
+
+        for plane in self.planes() {
+            let distance = plane.signed_distance(sphere.center);
+
+            if distance < -sphere.radius {
+                // Sphere is completely outside this plane
+                return Containment::Outside;
+            }
+
+            if distance < sphere.radius {
+                // Sphere intersects this plane
+                all_inside = false;
+            }
+        }
+
+        if all_inside {
+            Containment::Inside
+        } else {
+            Containment::Intersecting
+        }
+    }
+
+    /// Test AABB containment with full classification.
+    ///
+    /// Returns whether the AABB is completely outside, intersecting,
+    /// or completely inside the frustum.
+    #[must_use]
+    pub fn contains_aabb(&self, aabb: &Aabb) -> Containment {
+        let mut all_inside = true;
+
+        for plane in self.planes() {
+            // Positive vertex (most aligned with plane normal)
+            let p_vertex = Vec3::new(
+                if plane.normal.x >= 0.0 { aabb.max.x } else { aabb.min.x },
+                if plane.normal.y >= 0.0 { aabb.max.y } else { aabb.min.y },
+                if plane.normal.z >= 0.0 { aabb.max.z } else { aabb.min.z },
+            );
+
+            // Negative vertex (least aligned with plane normal)
+            let n_vertex = Vec3::new(
+                if plane.normal.x >= 0.0 { aabb.min.x } else { aabb.max.x },
+                if plane.normal.y >= 0.0 { aabb.min.y } else { aabb.max.y },
+                if plane.normal.z >= 0.0 { aabb.min.z } else { aabb.max.z },
+            );
+
+            if plane.signed_distance(p_vertex) < 0.0 {
+                // Positive vertex is outside, entire AABB is outside
+                return Containment::Outside;
+            }
+
+            if plane.signed_distance(n_vertex) < 0.0 {
+                // Negative vertex is outside, AABB straddles the plane
+                all_inside = false;
+            }
+        }
+
+        if all_inside {
+            Containment::Inside
+        } else {
+            Containment::Intersecting
+        }
+    }
 }
 
 impl Default for Frustum {
@@ -203,5 +284,51 @@ mod tests {
         let frustum = test_frustum();
         let aabb = Aabb::new(Vec3::splat(100.0), Vec3::splat(101.0));
         assert!(!frustum.intersects_aabb(&aabb));
+    }
+
+    #[test]
+    fn test_contains_sphere_inside() {
+        let frustum = test_frustum();
+        // Small sphere well within frustum
+        let sphere = Sphere::new(Vec3::ZERO, 0.1);
+        assert_eq!(frustum.contains_sphere(&sphere), Containment::Inside);
+    }
+
+    #[test]
+    fn test_contains_sphere_intersecting() {
+        let frustum = test_frustum();
+        // Large sphere that straddles frustum boundary
+        let sphere = Sphere::new(Vec3::new(0.0, 0.0, 10.0), 20.0);
+        assert_eq!(frustum.contains_sphere(&sphere), Containment::Intersecting);
+    }
+
+    #[test]
+    fn test_contains_sphere_outside() {
+        let frustum = test_frustum();
+        let sphere = Sphere::new(Vec3::new(100.0, 0.0, 0.0), 1.0);
+        assert_eq!(frustum.contains_sphere(&sphere), Containment::Outside);
+    }
+
+    #[test]
+    fn test_contains_aabb_inside() {
+        let frustum = test_frustum();
+        // Small AABB well within frustum
+        let aabb = Aabb::new(Vec3::splat(-0.1), Vec3::splat(0.1));
+        assert_eq!(frustum.contains_aabb(&aabb), Containment::Inside);
+    }
+
+    #[test]
+    fn test_contains_aabb_intersecting() {
+        let frustum = test_frustum();
+        // Large AABB that straddles frustum boundary
+        let aabb = Aabb::new(Vec3::new(-1.0, -1.0, -50.0), Vec3::new(1.0, 1.0, 50.0));
+        assert_eq!(frustum.contains_aabb(&aabb), Containment::Intersecting);
+    }
+
+    #[test]
+    fn test_contains_aabb_outside() {
+        let frustum = test_frustum();
+        let aabb = Aabb::new(Vec3::splat(100.0), Vec3::splat(101.0));
+        assert_eq!(frustum.contains_aabb(&aabb), Containment::Outside);
     }
 }

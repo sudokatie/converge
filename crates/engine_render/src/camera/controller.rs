@@ -80,6 +80,33 @@ impl FirstPersonController {
         glam::Quat::from_euler(glam::EulerRot::YXZ, self.yaw, self.pitch, 0.0)
     }
 
+    /// Update internal rotation state based on input.
+    ///
+    /// This updates the controller's pitch and yaw based on mouse input.
+    /// Use `rotation()` to get the resulting quaternion to apply to a camera.
+    ///
+    /// # Arguments
+    /// * `dt` - Delta time in seconds (unused for mouse look, included for API consistency)
+    /// * `input` - Current input state
+    pub fn update(&mut self, dt: f32, input: &InputState) {
+        let _ = dt; // Mouse look is not time-dependent
+
+        let mouse_delta = input.mouse_delta();
+        if mouse_delta.length_squared() == 0.0 {
+            return;
+        }
+
+        let sensitivity = self.settings.sensitivity;
+        let y_mult = if self.settings.invert_y { 1.0 } else { -1.0 };
+
+        self.yaw -= mouse_delta.x * sensitivity;
+        self.pitch += mouse_delta.y * sensitivity * y_mult;
+
+        // Clamp pitch to +/- 89 degrees
+        const MAX_PITCH: f32 = 89.0 * std::f32::consts::PI / 180.0;
+        self.pitch = self.pitch.clamp(-MAX_PITCH, MAX_PITCH);
+    }
+
     /// Update the camera based on input (using action map).
     ///
     /// # Arguments
@@ -87,7 +114,7 @@ impl FirstPersonController {
     /// * `input` - Current input state
     /// * `actions` - Action map for key bindings
     /// * `dt` - Delta time in seconds
-    pub fn update(&mut self, camera: &mut Camera, input: &InputState, actions: &ActionMap, dt: f32) {
+    pub fn update_with_actions(&mut self, camera: &mut Camera, input: &InputState, actions: &ActionMap, dt: f32) {
         // Mouse look
         let mouse_delta = input.mouse_delta();
         self.process_mouse(camera, mouse_delta);
@@ -262,6 +289,47 @@ mod tests {
         let rot = controller.rotation();
         assert!(rot.is_normalized());
         assert_eq!(camera.rotation, rot);
+    }
+
+    #[test]
+    fn test_update_changes_rotation() {
+        use engine_core::platform::WindowEvent;
+
+        let mut controller = FirstPersonController::new();
+        let mut input = InputState::new();
+
+        // Simulate mouse movement
+        input.update(&WindowEvent::MouseMoved { x: 100.0, y: 100.0 });
+        input.end_frame();
+        input.update(&WindowEvent::MouseMoved { x: 200.0, y: 150.0 });
+        input.end_frame();
+
+        let initial_yaw = controller.yaw();
+        let initial_pitch = controller.pitch();
+
+        controller.update(0.016, &input);
+
+        // Rotation should have changed
+        assert_ne!(controller.yaw(), initial_yaw);
+        assert_ne!(controller.pitch(), initial_pitch);
+    }
+
+    #[test]
+    fn test_update_rotation_is_normalized() {
+        use engine_core::platform::WindowEvent;
+
+        let mut controller = FirstPersonController::new();
+        let mut input = InputState::new();
+
+        input.update(&WindowEvent::MouseMoved { x: 0.0, y: 0.0 });
+        input.end_frame();
+        input.update(&WindowEvent::MouseMoved { x: 300.0, y: 200.0 });
+        input.end_frame();
+
+        controller.update(0.016, &input);
+
+        let rot = controller.rotation();
+        assert!(rot.is_normalized());
     }
 }
 

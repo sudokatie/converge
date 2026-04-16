@@ -3,6 +3,8 @@
 use glam::Vec3;
 use serde::{Deserialize, Serialize};
 
+use super::Sphere;
+
 /// Axis-Aligned Bounding Box.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Aabb {
@@ -85,6 +87,47 @@ impl Aabb {
             min: self.min.min(other.min),
             max: self.max.max(other.max),
         }
+    }
+
+    /// Check if this AABB intersects a sphere.
+    ///
+    /// Uses closest point on AABB to sphere center approach.
+    #[must_use]
+    pub fn intersects_sphere(&self, sphere: &Sphere) -> bool {
+        // Find the closest point on the AABB to the sphere center
+        let closest = Vec3::new(
+            sphere.center.x.clamp(self.min.x, self.max.x),
+            sphere.center.y.clamp(self.min.y, self.max.y),
+            sphere.center.z.clamp(self.min.z, self.max.z),
+        );
+
+        // Check if that point is within the sphere's radius
+        let distance_squared = closest.distance_squared(sphere.center);
+        distance_squared <= sphere.radius * sphere.radius
+    }
+
+    /// Check if a ray intersects this AABB.
+    ///
+    /// Uses the slab method for ray-AABB intersection.
+    /// Direction should be normalized or at least non-zero.
+    #[must_use]
+    pub fn intersects_ray(&self, origin: Vec3, direction: Vec3) -> bool {
+        // Slab method: find intersection intervals for each axis
+        let inv_dir = Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z);
+
+        let t1 = (self.min.x - origin.x) * inv_dir.x;
+        let t2 = (self.max.x - origin.x) * inv_dir.x;
+        let t3 = (self.min.y - origin.y) * inv_dir.y;
+        let t4 = (self.max.y - origin.y) * inv_dir.y;
+        let t5 = (self.min.z - origin.z) * inv_dir.z;
+        let t6 = (self.max.z - origin.z) * inv_dir.z;
+
+        let tmin = t1.min(t2).max(t3.min(t4)).max(t5.min(t6));
+        let tmax = t1.max(t2).min(t3.max(t4)).min(t5.max(t6));
+
+        // If tmax < 0, ray intersects AABB but entire AABB is behind origin
+        // If tmin > tmax, ray doesn't intersect AABB
+        tmax >= 0.0 && tmin <= tmax
     }
 }
 
@@ -170,5 +213,63 @@ mod tests {
         let merged = a.merge(&b);
         assert_eq!(merged.min, Vec3::ZERO);
         assert_eq!(merged.max, Vec3::splat(3.0));
+    }
+
+    #[test]
+    fn test_intersects_sphere_inside() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::splat(2.0));
+        let sphere = Sphere::new(Vec3::ONE, 0.5);
+        assert!(aabb.intersects_sphere(&sphere));
+    }
+
+    #[test]
+    fn test_intersects_sphere_touching() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        // Sphere touching the +X face
+        let sphere = Sphere::new(Vec3::new(2.0, 0.5, 0.5), 1.0);
+        assert!(aabb.intersects_sphere(&sphere));
+    }
+
+    #[test]
+    fn test_intersects_sphere_outside() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        let sphere = Sphere::new(Vec3::splat(5.0), 1.0);
+        assert!(!aabb.intersects_sphere(&sphere));
+    }
+
+    #[test]
+    fn test_intersects_ray_hit() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        // Ray from (-1, 0.5, 0.5) pointing +X
+        let origin = Vec3::new(-1.0, 0.5, 0.5);
+        let direction = Vec3::X;
+        assert!(aabb.intersects_ray(origin, direction));
+    }
+
+    #[test]
+    fn test_intersects_ray_miss() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        // Ray from (-1, 5, 0.5) pointing +X - misses above
+        let origin = Vec3::new(-1.0, 5.0, 0.5);
+        let direction = Vec3::X;
+        assert!(!aabb.intersects_ray(origin, direction));
+    }
+
+    #[test]
+    fn test_intersects_ray_inside() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        // Ray starting inside the AABB
+        let origin = Vec3::splat(0.5);
+        let direction = Vec3::X;
+        assert!(aabb.intersects_ray(origin, direction));
+    }
+
+    #[test]
+    fn test_intersects_ray_behind() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        // Ray pointing away from AABB
+        let origin = Vec3::new(-1.0, 0.5, 0.5);
+        let direction = Vec3::NEG_X;
+        assert!(!aabb.intersects_ray(origin, direction));
     }
 }

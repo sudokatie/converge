@@ -11,7 +11,7 @@ mod ray;
 mod sphere;
 
 pub use aabb::Aabb;
-pub use frustum::Frustum;
+pub use frustum::{Containment, Frustum};
 pub use intersect::Intersection;
 pub use obb::Obb;
 pub use plane::Plane;
