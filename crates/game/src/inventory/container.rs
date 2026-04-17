@@ -1,5 +1,7 @@
 //! Inventory container for storing items.
 
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 /// Total inventory size (36 slots).
@@ -23,20 +25,73 @@ impl ItemId {
     }
 }
 
+/// Custom item data for specialized items.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum ItemData {
+    /// Book with pages of text.
+    Book {
+        /// Title of the book.
+        title: String,
+        /// Author of the book.
+        author: String,
+        /// Pages of content.
+        pages: Vec<String>,
+    },
+    /// Potion with effect data.
+    Potion {
+        /// Effect type identifier.
+        effect: String,
+        /// Effect duration in seconds.
+        duration: f32,
+        /// Effect amplifier/level.
+        amplifier: u8,
+    },
+    /// Enchanted item data.
+    Enchantments {
+        /// Map of enchantment ID to level.
+        enchants: HashMap<String, u8>,
+    },
+    /// Map with explored data.
+    Map {
+        /// Map scale (0 = 1:1, 1 = 1:2, etc.).
+        scale: u8,
+        /// Center X coordinate.
+        center_x: i32,
+        /// Center Z coordinate.
+        center_z: i32,
+    },
+    /// Custom NBT-like data for modding.
+    Custom {
+        /// Arbitrary key-value data.
+        data: HashMap<String, String>,
+    },
+}
+
 /// A stack of items.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ItemStack {
     /// Item type.
     pub item_id: ItemId,
     /// Number of items in the stack.
     pub count: u32,
+    /// Current durability (for tools/weapons/armor).
+    #[serde(default)]
+    pub durability: Option<u32>,
+    /// Custom item data.
+    #[serde(default)]
+    pub data: Option<ItemData>,
 }
 
 impl ItemStack {
     /// Create a new item stack.
     #[must_use]
     pub fn new(item_id: ItemId, count: u32) -> Self {
-        Self { item_id, count }
+        Self {
+            item_id,
+            count,
+            durability: None,
+            data: None,
+        }
     }
 
     /// Create a single item stack.
@@ -45,17 +100,80 @@ impl ItemStack {
         Self::new(item_id, 1)
     }
 
+    /// Create an item stack with durability.
+    #[must_use]
+    pub fn with_durability(item_id: ItemId, count: u32, durability: u32) -> Self {
+        Self {
+            item_id,
+            count,
+            durability: Some(durability),
+            data: None,
+        }
+    }
+
+    /// Create an item stack with custom data.
+    #[must_use]
+    pub fn with_data(item_id: ItemId, count: u32, data: ItemData) -> Self {
+        Self {
+            item_id,
+            count,
+            durability: None,
+            data: Some(data),
+        }
+    }
+
+    /// Set durability on this stack.
+    pub fn set_durability(&mut self, durability: u32) {
+        self.durability = Some(durability);
+    }
+
+    /// Get current durability.
+    #[must_use]
+    pub fn get_durability(&self) -> Option<u32> {
+        self.durability
+    }
+
+    /// Reduce durability by amount, returns true if item broke (durability reached 0).
+    pub fn damage(&mut self, amount: u32) -> bool {
+        if let Some(ref mut dur) = self.durability {
+            *dur = dur.saturating_sub(amount);
+            *dur == 0
+        } else {
+            false
+        }
+    }
+
+    /// Set custom data on this stack.
+    pub fn set_data(&mut self, data: ItemData) {
+        self.data = Some(data);
+    }
+
+    /// Get custom data.
+    #[must_use]
+    pub fn get_data(&self) -> Option<&ItemData> {
+        self.data.as_ref()
+    }
+
     /// Check if this stack can merge with another.
+    ///
+    /// Stacks can only merge if they have the same item ID and neither has
+    /// durability or custom data (since those make items unique).
     #[must_use]
     pub fn can_merge(&self, other: &ItemStack) -> bool {
-        self.item_id == other.item_id && self.count < MAX_STACK_SIZE
+        self.item_id == other.item_id
+            && self.count < MAX_STACK_SIZE
+            && self.durability.is_none()
+            && other.durability.is_none()
+            && self.data.is_none()
+            && other.data.is_none()
     }
 
     /// Try to merge another stack into this one.
     ///
     /// Returns the remainder that couldn't be merged (if any).
+    /// Items with durability or custom data cannot be merged.
     pub fn merge(&mut self, other: ItemStack) -> Option<ItemStack> {
-        if self.item_id != other.item_id {
+        if !self.can_merge(&other) {
             return Some(other);
         }
 
@@ -74,13 +192,19 @@ impl ItemStack {
     /// Split off a number of items from this stack.
     ///
     /// Returns the split-off stack, or None if not enough items.
+    /// Note: Split stacks from durable/data items share the same durability/data.
     pub fn split(&mut self, count: u32) -> Option<ItemStack> {
         if count > self.count {
             return None;
         }
 
         self.count -= count;
-        Some(ItemStack::new(self.item_id, count))
+        Some(ItemStack {
+            item_id: self.item_id,
+            count,
+            durability: self.durability,
+            data: self.data.clone(),
+        })
     }
 
     /// Check if the stack is empty.
@@ -88,7 +212,55 @@ impl ItemStack {
     pub fn is_empty(&self) -> bool {
         self.count == 0
     }
+
+    /// Check if this item has durability.
+    #[must_use]
+    pub fn has_durability(&self) -> bool {
+        self.durability.is_some()
+    }
+
+    /// Check if this item has custom data.
+    #[must_use]
+    pub fn has_data(&self) -> bool {
+        self.data.is_some()
+    }
 }
+
+/// Errors that can occur during inventory operations.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InventoryError {
+    /// Slot index is out of bounds.
+    SlotOutOfBounds { slot: usize, max: usize },
+    /// Not enough items in the slot.
+    InsufficientItems { have: u32, requested: u32 },
+    /// Slot is empty.
+    EmptySlot { slot: usize },
+    /// Item count is zero.
+    ZeroCount,
+    /// Invalid item ID.
+    InvalidItem { item_id: ItemId },
+    /// Inventory is full.
+    InventoryFull,
+}
+
+impl std::fmt::Display for InventoryError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SlotOutOfBounds { slot, max } => {
+                write!(f, "Slot {slot} is out of bounds (max {max})")
+            }
+            Self::InsufficientItems { have, requested } => {
+                write!(f, "Insufficient items: have {have}, requested {requested}")
+            }
+            Self::EmptySlot { slot } => write!(f, "Slot {slot} is empty"),
+            Self::ZeroCount => write!(f, "Cannot add zero items"),
+            Self::InvalidItem { item_id } => write!(f, "Invalid item ID: {:?}", item_id),
+            Self::InventoryFull => write!(f, "Inventory is full"),
+        }
+    }
+}
+
+impl std::error::Error for InventoryError {}
 
 /// Player inventory container.
 #[derive(Clone, Debug, Serialize, Deserialize)]

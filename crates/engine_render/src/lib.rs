@@ -4,6 +4,7 @@
 
 pub mod backend;
 pub mod camera;
+pub mod lighting;
 mod renderer;
 pub mod sky;
 pub mod voxel;

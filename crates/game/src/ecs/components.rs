@@ -3,6 +3,8 @@
 use glam::{Quat, Vec3};
 use serde::{Deserialize, Serialize};
 
+use engine_ai::{BehaviorTree, Blackboard};
+
 /// Transform component - position and rotation in world space.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Transform {
@@ -193,6 +195,136 @@ impl Player {
     }
 }
 
+/// Network identifier component for multiplayer synchronization.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct NetworkId {
+    /// Unique network identifier.
+    pub id: u64,
+}
+
+impl NetworkId {
+    /// Create a new network ID.
+    #[must_use]
+    pub fn new(id: u64) -> Self {
+        Self { id }
+    }
+}
+
+/// Controller type for entities.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ControllerKind {
+    /// Controlled by local player input.
+    Player,
+    /// Controlled by AI behavior tree.
+    AI,
+    /// Controlled by network synchronization.
+    Network,
+}
+
+/// Controller component - determines how an entity is controlled.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Controller {
+    /// The type of controller.
+    pub kind: ControllerKind,
+}
+
+impl Controller {
+    /// Create a player controller.
+    #[must_use]
+    pub fn player() -> Self {
+        Self {
+            kind: ControllerKind::Player,
+        }
+    }
+
+    /// Create an AI controller.
+    #[must_use]
+    pub fn ai() -> Self {
+        Self {
+            kind: ControllerKind::AI,
+        }
+    }
+
+    /// Create a network controller.
+    #[must_use]
+    pub fn network() -> Self {
+        Self {
+            kind: ControllerKind::Network,
+        }
+    }
+
+    /// Check if this is a player controller.
+    #[must_use]
+    pub fn is_player(&self) -> bool {
+        self.kind == ControllerKind::Player
+    }
+
+    /// Check if this is an AI controller.
+    #[must_use]
+    pub fn is_ai(&self) -> bool {
+        self.kind == ControllerKind::AI
+    }
+
+    /// Check if this is a network controller.
+    #[must_use]
+    pub fn is_network(&self) -> bool {
+        self.kind == ControllerKind::Network
+    }
+}
+
+/// AI brain component for entities controlled by behavior trees.
+///
+/// Contains the behavior tree and blackboard for AI decision making.
+pub struct AIBrain {
+    /// Behavior tree for AI decision making.
+    pub behavior: BehaviorTree,
+    /// Shared blackboard for storing AI state.
+    pub blackboard: Blackboard,
+}
+
+impl AIBrain {
+    /// Create a new AI brain with the given behavior tree.
+    pub fn new(behavior: BehaviorTree) -> Self {
+        Self {
+            blackboard: Blackboard::new(),
+            behavior,
+        }
+    }
+
+    /// Create an AI brain with existing blackboard.
+    pub fn with_blackboard(behavior: BehaviorTree, blackboard: Blackboard) -> Self {
+        Self {
+            behavior,
+            blackboard,
+        }
+    }
+
+    /// Tick the behavior tree.
+    pub fn tick(&mut self) -> engine_ai::NodeStatus {
+        self.behavior.tick()
+    }
+
+    /// Reset the behavior tree.
+    pub fn reset(&mut self) {
+        self.behavior.reset();
+    }
+}
+
+impl std::fmt::Debug for AIBrain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AIBrain")
+            .field("behavior", &"BehaviorTree")
+            .field("blackboard", &self.blackboard)
+            .finish()
+    }
+}
+
+/// Marker component for entities pending destruction.
+///
+/// Entities with this component will be destroyed at the end of the frame.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PendingDestroy;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,5 +376,35 @@ mod tests {
             }
             _ => panic!("Expected capsule shape"),
         }
+    }
+
+    #[test]
+    fn test_network_id() {
+        let id = NetworkId::new(12345);
+        assert_eq!(id.id, 12345);
+    }
+
+    #[test]
+    fn test_controller_types() {
+        let player = Controller::player();
+        assert!(player.is_player());
+        assert!(!player.is_ai());
+        assert!(!player.is_network());
+
+        let ai = Controller::ai();
+        assert!(!ai.is_player());
+        assert!(ai.is_ai());
+        assert!(!ai.is_network());
+
+        let network = Controller::network();
+        assert!(!network.is_player());
+        assert!(!network.is_ai());
+        assert!(network.is_network());
+    }
+
+    #[test]
+    fn test_controller_kind_equality() {
+        assert_eq!(ControllerKind::Player, ControllerKind::Player);
+        assert_ne!(ControllerKind::Player, ControllerKind::AI);
     }
 }
