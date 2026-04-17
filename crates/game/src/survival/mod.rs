@@ -1,12 +1,16 @@
 //! Survival mechanics: health, hunger, and status effects.
 
 mod combat;
+mod death;
 mod health;
 mod hunger;
 mod mining;
 
 pub use combat::{
     attempt_attack, calculate_knockback, can_attack, AttackCooldown, AttackResult, CombatStats,
+};
+pub use death::{
+    DeathCause, DeathHandler, DeathResult, DroppedItem, ITEM_DESPAWN_TIME, PICKUP_DELAY_SECS,
 };
 pub use health::{DamageSource, Health};
 pub use hunger::Hunger;
