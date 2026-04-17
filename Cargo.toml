@@ -41,6 +41,9 @@ renet = "0.0.16"
 # Audio
 kira = "0.9"
 
+# Random
+rand = "0.8"
+
 # UI
 egui = "0.30"
 egui-wgpu = "0.30"

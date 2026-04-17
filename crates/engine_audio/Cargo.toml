@@ -12,6 +12,7 @@ kira.workspace = true
 glam.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+rand.workspace = true
 
 [lints]
 workspace = true

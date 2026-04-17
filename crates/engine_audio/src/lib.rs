@@ -6,6 +6,7 @@ mod effects;
 mod manager;
 mod music;
 mod sound;
+mod sound_pool;
 
 pub use effects::{
     AmbientSoundEvent, AudioEffectsExt, BlockSoundEvent, CombatSoundEvent, SoundEffects,
@@ -14,3 +15,4 @@ pub use effects::{
 pub use manager::{AudioManager, VolumeCategory};
 pub use music::{MusicPlayRequest, MusicPlayer, MusicRegistry, MusicState, MusicTrack, TrackId};
 pub use sound::{SoundId, SoundRegistry};
+pub use sound_pool::{PoolPick, SoundPool, SoundPoolRegistry, MAX_POOL_SIZE};
