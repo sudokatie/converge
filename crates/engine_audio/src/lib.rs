@@ -2,12 +2,16 @@
 //!
 //! Provides 3D positional audio, music, and sound effects using kira.
 
+mod combat_music;
 mod effects;
 mod manager;
 mod music;
 mod sound;
 mod sound_pool;
 
+pub use combat_music::{
+    CombatMusicController, CombatMusicState, COMBAT_COOLDOWN_SECS, COMBAT_RADIUS,
+};
 pub use effects::{
     AmbientSoundEvent, AudioEffectsExt, BlockSoundEvent, CombatSoundEvent, SoundEffects,
     SurfaceType, UiSoundEvent,
