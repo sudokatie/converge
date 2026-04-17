@@ -1,5 +1,7 @@
 //! Client-side networking for multiplayer.
 
+pub mod commands;
+
 use std::time::Duration;
 
 use engine_network::{
