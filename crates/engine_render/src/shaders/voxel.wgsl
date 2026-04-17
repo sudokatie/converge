@@ -29,12 +29,45 @@ struct VertexInput {
     @location(3) ao: u32,
 }
 
+struct FogUniform {
+    color: vec4<f32>,
+    density: f32,
+    start_distance: f32,
+    end_distance: f32,
+    enabled: u32,
+}
+
+@group(3) @binding(0)
+var<uniform> fog: FogUniform;
+
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) uv: vec2<f32>,
     @location(1) ao: f32,
     @location(2) normal: vec3<f32>,
     @location(3) world_pos: vec3<f32>,
+}
+
+// Calculate fog factor based on distance from camera
+fn fog_factor(world_pos: vec3<f32>) -> f32 {
+    if fog.enabled == 0u {
+        return 0.0; // No fog
+    }
+    let dist = distance(camera.position, world_pos);
+    if dist <= fog.start_distance {
+        return 0.0;
+    }
+    if dist >= fog.end_distance {
+        return fog.density;
+    }
+    let t = (dist - fog.start_distance) / (fog.end_distance - fog.start_distance);
+    return t * fog.density;
+}
+
+// Apply fog to a color
+fn apply_fog(color: vec3<f32>, world_pos: vec3<f32>) -> vec3<f32> {
+    let f = fog_factor(world_pos);
+    return mix(color, fog.color.rgb, f);
 }
 
 // Normal lookup table (matches normals:: constants)
@@ -94,7 +127,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         base_color = vec3<f32>(0.45, 0.4, 0.25);
     }
     
-    return vec4<f32>(base_color * final_light, 1.0);
+    return vec4<f32>(apply_fog(base_color * final_light, in.world_pos), 1.0);
 }
 
 // Textured variant (for when atlas is ready)
@@ -110,5 +143,5 @@ fn fs_textured(in: VertexOutput) -> @location(0) vec4<f32> {
     let diffuse = 0.7 * ndotl;
     let lighting = (ambient + diffuse) * in.ao;
     
-    return vec4<f32>(tex_color.rgb * lighting, tex_color.a);
+    return vec4<f32>(apply_fog(tex_color.rgb * lighting, in.world_pos), tex_color.a);
 }
