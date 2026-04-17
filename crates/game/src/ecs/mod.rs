@@ -1,11 +1,13 @@
 //! ECS components and systems.
 
 mod components;
+mod entity_save;
 
 pub use components::{
     AIBrain, Collider, ColliderShape, Controller, ControllerKind, NetworkId, PendingDestroy,
     Player, Transform, Velocity,
 };
+pub use entity_save::{EntitySaveData, EntitySaveError, SerializedEntity, SerializedEntityType};
 
 use hecs::{Entity, World};
 
