@@ -3,9 +3,14 @@
 mod combat;
 mod health;
 mod hunger;
+mod mining;
 
 pub use combat::{
     attempt_attack, calculate_knockback, can_attack, AttackCooldown, AttackResult, CombatStats,
 };
 pub use health::{DamageSource, Health};
 pub use hunger::Hunger;
+pub use mining::{
+    calculate_mining_time, MiningProgress, MiningResult, BlockPos, BASE_MINE_TIME_SECS,
+    BASE_MINING_SPEED,
+};
