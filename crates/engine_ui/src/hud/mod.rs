@@ -7,6 +7,7 @@ mod health_bar;
 mod hotbar;
 mod hunger_bar;
 mod status_effects;
+mod tooltip;
 
 pub use crosshair::{CrosshairConfig, CrosshairStyle, draw_crosshair};
 pub use debug_console::{
@@ -19,3 +20,4 @@ pub use hunger_bar::{draw_hunger_bar, HungerBarState};
 pub use status_effects::{
     ActiveStatusEffect, StatusEffectKind, ICON_SIZE, draw_status_effects,
 };
+pub use tooltip::{ItemTooltip, draw_tooltip};
