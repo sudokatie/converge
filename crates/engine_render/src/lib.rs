@@ -5,6 +5,7 @@
 pub mod backend;
 pub mod camera;
 pub mod fog;
+pub mod ghost_block;
 pub mod lighting;
 mod renderer;
 pub mod sky;
