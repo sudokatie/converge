@@ -46,6 +46,8 @@ lattice/
 - Procedural terrain with caves
 - Region-based persistence (lz4 compressed)
 - Frustum culling and ambient occlusion
+- Procedural sky with atmospheric scattering
+- Day/night cycle with sun, moon, and stars
 
 ### Gameplay
 - Data-driven items and recipes (RON files)
@@ -57,13 +59,23 @@ lattice/
 ### Creatures
 - Passive animals (pig, cow, sheep, chicken)
 - Hostile mobs (zombie, skeleton, spider, creeper)
-- State machine AI (idle, wander, flee)
+- Behavior tree AI with blackboard
+- A* pathfinding on voxel grid
+
+### Multiplayer
+- Client-server architecture (renet)
+- Server-authoritative with client prediction
+- Input reconciliation and lag compensation
+- Entity relevancy and snapshot system
+- Chat with message history
 
 ### UI
 - Health bar with damage flash
 - Hunger bar with low-hunger shake
 - Hotbar with item icons
 - Crafting screen with filtering
+- Main menu, pause menu, settings
+- Debug overlay with FPS, position, memory
 
 ## Building
 
@@ -120,13 +132,13 @@ Items and recipes are data-driven via RON files in `assets/data/`:
 - 60 FPS at 1080p
 - 12 chunk view distance
 - <2GB RAM
-- 10 players (when multiplayer lands)
+- 10 players multiplayer
 
 ## Philosophy
 
 1. **Understand everything** - No magic black boxes
 2. **Data-driven** - RON files over hardcoded values
-3. **Test everything** - 100+ tests and counting
+3. **Test everything** - 540+ tests and counting
 4. **One component, one file** - Clean architecture
 5. **Build incrementally** - Task by task, milestone by milestone
 
