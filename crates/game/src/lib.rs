@@ -2,6 +2,7 @@
 //!
 //! Core game logic including ECS components, systems, and entity management.
 
+pub mod ai;
 pub mod building;
 pub mod crafting;
 pub mod ecs;
