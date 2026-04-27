@@ -56,6 +56,11 @@ mod propagation_config;
 mod vector_channel;
 mod vector_diffusion;
 
+mod chunk_fluids;
+mod fluid_cell;
+mod fluid_kind;
+mod fluid_transport;
+
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
     AtmosphereConfig, AtmosphereEffects, LayerNeighborCounts, TransitionRules, cell_from_material,
@@ -84,4 +89,14 @@ pub use vector_diffusion::{
 pub use materials::{
     MaterialCategory, MaterialId, MaterialProperties, MaterialRegistry, MaterialRegistryError,
     hazard_integration,
+};
+
+pub use chunk_fluids::{ChunkFluids, FluidLayer, FluidSample};
+pub use fluid_cell::{
+    FluidCell, MAX_PRESSURE, MAX_TEMPERATURE, MAX_VOLUME, MIN_PRESSURE, MIN_TEMPERATURE, MIN_VOLUME,
+};
+pub use fluid_kind::FluidKind;
+pub use fluid_transport::{
+    BoundaryOutflow, FluidDelta, FluidResistanceMap, FluidTransportConfig, FluidTransportResult,
+    apply_fluid_deltas, transport_step,
 };
