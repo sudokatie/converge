@@ -2,6 +2,7 @@
 //!
 //! Provides collision detection, rigid body dynamics, and character physics.
 
+pub mod character;
 pub mod collision;
 pub mod raycast;
 pub mod simulation;

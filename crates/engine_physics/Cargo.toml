@@ -9,8 +9,12 @@ description = "Physics system for the Lattice game engine"
 [dependencies]
 engine_core = { path = "../engine_core" }
 glam.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
 
 [lints]
 workspace = true
