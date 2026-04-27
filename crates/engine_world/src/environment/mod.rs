@@ -39,7 +39,11 @@
 //! let wind = vec_fields.sample(VectorFieldChannel::Wind, 8.5, 8.5, 8.5);
 //! ```
 
+mod atmosphere_cell;
+mod atmosphere_config;
+mod atmosphere_layer;
 mod channel;
+mod chunk_atmosphere;
 mod chunk_fields;
 mod chunk_hazards;
 mod chunk_vector_fields;
@@ -52,7 +56,14 @@ mod propagation_config;
 mod vector_channel;
 mod vector_diffusion;
 
+pub use atmosphere_cell::AtmosphereCell;
+pub use atmosphere_config::{
+    AtmosphereConfig, AtmosphereEffects, LayerNeighborCounts, TransitionRules, cell_from_material,
+    layer_from_material,
+};
+pub use atmosphere_layer::AtmosphereLayer;
 pub use channel::FieldChannel;
+pub use chunk_atmosphere::{AtmosphereSample, ChunkAtmosphere};
 pub use chunk_fields::{ChannelData, ChunkFields};
 pub use chunk_hazards::{ChunkHazards, HazardLayer};
 pub use chunk_vector_fields::{ChunkVectorFields, VectorChannelData};
