@@ -1,10 +1,10 @@
 //! Chunk storage for voxel data.
 
-use engine_core::coords::{LocalPos, CHUNK_SIZE};
+use engine_core::coords::{CHUNK_SIZE, LocalPos};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use super::BlockId;
 use super::AIR;
+use super::BlockId;
 
 /// Number of blocks in a chunk (16^3).
 pub const CHUNK_VOLUME: usize = (CHUNK_SIZE as usize).pow(3);
@@ -59,7 +59,10 @@ impl<'de> Deserialize<'de> for Chunk {
                     .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
 
                 if blocks_vec.len() != CHUNK_VOLUME {
-                    return Err(serde::de::Error::invalid_length(blocks_vec.len(), &"4096 blocks"));
+                    return Err(serde::de::Error::invalid_length(
+                        blocks_vec.len(),
+                        &"4096 blocks",
+                    ));
                 }
 
                 let mut blocks = Box::new([AIR; CHUNK_VOLUME]);
@@ -138,9 +141,10 @@ impl Chunk {
 
     /// Iterate over all blocks in the chunk.
     pub fn iter(&self) -> impl Iterator<Item = (LocalPos, BlockId)> + '_ {
-        self.blocks.iter().enumerate().map(|(i, &block)| {
-            (LocalPos::from_index(i), block)
-        })
+        self.blocks
+            .iter()
+            .enumerate()
+            .map(|(i, &block)| (LocalPos::from_index(i), block))
     }
 
     /// Iterate over non-air blocks only.

@@ -54,10 +54,7 @@ impl NeighborTracker {
 
         // Register reverse dependencies
         for neighbor in &missing {
-            self.dependents
-                .entry(*neighbor)
-                .or_default()
-                .insert(pos);
+            self.dependents.entry(*neighbor).or_default().insert(pos);
         }
 
         self.waiting.insert(pos, missing);
@@ -126,9 +123,7 @@ mod tests {
         let center = ChunkPos(IVec3::ZERO);
 
         // Mark all neighbors as ready
-        let ready: HashSet<ChunkPos> = NeighborTracker::neighbors(center)
-            .into_iter()
-            .collect();
+        let ready: HashSet<ChunkPos> = NeighborTracker::neighbors(center).into_iter().collect();
 
         assert!(tracker.start_waiting(center, &ready));
         assert!(!tracker.is_waiting(&center));

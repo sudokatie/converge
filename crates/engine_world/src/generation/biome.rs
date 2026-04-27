@@ -25,10 +25,10 @@ impl Biome {
     pub fn surface_block(&self) -> u16 {
         match self {
             Biome::Plains => 3,    // Grass
-            Biome::Forest => 3,   // Grass
-            Biome::Desert => 4,   // Sand
+            Biome::Forest => 3,    // Grass
+            Biome::Desert => 4,    // Sand
             Biome::Mountains => 1, // Stone
-            Biome::Ocean => 4,    // Sand (underwater)
+            Biome::Ocean => 4,     // Sand (underwater)
         }
     }
 
@@ -37,10 +37,10 @@ impl Biome {
     pub fn subsurface_block(&self) -> u16 {
         match self {
             Biome::Plains => 2,    // Dirt
-            Biome::Forest => 2,   // Dirt
-            Biome::Desert => 4,   // Sand
+            Biome::Forest => 2,    // Dirt
+            Biome::Desert => 4,    // Sand
             Biome::Mountains => 1, // Stone
-            Biome::Ocean => 2,    // Dirt
+            Biome::Ocean => 2,     // Dirt
         }
     }
 
@@ -101,7 +101,7 @@ impl BiomeSelector {
         // Use different seeds for each noise layer
         let temp_seed = seed.wrapping_mul(31337);
         let humid_seed = seed.wrapping_mul(65537);
-        
+
         Self {
             temperature_noise: Perlin::new(temp_seed as u32),
             humidity_noise: Perlin::new(humid_seed as u32),
@@ -244,8 +244,16 @@ mod tests {
             let z = (i * 23) as f64;
             let (temp, humid) = selector.sample(x, z);
 
-            assert!(temp >= 0.0 && temp <= 1.0, "Temperature out of range: {}", temp);
-            assert!(humid >= 0.0 && humid <= 1.0, "Humidity out of range: {}", humid);
+            assert!(
+                temp >= 0.0 && temp <= 1.0,
+                "Temperature out of range: {}",
+                temp
+            );
+            assert!(
+                humid >= 0.0 && humid <= 1.0,
+                "Humidity out of range: {}",
+                humid
+            );
         }
     }
 

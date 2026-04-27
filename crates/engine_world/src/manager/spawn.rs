@@ -178,7 +178,11 @@ mod tests {
         let is_solid = |pos: WorldPos| pos.y() == 60;
 
         let safe = mgr.find_safe_spawn(WorldPos::new(0, 70, 0), is_solid);
-        assert_eq!(safe, WorldPos::new(0, 61, 0), "Should find feet position above solid ground");
+        assert_eq!(
+            safe,
+            WorldPos::new(0, 61, 0),
+            "Should find feet position above solid ground"
+        );
     }
 
     #[test]
@@ -189,6 +193,10 @@ mod tests {
         let is_solid = |_pos: WorldPos| false;
 
         let safe = mgr.find_safe_spawn(WorldPos::new(0, 70, 0), is_solid);
-        assert_eq!(safe, WorldPos::new(0, 70, 0), "Should fallback to start position");
+        assert_eq!(
+            safe,
+            WorldPos::new(0, 70, 0),
+            "Should fallback to start position"
+        );
     }
 }

@@ -413,8 +413,7 @@ mod tests {
         // Corrupt the file
         {
             let mut file = OpenOptions::new().write(true).open(&path).unwrap();
-            file.seek(SeekFrom::Start(HEADER_SIZE as u64 + 10))
-                .unwrap();
+            file.seek(SeekFrom::Start(HEADER_SIZE as u64 + 10)).unwrap();
             file.write_all(&[0xFF, 0xFF, 0xFF, 0xFF]).unwrap();
         }
 

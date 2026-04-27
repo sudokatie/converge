@@ -23,10 +23,7 @@ impl ChunkState {
     pub fn has_data(self) -> bool {
         matches!(
             self,
-            ChunkState::Generated
-                | ChunkState::Meshing
-                | ChunkState::Ready
-                | ChunkState::Dirty
+            ChunkState::Generated | ChunkState::Meshing | ChunkState::Ready | ChunkState::Dirty
         )
     }
 

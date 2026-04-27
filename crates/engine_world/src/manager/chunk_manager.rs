@@ -4,7 +4,7 @@ use crate::chunk::{BlockId, Chunk, ChunkState};
 use crate::generation::TerrainGenerator;
 use crate::manager::{LoadingQueue, NeighborTracker};
 use crossbeam_channel::{Receiver, Sender};
-use engine_core::coords::{ChunkPos, WorldPos, CHUNK_SIZE};
+use engine_core::coords::{CHUNK_SIZE, ChunkPos, WorldPos};
 use glam::{IVec3, Vec3};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -75,7 +75,7 @@ impl ChunkManager {
             player_chunk: ChunkPos(IVec3::new(i32::MAX, i32::MAX, i32::MAX)),
             generation_rx: rx,
             generation_tx: tx,
-        generating: HashSet::new(),
+            generating: HashSet::new(),
         }
     }
 
@@ -177,9 +177,9 @@ impl ChunkManager {
 
     /// Iterate over all ready chunks.
     pub fn iter_ready(&self) -> impl Iterator<Item = (ChunkPos, &Chunk)> {
-        self.ready_chunks.iter().filter_map(|&pos| {
-            self.chunks.get(&pos).map(|entry| (pos, &entry.chunk))
-        })
+        self.ready_chunks
+            .iter()
+            .filter_map(|&pos| self.chunks.get(&pos).map(|entry| (pos, &entry.chunk)))
     }
 
     /// Iterate over all dirty chunks that need remeshing.
@@ -234,7 +234,8 @@ impl ChunkManager {
 
     /// Rebuild the loading queue based on player position.
     fn rebuild_loading_queue(&mut self) {
-        self.loading_queue.rebuild(self.player_chunk, self.view_distance);
+        self.loading_queue
+            .rebuild(self.player_chunk, self.view_distance);
         debug!(
             "Rebuilt loading queue: {} chunks to consider",
             self.loading_queue.len()

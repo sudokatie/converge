@@ -1,8 +1,8 @@
 //! Cave generation using 3D noise carving.
 
-use engine_core::coords::{ChunkPos, LocalPos, CHUNK_SIZE};
+use engine_core::coords::{CHUNK_SIZE, ChunkPos, LocalPos};
 
-use crate::chunk::{Chunk, AIR};
+use crate::chunk::{AIR, Chunk};
 
 use super::TerrainNoise;
 
@@ -71,11 +71,9 @@ impl CaveCarver {
                     }
 
                     // Sample 3D noise at this position
-                    let noise_value = self.noise.sample_3d(
-                        world_x as f64,
-                        world_y as f64,
-                        world_z as f64,
-                    );
+                    let noise_value =
+                        self.noise
+                            .sample_3d(world_x as f64, world_y as f64, world_z as f64);
 
                     // Carve if below threshold
                     if noise_value < CAVE_THRESHOLD {
@@ -217,9 +215,6 @@ mod tests {
             }
         }
 
-        assert_eq!(
-            low_level_air, 0,
-            "No caves should exist below MIN_CAVE_Y"
-        );
+        assert_eq!(low_level_air, 0, "No caves should exist below MIN_CAVE_Y");
     }
 }

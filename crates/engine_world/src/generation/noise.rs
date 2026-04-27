@@ -33,7 +33,11 @@ impl TerrainNoise {
         let perlin = Perlin::new(seed as u32);
         // Use seed to create a unique offset with prime multiplier for better distribution
         let offset = ((seed as f64) * 7919.0) % 100_000.0;
-        Self { seed, perlin, offset }
+        Self {
+            seed,
+            perlin,
+            offset,
+        }
     }
 
     /// Get the terrain height at a world position.
@@ -95,7 +99,10 @@ impl TerrainNoise {
         let oz = z + self.offset;
 
         for _ in 0..OCTAVES {
-            total += self.perlin.get([ox * frequency, oy * frequency, oz * frequency]) * amplitude;
+            total += self
+                .perlin
+                .get([ox * frequency, oy * frequency, oz * frequency])
+                * amplitude;
             max_value += amplitude;
             amplitude *= PERSISTENCE;
             frequency *= LACUNARITY;

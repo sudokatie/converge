@@ -3,6 +3,13 @@
 //! Provides chunk management, terrain generation, and world persistence.
 
 pub mod chunk;
+pub mod environment;
 pub mod generation;
 pub mod manager;
 pub mod persistence;
+
+// Re-export environment API at crate root for convenience
+pub use environment::{
+    AdvectionConfig, ChannelData, ChunkFields, DiffusionConfig, DiffusionStep, FieldChannel,
+    FieldSimConfig, SimStepResult,
+};

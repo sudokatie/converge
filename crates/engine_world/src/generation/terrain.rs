@@ -1,8 +1,8 @@
 //! Basic terrain generation.
 
-use engine_core::coords::{ChunkPos, LocalPos, CHUNK_SIZE};
+use engine_core::coords::{CHUNK_SIZE, ChunkPos, LocalPos};
 
-use crate::chunk::{BlockId, Chunk, AIR, DIRT, GRASS, STONE};
+use crate::chunk::{AIR, BlockId, Chunk, DIRT, GRASS, STONE};
 
 use super::TerrainNoise;
 
@@ -128,10 +128,7 @@ mod tests {
         let chunk = generator.generate(ChunkPos::new(0, 4, 0)); // Y=64 is chunk 4
 
         // Should have some non-air blocks
-        assert!(
-            !chunk.is_empty(),
-            "Surface chunk should have blocks"
-        );
+        assert!(!chunk.is_empty(), "Surface chunk should have blocks");
     }
 
     #[test]

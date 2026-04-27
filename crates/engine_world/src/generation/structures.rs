@@ -1,6 +1,6 @@
 //! Structure generation for world features like trees.
 
-use engine_core::coords::{ChunkPos, LocalPos, WorldPos, CHUNK_SIZE};
+use engine_core::coords::{CHUNK_SIZE, ChunkPos, LocalPos, WorldPos};
 
 use super::Biome;
 
@@ -203,11 +203,7 @@ impl Structure {
     /// Get blocks that fall within a specific chunk.
     ///
     /// Returns (local_pos, block_id) pairs for blocks in the chunk.
-    pub fn blocks_in_chunk(
-        &self,
-        origin: WorldPos,
-        chunk_pos: ChunkPos,
-    ) -> Vec<(LocalPos, u16)> {
+    pub fn blocks_in_chunk(&self, origin: WorldPos, chunk_pos: ChunkPos) -> Vec<(LocalPos, u16)> {
         let chunk_min_x = chunk_pos.x() * CHUNK_SIZE;
         let chunk_min_y = chunk_pos.y() * CHUNK_SIZE;
         let chunk_min_z = chunk_pos.z() * CHUNK_SIZE;
@@ -231,10 +227,7 @@ impl Structure {
                     && lz >= 0
                     && lz < CHUNK_SIZE
                 {
-                    Some((
-                        LocalPos::new(lx as u32, ly as u32, lz as u32),
-                        sb.block,
-                    ))
+                    Some((LocalPos::new(lx as u32, ly as u32, lz as u32), sb.block))
                 } else {
                     None
                 }

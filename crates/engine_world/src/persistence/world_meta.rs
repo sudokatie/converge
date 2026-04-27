@@ -11,7 +11,7 @@ use glam::IVec2;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use super::region::{chunk_to_local, chunk_to_region, region_filename, Region, RegionError};
+use super::region::{Region, RegionError, chunk_to_local, chunk_to_region, region_filename};
 use crate::chunk::Chunk;
 
 /// World metadata stored in world.json.
