@@ -10,6 +10,7 @@ pub mod persistence;
 
 // Re-export environment API at crate root for convenience
 pub use environment::{
-    AdvectionConfig, ChannelData, ChunkFields, DiffusionConfig, DiffusionStep, FieldChannel,
-    FieldSimConfig, SimStepResult,
+    AdvectionConfig, ChannelData, ChunkFields, ChunkVectorFields, DiffusionConfig, DiffusionStep,
+    FieldChannel, FieldSimConfig, SimStepResult, VectorAdvectionConfig, VectorChannelData,
+    VectorDecayConfig, VectorFieldChannel, VectorFieldSimConfig, VectorSmoothingConfig,
 };
