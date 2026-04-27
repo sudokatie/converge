@@ -75,6 +75,8 @@ mod conduit_kind;
 mod conduit_network;
 mod conduit_node;
 
+mod gravity;
+
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
     AtmosphereConfig, AtmosphereEffects, LayerNeighborCounts, TransitionRules, cell_from_material,
@@ -142,3 +144,7 @@ pub use conduit_network::{
     apply_conduit_deltas, find_boundary_cells, find_networks, network_step,
 };
 pub use conduit_node::{ConduitNode, NodeRole};
+
+pub use gravity::{
+    GravityModel, GravityProfile, MAX_GRAVITY_MAGNITUDE, MIN_GRAVITY_MAGNITUDE, STANDARD_GRAVITY,
+};
