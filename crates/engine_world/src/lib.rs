@@ -13,14 +13,18 @@ pub mod scheduler;
 pub use environment::{
     AdvectionConfig, AtmosphereCell, AtmosphereConfig, AtmosphereEffects, AtmosphereLayer,
     AtmosphereSample, BoundaryOutflow, ChannelData, ChunkAtmosphere, ChunkFields, ChunkFluids,
-    ChunkHazards, ChunkVectorFields, DecayConfig, DiffusionConfig, DiffusionStep, FieldChannel,
-    FieldSimConfig, FluidCell, FluidDelta, FluidKind, FluidLayer, FluidResistanceMap, FluidSample,
-    FluidTransportConfig, FluidTransportResult, HazardCell, HazardKind, HazardLayer,
-    LayerNeighborCounts, MaterialCategory, MaterialId, MaterialProperties, MaterialRegistry,
-    MaterialRegistryError, PropagationConfig, PropagationResult, Resistance, SimStepResult,
-    SpreadConfig, TransitionRules, VectorAdvectionConfig, VectorChannelData, VectorDecayConfig,
-    VectorFieldChannel, VectorFieldSimConfig, VectorSmoothingConfig, apply_fluid_deltas,
-    cell_from_material, hazard_integration, layer_from_material, transport_step,
+    ChunkHazards, ChunkStructural, ChunkVectorFields, DecayConfig, DiffusionConfig, DiffusionStep,
+    FieldChannel, FieldSimConfig, FluidCell, FluidDelta, FluidKind, FluidLayer, FluidResistanceMap,
+    FluidSample, FluidTransportConfig, FluidTransportResult, HazardCell, HazardKind, HazardLayer,
+    LayerNeighborCounts, LoadConfig, MaterialCategory, MaterialId, MaterialProperties,
+    MaterialRegistry, MaterialRegistryError, PressureMap, PropagationConfig, PropagationResult,
+    Resistance, SimStepResult, SpreadConfig, StabilityConfig, StrengthMap, StructuralBoundary,
+    StructuralCell, StructuralConfig, StructuralDelta, StructuralEvent, StructuralEventKind,
+    StructuralResult, SupportKind, SupportPropagationConfig, TransitionRules,
+    VectorAdvectionConfig, VectorChannelData, VectorDecayConfig, VectorFieldChannel,
+    VectorFieldSimConfig, VectorSmoothingConfig, apply_fluid_deltas, apply_structural_deltas,
+    cell_from_material, check_decompression, detect_cavein, distribute_load, hazard_integration,
+    layer_from_material, propagate_support, structural_step, transport_step,
 };
 
 // Re-export scheduler API at crate root for convenience

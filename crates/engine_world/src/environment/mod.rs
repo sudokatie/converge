@@ -61,6 +61,13 @@ mod fluid_cell;
 mod fluid_kind;
 mod fluid_transport;
 
+mod chunk_structural;
+mod structural_cell;
+mod structural_config;
+mod structural_event;
+mod structural_propagation;
+mod support_kind;
+
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
     AtmosphereConfig, AtmosphereEffects, LayerNeighborCounts, TransitionRules, cell_from_material,
@@ -100,3 +107,17 @@ pub use fluid_transport::{
     BoundaryOutflow, FluidDelta, FluidResistanceMap, FluidTransportConfig, FluidTransportResult,
     apply_fluid_deltas, transport_step,
 };
+
+pub use chunk_structural::ChunkStructural;
+pub use structural_cell::{
+    FAILURE_THRESHOLD, MAX_LOAD, MAX_STRESS, OVERSTRESS_THRESHOLD, StructuralCell,
+};
+pub use structural_config::{
+    LoadConfig, StabilityConfig, StructuralConfig, SupportPropagationConfig,
+};
+pub use structural_event::{StructuralBoundary, StructuralEvent, StructuralEventKind};
+pub use structural_propagation::{
+    PressureMap, StrengthMap, StructuralDelta, StructuralResult, apply_structural_deltas,
+    check_decompression, detect_cavein, distribute_load, propagate_support, structural_step,
+};
+pub use support_kind::SupportKind;
