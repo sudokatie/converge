@@ -46,6 +46,7 @@ mod chunk_vector_fields;
 mod diffusion;
 mod hazard_cell;
 mod hazard_kind;
+mod materials;
 mod propagation;
 mod propagation_config;
 mod vector_channel;
@@ -67,4 +68,9 @@ pub use propagation_config::{DecayConfig, PropagationConfig, Resistance, SpreadC
 pub use vector_channel::VectorFieldChannel;
 pub use vector_diffusion::{
     VectorAdvectionConfig, VectorDecayConfig, VectorFieldSimConfig, VectorSmoothingConfig,
+};
+
+pub use materials::{
+    MaterialCategory, MaterialId, MaterialProperties, MaterialRegistry, MaterialRegistryError,
+    hazard_integration,
 };

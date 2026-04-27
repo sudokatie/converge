@@ -13,9 +13,10 @@ pub mod scheduler;
 pub use environment::{
     AdvectionConfig, ChannelData, ChunkFields, ChunkHazards, ChunkVectorFields, DecayConfig,
     DiffusionConfig, DiffusionStep, FieldChannel, FieldSimConfig, HazardCell, HazardKind,
-    HazardLayer, PropagationConfig, PropagationResult, Resistance, SimStepResult, SpreadConfig,
-    VectorAdvectionConfig, VectorChannelData, VectorDecayConfig, VectorFieldChannel,
-    VectorFieldSimConfig, VectorSmoothingConfig,
+    HazardLayer, MaterialCategory, MaterialId, MaterialProperties, MaterialRegistry,
+    MaterialRegistryError, PropagationConfig, PropagationResult, Resistance, SimStepResult,
+    SpreadConfig, VectorAdvectionConfig, VectorChannelData, VectorDecayConfig, VectorFieldChannel,
+    VectorFieldSimConfig, VectorSmoothingConfig, hazard_integration,
 };
 
 // Re-export scheduler API at crate root for convenience
