@@ -41,17 +41,29 @@
 
 mod channel;
 mod chunk_fields;
+mod chunk_hazards;
 mod chunk_vector_fields;
 mod diffusion;
+mod hazard_cell;
+mod hazard_kind;
+mod propagation;
+mod propagation_config;
 mod vector_channel;
 mod vector_diffusion;
 
 pub use channel::FieldChannel;
 pub use chunk_fields::{ChannelData, ChunkFields};
+pub use chunk_hazards::{ChunkHazards, HazardLayer};
 pub use chunk_vector_fields::{ChunkVectorFields, VectorChannelData};
 pub use diffusion::{
     AdvectionConfig, DiffusionConfig, DiffusionStep, FieldSimConfig, SimStepResult,
 };
+pub use hazard_cell::HazardCell;
+pub use hazard_kind::HazardKind;
+pub use propagation::{
+    CellDelta, PropagationResult, ResistanceMap, apply_deltas, decay_step, propagation_step,
+};
+pub use propagation_config::{DecayConfig, PropagationConfig, Resistance, SpreadConfig};
 pub use vector_channel::VectorFieldChannel;
 pub use vector_diffusion::{
     VectorAdvectionConfig, VectorDecayConfig, VectorFieldSimConfig, VectorSmoothingConfig,

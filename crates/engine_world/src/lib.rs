@@ -11,9 +11,11 @@ pub mod scheduler;
 
 // Re-export environment API at crate root for convenience
 pub use environment::{
-    AdvectionConfig, ChannelData, ChunkFields, ChunkVectorFields, DiffusionConfig, DiffusionStep,
-    FieldChannel, FieldSimConfig, SimStepResult, VectorAdvectionConfig, VectorChannelData,
-    VectorDecayConfig, VectorFieldChannel, VectorFieldSimConfig, VectorSmoothingConfig,
+    AdvectionConfig, ChannelData, ChunkFields, ChunkHazards, ChunkVectorFields, DecayConfig,
+    DiffusionConfig, DiffusionStep, FieldChannel, FieldSimConfig, HazardCell, HazardKind,
+    HazardLayer, PropagationConfig, PropagationResult, Resistance, SimStepResult, SpreadConfig,
+    VectorAdvectionConfig, VectorChannelData, VectorDecayConfig, VectorFieldChannel,
+    VectorFieldSimConfig, VectorSmoothingConfig,
 };
 
 // Re-export scheduler API at crate root for convenience
