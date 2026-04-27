@@ -67,4 +67,4 @@ pub use sync::{
     ChunkPriority, ChunkRequest, ClientChunkSync, InterpolatedState, InterpolationBuffer,
     ServerChunkSync,
 };
-pub use transport::{ClientId, GameClient, GameServer, DEFAULT_PORT};
+pub use transport::{ClientId, DEFAULT_PORT, GameClient, GameServer};

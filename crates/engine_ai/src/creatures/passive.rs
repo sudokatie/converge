@@ -19,20 +19,15 @@ pub const MAX_IDLE_TIME: f32 = 5.0;
 pub const REACH_THRESHOLD: f32 = 0.5;
 
 /// State of a passive creature.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PassiveState {
     /// Standing still, waiting.
+    #[default]
     Idle,
     /// Moving toward a target position.
     Wandering,
     /// Fleeing from a threat (player attacked).
     Fleeing,
-}
-
-impl Default for PassiveState {
-    fn default() -> Self {
-        Self::Idle
-    }
 }
 
 /// AI component for passive creatures.
@@ -176,7 +171,7 @@ impl Default for PassiveAI {
 /// Generate a random idle time.
 fn random_idle_time() -> f32 {
     // Simple deterministic for testing
-    (MIN_IDLE_TIME + MAX_IDLE_TIME) / 2.0
+    f32::midpoint(MIN_IDLE_TIME, MAX_IDLE_TIME)
 }
 
 /// Generate idle time based on a seed value.

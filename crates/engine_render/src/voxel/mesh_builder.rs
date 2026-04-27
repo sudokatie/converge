@@ -16,7 +16,7 @@ pub struct Vertex {
     /// Ambient occlusion (0-3).
     pub ao: u8,
     /// Padding for alignment.
-    pub _pad: [u8; 3],
+    pub pad: [u8; 3],
 }
 
 impl Vertex {
@@ -28,7 +28,7 @@ impl Vertex {
             normal,
             uv,
             ao,
-            _pad: [0; 3],
+            pad: [0; 3],
         }
     }
 
@@ -103,6 +103,10 @@ impl MeshBuilder {
     /// Add a quad (4 vertices, 6 indices).
     ///
     /// Vertices should be in counter-clockwise order when viewed from outside.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "mesh vertex count bounded by chunk size"
+    )]
     pub fn add_quad(&mut self, v0: Vertex, v1: Vertex, v2: Vertex, v3: Vertex) {
         let base = self.vertices.len() as u32;
 
@@ -113,8 +117,8 @@ impl MeshBuilder {
 
         // Two triangles: 0-1-2, 0-2-3
         // Flip winding based on AO to avoid visual artifacts
-        let ao_sum_02 = v0.ao as u32 + v2.ao as u32;
-        let ao_sum_13 = v1.ao as u32 + v3.ao as u32;
+        let ao_sum_02 = u32::from(v0.ao) + u32::from(v2.ao);
+        let ao_sum_13 = u32::from(v1.ao) + u32::from(v3.ao);
 
         if ao_sum_02 > ao_sum_13 {
             // Standard winding

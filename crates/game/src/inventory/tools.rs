@@ -43,11 +43,10 @@ impl BlockHardness {
     #[must_use]
     pub fn preferred_tool(&self) -> Option<ToolType> {
         match self {
-            BlockHardness::Instant => None,
+            BlockHardness::Instant | BlockHardness::Unbreakable => None,
             BlockHardness::Soft => Some(ToolType::Shovel),
             BlockHardness::Wood => Some(ToolType::Axe),
             BlockHardness::Stone | BlockHardness::Metal => Some(ToolType::Pickaxe),
-            BlockHardness::Unbreakable => None,
         }
     }
 
@@ -276,25 +275,15 @@ pub fn will_drop_items(
 #[must_use]
 pub fn default_block_properties(block_id: BlockId) -> BlockToolProperties {
     match block_id.0 {
-        0 => BlockToolProperties::instant(),           // Air
-        1 => BlockToolProperties::stone(),             // Stone
-        2 => BlockToolProperties::soft(),              // Dirt
-        3 => BlockToolProperties::soft(),              // Grass
-        4 => BlockToolProperties::soft(),              // Sand
+        0 | 7 | 9 | 10 => BlockToolProperties::instant(), // Air, Oak Leaves, Birch Leaves, Cactus
+        1 | 12 => BlockToolProperties::stone(),           // Stone, Cobblestone
         5 => BlockToolProperties::soft().with_break_time(0.1), // Water (instant-ish)
-        6 => BlockToolProperties::wood(),              // Oak Log
-        7 => BlockToolProperties::instant(),           // Oak Leaves
-        8 => BlockToolProperties::wood(),              // Birch Log
-        9 => BlockToolProperties::instant(),           // Birch Leaves
-        10 => BlockToolProperties::instant(),          // Cactus
-        11 => BlockToolProperties::wood(),             // Oak Planks
-        12 => BlockToolProperties::stone(),            // Cobblestone
-        13 => BlockToolProperties::ore(1),             // Coal Ore (wood pickaxe)
-        14 => BlockToolProperties::ore(2),             // Iron Ore (stone pickaxe)
-        15 => BlockToolProperties::ore(3),             // Gold Ore (iron pickaxe)
-        16 => BlockToolProperties::ore(3),             // Diamond Ore (iron pickaxe)
-        255 => BlockToolProperties::unbreakable(),     // Bedrock
-        _ => BlockToolProperties::soft(),              // Default to soft
+        6 | 8 | 11 => BlockToolProperties::wood(),        // Oak Log, Birch Log, Oak Planks
+        13 => BlockToolProperties::ore(1),                // Coal Ore (wood pickaxe)
+        14 => BlockToolProperties::ore(2),                // Iron Ore (stone pickaxe)
+        15 | 16 => BlockToolProperties::ore(3),           // Gold Ore, Diamond Ore (iron pickaxe)
+        255 => BlockToolProperties::unbreakable(),        // Bedrock
+        _ => BlockToolProperties::soft(), // Default to soft (Dirt, Grass, Sand, etc.)
     }
 }
 
@@ -304,16 +293,19 @@ mod tests {
 
     #[test]
     fn test_block_hardness_break_time() {
-        assert_eq!(BlockHardness::Instant.base_break_time(), 0.0);
+        assert!((BlockHardness::Instant.base_break_time() - 0.0).abs() < f32::EPSILON);
         assert!(BlockHardness::Soft.base_break_time() < BlockHardness::Stone.base_break_time());
-        assert_eq!(BlockHardness::Unbreakable.base_break_time(), f32::INFINITY);
+        assert!(BlockHardness::Unbreakable.base_break_time().is_infinite());
     }
 
     #[test]
     fn test_preferred_tools() {
         assert_eq!(BlockHardness::Soft.preferred_tool(), Some(ToolType::Shovel));
         assert_eq!(BlockHardness::Wood.preferred_tool(), Some(ToolType::Axe));
-        assert_eq!(BlockHardness::Stone.preferred_tool(), Some(ToolType::Pickaxe));
+        assert_eq!(
+            BlockHardness::Stone.preferred_tool(),
+            Some(ToolType::Pickaxe)
+        );
     }
 
     #[test]
@@ -327,20 +319,11 @@ mod tests {
         let props = BlockToolProperties::stone();
 
         // Correct tool (pickaxe) is fast
-        let speed_pickaxe = calculate_mining_speed(
-            Some(ToolType::Pickaxe),
-            ToolTier::Stone,
-            4.0,
-            &props,
-        );
+        let speed_pickaxe =
+            calculate_mining_speed(Some(ToolType::Pickaxe), ToolTier::Stone, 4.0, &props);
 
         // Wrong tool (axe) is slower
-        let speed_axe = calculate_mining_speed(
-            Some(ToolType::Axe),
-            ToolTier::Stone,
-            4.0,
-            &props,
-        );
+        let speed_axe = calculate_mining_speed(Some(ToolType::Axe), ToolTier::Stone, 4.0, &props);
 
         assert!(speed_pickaxe > speed_axe);
     }
@@ -350,7 +333,7 @@ mod tests {
         let props = BlockToolProperties::soft();
 
         let speed = calculate_mining_speed(None, ToolTier::Hand, 1.0, &props);
-        assert_eq!(speed, 1.0);
+        assert!((speed - 1.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -361,12 +344,7 @@ mod tests {
         let time_hand = calculate_break_time(None, ToolTier::Hand, 1.0, &props);
 
         // Iron pickaxe: fast
-        let time_iron = calculate_break_time(
-            Some(ToolType::Pickaxe),
-            ToolTier::Iron,
-            6.0,
-            &props,
-        );
+        let time_iron = calculate_break_time(Some(ToolType::Pickaxe), ToolTier::Iron, 6.0, &props);
 
         assert!(time_iron < time_hand);
     }
@@ -376,10 +354,10 @@ mod tests {
         let props = BlockToolProperties::unbreakable();
 
         let speed = calculate_mining_speed(Some(ToolType::Pickaxe), ToolTier::Diamond, 8.0, &props);
-        assert_eq!(speed, 0.0);
+        assert!((speed - 0.0).abs() < f32::EPSILON);
 
         let time = calculate_break_time(Some(ToolType::Pickaxe), ToolTier::Diamond, 8.0, &props);
-        assert_eq!(time, f32::INFINITY);
+        assert!(time.is_infinite());
     }
 
     #[test]
@@ -388,7 +366,11 @@ mod tests {
 
         // Soft blocks always drop
         assert!(will_drop_items(None, ToolTier::Hand, &props));
-        assert!(will_drop_items(Some(ToolType::Shovel), ToolTier::Wood, &props));
+        assert!(will_drop_items(
+            Some(ToolType::Shovel),
+            ToolTier::Wood,
+            &props
+        ));
     }
 
     #[test]
@@ -397,8 +379,16 @@ mod tests {
 
         // Stone needs pickaxe
         assert!(!will_drop_items(None, ToolTier::Hand, &props));
-        assert!(!will_drop_items(Some(ToolType::Axe), ToolTier::Iron, &props));
-        assert!(will_drop_items(Some(ToolType::Pickaxe), ToolTier::Wood, &props));
+        assert!(!will_drop_items(
+            Some(ToolType::Axe),
+            ToolTier::Iron,
+            &props
+        ));
+        assert!(will_drop_items(
+            Some(ToolType::Pickaxe),
+            ToolTier::Wood,
+            &props
+        ));
     }
 
     #[test]
@@ -406,13 +396,25 @@ mod tests {
         let iron_ore = BlockToolProperties::ore(2); // Needs stone pickaxe
 
         // Wood pickaxe too low tier
-        assert!(!will_drop_items(Some(ToolType::Pickaxe), ToolTier::Wood, &iron_ore));
+        assert!(!will_drop_items(
+            Some(ToolType::Pickaxe),
+            ToolTier::Wood,
+            &iron_ore
+        ));
 
         // Stone pickaxe works
-        assert!(will_drop_items(Some(ToolType::Pickaxe), ToolTier::Stone, &iron_ore));
+        assert!(will_drop_items(
+            Some(ToolType::Pickaxe),
+            ToolTier::Stone,
+            &iron_ore
+        ));
 
         // Iron pickaxe also works
-        assert!(will_drop_items(Some(ToolType::Pickaxe), ToolTier::Iron, &iron_ore));
+        assert!(will_drop_items(
+            Some(ToolType::Pickaxe),
+            ToolTier::Iron,
+            &iron_ore
+        ));
     }
 
     #[test]

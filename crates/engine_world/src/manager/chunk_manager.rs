@@ -82,6 +82,10 @@ impl ChunkManager {
     /// Update chunk loading based on player position.
     ///
     /// Call this every frame with the player's world position.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "world coordinates are bounded within i32 range"
+    )]
     pub fn update(&mut self, player_pos: Vec3) {
         let new_chunk = WorldPos(IVec3::new(
             player_pos.x.floor() as i32,
@@ -159,12 +163,12 @@ impl ChunkManager {
             for (is_border, offset) in border_neighbors {
                 if is_border {
                     let neighbor_pos = ChunkPos(chunk_pos.0 + offset);
-                    if let Some(neighbor) = self.chunks.get_mut(&neighbor_pos) {
-                        if neighbor.state == ChunkState::Ready {
-                            neighbor.state = ChunkState::Dirty;
-                            self.ready_chunks.remove(&neighbor_pos);
-                            debug!("Neighbor chunk {:?} marked dirty", neighbor_pos);
-                        }
+                    if let Some(neighbor) = self.chunks.get_mut(&neighbor_pos)
+                        && neighbor.state == ChunkState::Ready
+                    {
+                        neighbor.state = ChunkState::Dirty;
+                        self.ready_chunks.remove(&neighbor_pos);
+                        debug!("Neighbor chunk {:?} marked dirty", neighbor_pos);
                     }
                 }
             }

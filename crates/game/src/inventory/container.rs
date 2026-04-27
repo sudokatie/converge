@@ -227,6 +227,10 @@ impl ItemStack {
 }
 
 /// Errors that can occur during inventory operations.
+#[expect(
+    dead_code,
+    reason = "error variants reserved for future inventory operations"
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InventoryError {
     /// Slot index is out of bounds.
@@ -254,7 +258,7 @@ impl std::fmt::Display for InventoryError {
             }
             Self::EmptySlot { slot } => write!(f, "Slot {slot} is empty"),
             Self::ZeroCount => write!(f, "Cannot add zero items"),
-            Self::InvalidItem { item_id } => write!(f, "Invalid item ID: {:?}", item_id),
+            Self::InvalidItem { item_id } => write!(f, "Invalid item ID: {item_id:?}"),
             Self::InventoryFull => write!(f, "Inventory is full"),
         }
     }
@@ -287,11 +291,9 @@ impl Inventory {
     /// Returns any overflow that couldn't be added.
     pub fn add(&mut self, mut stack: ItemStack) -> Option<ItemStack> {
         // First, try to merge with existing stacks of the same item
-        for slot in &mut self.slots {
-            if let Some(existing) = slot {
-                if existing.can_merge(&stack) {
-                    stack = existing.merge(stack)?;
-                }
+        for existing in self.slots.iter_mut().flatten() {
+            if existing.can_merge(&stack) {
+                stack = existing.merge(stack)?;
             }
         }
 
@@ -366,6 +368,11 @@ impl Inventory {
     }
 
     /// Scroll hotbar selection.
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        reason = "hotbar size is always small"
+    )]
     pub fn scroll(&mut self, delta: i32) {
         let new_slot = (self.selected as i32 + delta).rem_euclid(HOTBAR_SIZE as i32) as usize;
         self.selected = new_slot;
@@ -392,7 +399,7 @@ impl Inventory {
     /// Check if inventory is completely empty.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.slots.iter().all(|s| s.is_none())
+        self.slots.iter().all(Option::is_none)
     }
 
     /// Get number of occupied slots.

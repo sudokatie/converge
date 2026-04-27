@@ -50,18 +50,21 @@ impl RecipeDisplay {
     }
 
     /// Add an input requirement.
+    #[must_use]
     pub fn with_input(mut self, name: impl Into<String>, count: u32) -> Self {
         self.inputs.push((name.into(), count));
         self
     }
 
     /// Set the category.
+    #[must_use]
     pub fn with_category(mut self, category: impl Into<String>) -> Self {
         self.category = Some(category.into());
         self
     }
 
     /// Set the output name.
+    #[must_use]
     pub fn with_output_name(mut self, name: impl Into<String>) -> Self {
         self.output.0 = name.into();
         self
@@ -185,34 +188,32 @@ impl CraftingScreen {
                 ui.separator();
 
                 // Recipe list
-                ScrollArea::vertical()
-                    .max_height(400.0)
-                    .show(ui, |ui| {
-                        for recipe in self.filter_recipes(recipes) {
-                            let is_selected = self.selected_recipe.as_ref() == Some(&recipe.id);
+                ScrollArea::vertical().max_height(400.0).show(ui, |ui| {
+                    for recipe in self.filter_recipes(recipes) {
+                        let is_selected = self.selected_recipe.as_ref() == Some(&recipe.id);
 
-                            let text = if recipe.can_craft {
-                                RichText::new(&recipe.name).color(Color32::WHITE)
-                            } else {
-                                RichText::new(&recipe.name).color(Color32::GRAY)
-                            };
+                        let text = if recipe.can_craft {
+                            RichText::new(&recipe.name).color(Color32::WHITE)
+                        } else {
+                            RichText::new(&recipe.name).color(Color32::GRAY)
+                        };
 
-                            let response = ui.selectable_label(is_selected, text);
+                        let response = ui.selectable_label(is_selected, text);
 
-                            if response.clicked() {
-                                self.selected_recipe = Some(recipe.id.clone());
-                            }
-
-                            // Show details on hover
-                            response.on_hover_ui(|ui| {
-                                ui.label(format!("Output: {} x{}", recipe.output.0, recipe.output.1));
-                                ui.label("Requires:");
-                                for (name, count) in &recipe.inputs {
-                                    ui.label(format!("  - {} x{}", name, count));
-                                }
-                            });
+                        if response.clicked() {
+                            self.selected_recipe = Some(recipe.id.clone());
                         }
-                    });
+
+                        // Show details on hover
+                        response.on_hover_ui(|ui| {
+                            ui.label(format!("Output: {} x{}", recipe.output.0, recipe.output.1));
+                            ui.label("Requires:");
+                            for (name, count) in &recipe.inputs {
+                                ui.label(format!("  - {name} x{count}"));
+                            }
+                        });
+                    }
+                });
 
                 ui.separator();
 
@@ -222,18 +223,14 @@ impl CraftingScreen {
                         .selected_recipe
                         .as_ref()
                         .and_then(|id| recipes.iter().find(|r| &r.id == id))
-                        .map(|r| r.can_craft)
-                        .unwrap_or(false);
+                        .is_some_and(|r| r.can_craft);
 
-                    let button = ui.add_enabled(
-                        can_craft,
-                        egui::Button::new("Craft"),
-                    );
+                    let button = ui.add_enabled(can_craft, egui::Button::new("Craft"));
 
-                    if button.clicked() {
-                        if let Some(id) = &self.selected_recipe {
-                            action = Some(CraftingAction::Craft(id.clone()));
-                        }
+                    if button.clicked()
+                        && let Some(id) = &self.selected_recipe
+                    {
+                        action = Some(CraftingAction::Craft(id.clone()));
                     }
 
                     if !can_craft {
@@ -256,10 +253,10 @@ impl CraftingScreen {
             .iter()
             .filter(|r| {
                 // Category filter
-                if let Some(cat) = &self.category_filter {
-                    if r.category.as_ref() != Some(cat) {
-                        return false;
-                    }
+                if let Some(cat) = &self.category_filter
+                    && r.category.as_ref() != Some(cat)
+                {
+                    return false;
                 }
 
                 // Search filter
@@ -278,10 +275,7 @@ impl CraftingScreen {
 
 /// Extract unique categories from recipes.
 fn get_categories(recipes: &[RecipeDisplay]) -> Vec<String> {
-    let mut categories: Vec<_> = recipes
-        .iter()
-        .filter_map(|r| r.category.clone())
-        .collect();
+    let mut categories: Vec<_> = recipes.iter().filter_map(|r| r.category.clone()).collect();
     categories.sort();
     categories.dedup();
     categories

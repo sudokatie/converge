@@ -144,7 +144,10 @@ mod tests {
     fn test_midnight_sun_low() {
         let mut light = DirectionalLight::default();
         light.update_from_time(0.0); // Midnight
-        assert!(light.direction.y < 0.0, "Sun should be below horizon at midnight");
+        assert!(
+            light.direction.y < 0.0,
+            "Sun should be below horizon at midnight"
+        );
         assert!(!light.is_daytime());
     }
 
@@ -154,7 +157,10 @@ mod tests {
 
         // Morning (slightly after sunrise) - warm
         light.update_from_time(0.28);
-        assert!(light.color.x > light.color.z, "Morning should be warm (more red than blue)");
+        assert!(
+            light.color.x > light.color.z,
+            "Morning should be warm (more red than blue)"
+        );
 
         // Noon - neutral/cool
         light.update_from_time(0.5);
@@ -170,10 +176,7 @@ mod tests {
 
     #[test]
     fn test_shadow_matrix_valid() {
-        let mut light = DirectionalLight::new(
-            Vec3::new(0.5, 1.0, 0.3).normalize(),
-            Vec3::ONE,
-        );
+        let mut light = DirectionalLight::new(Vec3::new(0.5, 1.0, 0.3).normalize(), Vec3::ONE);
         light.update_shadow_matrix(Vec3::ZERO, 100.0);
 
         // Matrix should not be identity (was updated)

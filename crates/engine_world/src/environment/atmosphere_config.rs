@@ -227,13 +227,7 @@ pub fn layer_from_material(
     above_ground: bool,
     has_ceiling: bool,
 ) -> AtmosphereLayer {
-    if !above_ground {
-        if props.is_airtight() {
-            AtmosphereLayer::Indoor
-        } else {
-            AtmosphereLayer::Exposed
-        }
-    } else if has_ceiling {
+    if !above_ground || has_ceiling {
         if props.is_airtight() {
             AtmosphereLayer::Indoor
         } else {
@@ -347,6 +341,10 @@ impl AtmosphereEffects {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 
@@ -510,8 +508,10 @@ mod tests {
 
     #[test]
     fn effects_from_cell_indoor_temp() {
-        let mut config = AtmosphereConfig::default();
-        config.indoor_temperature = 25.0;
+        let config = AtmosphereConfig {
+            indoor_temperature: 25.0,
+            ..AtmosphereConfig::default()
+        };
 
         let cell = AtmosphereCell::indoor_sealed();
         let effects = AtmosphereEffects::from_cell(&cell, &config);

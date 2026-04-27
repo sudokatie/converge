@@ -72,6 +72,11 @@ pub struct Region {
 
 impl Region {
     /// Open or create a region file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be created/opened, has invalid format,
+    /// or uses an unsupported version.
     pub fn open(path: &Path) -> Result<Self, RegionError> {
         if path.exists() {
             Self::open_existing(path)
@@ -81,6 +86,10 @@ impl Region {
     }
 
     /// Create a new region file.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "HEADER_SIZE is a known small constant that fits in u32"
+    )]
     fn create_new(path: &Path) -> Result<Self, RegionError> {
         // Ensure parent directory exists
         if let Some(parent) = path.parent() {
@@ -114,6 +123,10 @@ impl Region {
     }
 
     /// Open an existing region file.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "region files are bounded in size, file offset fits in u32"
+    )]
     fn open_existing(path: &Path) -> Result<Self, RegionError> {
         let mut file = OpenOptions::new().read(true).write(true).open(path)?;
 
@@ -156,8 +169,13 @@ impl Region {
     /// Load a chunk from the region.
     ///
     /// `local` is the position within the region (0-31 for x and z).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the position is out of bounds, IO fails,
+    /// data is corrupt, or deserialization fails.
     pub fn load_chunk(&mut self, local: IVec2) -> Result<Option<Chunk>, RegionError> {
-        let index = self.local_to_index(local)?;
+        let index = Self::local_to_index(local)?;
         let entry = self.offsets[index];
 
         if entry.offset == 0 {
@@ -165,7 +183,7 @@ impl Region {
         }
 
         // Seek to chunk data
-        self.file.seek(SeekFrom::Start(entry.offset as u64))?;
+        self.file.seek(SeekFrom::Start(u64::from(entry.offset)))?;
 
         // Read compressed data
         let mut compressed = vec![0u8; entry.size as usize];
@@ -203,8 +221,17 @@ impl Region {
     /// Save a chunk to the region.
     ///
     /// `local` is the position within the region (0-31 for x and z).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the position is out of bounds, serialization fails,
+    /// or IO fails.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "chunk data size is bounded, fits in u32"
+    )]
     pub fn save_chunk(&mut self, local: IVec2, chunk: &Chunk) -> Result<(), RegionError> {
-        let index = self.local_to_index(local)?;
+        let index = Self::local_to_index(local)?;
 
         // Serialize chunk
         let serialized = bincode::serialize(chunk)?;
@@ -219,7 +246,8 @@ impl Region {
         let total_size = compressed.len() + 4;
 
         // Write at end of file
-        self.file.seek(SeekFrom::Start(self.next_offset as u64))?;
+        self.file
+            .seek(SeekFrom::Start(u64::from(self.next_offset)))?;
         self.file.write_all(&compressed)?;
         self.file.write_all(&crc.to_le_bytes())?;
 
@@ -235,6 +263,10 @@ impl Region {
     }
 
     /// Flush changes to disk.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if writing to the file fails.
     pub fn flush(&mut self) -> Result<(), RegionError> {
         if self.dirty {
             // Write offset table
@@ -261,7 +293,7 @@ impl Region {
     /// Check if a chunk exists in the region.
     #[must_use]
     pub fn has_chunk(&self, local: IVec2) -> bool {
-        if let Ok(index) = self.local_to_index(local) {
+        if let Ok(index) = Self::local_to_index(local) {
             self.offsets[index].offset != 0
         } else {
             false
@@ -275,7 +307,11 @@ impl Region {
     }
 
     /// Convert local position to index.
-    fn local_to_index(&self, local: IVec2) -> Result<usize, RegionError> {
+    #[expect(
+        clippy::cast_sign_loss,
+        reason = "bounds check guarantees non-negative coordinates"
+    )]
+    fn local_to_index(local: IVec2) -> Result<usize, RegionError> {
         if local.x < 0 || local.x >= REGION_SIZE || local.y < 0 || local.y >= REGION_SIZE {
             return Err(RegionError::OutOfBounds(local.x, local.y));
         }
@@ -393,7 +429,7 @@ mod tests {
         let file_size = std::fs::metadata(&path).unwrap().len();
         // Header is ~8200 bytes, compressed chunk data should be minimal
         // Total should be well under 16KB
-        assert!(file_size < 16384, "File size was {} bytes", file_size);
+        assert!(file_size < 16384, "File size was {file_size} bytes");
     }
 
     #[test]
@@ -423,7 +459,7 @@ mod tests {
             let result = region.load_chunk(IVec2::ZERO);
             assert!(matches!(
                 result,
-                Err(RegionError::CorruptData) | Err(RegionError::Decompression)
+                Err(RegionError::CorruptData | RegionError::Decompression)
             ));
         }
     }

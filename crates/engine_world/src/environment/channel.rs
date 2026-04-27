@@ -79,6 +79,10 @@ impl FieldChannel {
     ///
     /// Default values represent neutral/safe environmental conditions.
     #[must_use]
+    #[expect(
+        clippy::match_same_arms,
+        reason = "values documented separately for each channel for clarity"
+    )]
     pub const fn default_value(self) -> f32 {
         match self {
             FieldChannel::Temperature => 20.0, // Room temperature (Celsius-ish)
@@ -105,6 +109,10 @@ impl FieldChannel {
     ///
     /// Returns None if unbounded.
     #[must_use]
+    #[expect(
+        clippy::match_same_arms,
+        reason = "values documented separately for each channel for clarity"
+    )]
     pub const fn max_value(self) -> Option<f32> {
         match self {
             FieldChannel::Temperature => None, // Unbounded upper
@@ -135,6 +143,11 @@ impl FieldChannel {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    reason = "tests check exact values; format args clearer with explicit args"
+)]
 mod tests {
     use super::*;
 

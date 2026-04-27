@@ -97,6 +97,10 @@ impl MusicRegistry {
     }
 
     /// Load a track from a file.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MusicError::LoadFailed`] if the file cannot be read or decoded.
     pub fn load(&mut self, id: TrackId, path: &Path, name: &str) -> Result<(), MusicError> {
         let data = StaticSoundData::from_file(path)
             .map_err(|e| MusicError::LoadFailed(format!("{}: {}", path.display(), e)))?;
@@ -141,7 +145,7 @@ impl Default for MusicRegistry {
     }
 }
 
-/// Music playback request returned by MusicPlayer.
+/// Music playback request returned by `MusicPlayer`.
 #[derive(Clone, Debug)]
 pub struct MusicPlayRequest {
     /// Track ID to play.
@@ -156,8 +160,8 @@ pub struct MusicPlayRequest {
 
 /// Music state manager.
 ///
-/// This is a state-only manager - actual playback is handled by AudioManager.
-/// Call `request_play` to get data to pass to AudioManager.
+/// This is a state-only manager - actual playback is handled by `AudioManager`.
+/// Call `request_play` to get data to pass to `AudioManager`.
 pub struct MusicPlayer {
     /// Track registry.
     tracks: MusicRegistry,

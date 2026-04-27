@@ -11,6 +11,14 @@ pub struct PoolHandle<T> {
     _marker: PhantomData<T>,
 }
 
+impl<T> Clone for PoolHandle<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T> Copy for PoolHandle<T> {}
+
 impl<T> PoolHandle<T> {
     /// Get the pool index of this handle.
     #[must_use]
@@ -48,6 +56,10 @@ impl<T: Default> Pool<T> {
 
 impl<T> Pool<T> {
     /// Create a pool from an iterator of items.
+    #[expect(
+        clippy::should_implement_trait,
+        reason = "deliberate API design; implementing FromIterator would require additional bounds"
+    )]
     pub fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let items: Vec<Option<T>> = iter.into_iter().map(Some).collect();
         let capacity = items.len();
@@ -82,7 +94,9 @@ impl<T> Pool<T> {
 
     /// Get a mutable reference to a pooled object.
     pub fn get_mut(&mut self, handle: &PoolHandle<T>) -> Option<&mut T> {
-        self.items.get_mut(handle.index).and_then(|opt| opt.as_mut())
+        self.items
+            .get_mut(handle.index)
+            .and_then(|opt| opt.as_mut())
     }
 
     /// Get the total capacity of the pool.
@@ -137,10 +151,8 @@ mod tests {
 
     #[test]
     fn test_get_mut() {
-        let mut pool: Pool<String> = Pool::from_iter(vec![
-            String::from("hello"),
-            String::from("world"),
-        ]);
+        let mut pool: Pool<String> =
+            Pool::from_iter(vec![String::from("hello"), String::from("world")]);
 
         let handle = pool.acquire().unwrap();
         if let Some(s) = pool.get_mut(&handle) {

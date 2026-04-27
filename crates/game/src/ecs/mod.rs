@@ -38,7 +38,7 @@ impl DeferredDestruction {
 
     /// Collect all entities with `PendingDestroy` component.
     pub fn collect(&mut self, world: &World) {
-        for (entity, _) in world.query::<&PendingDestroy>().iter() {
+        for (entity, _) in &mut world.query::<&PendingDestroy>() {
             if !self.pending.contains(&entity) {
                 self.pending.push(entity);
             }

@@ -66,7 +66,14 @@ impl InputState {
                 }
             }
             WindowEvent::MouseMoved { x, y } => {
-                self.mouse_position = Vec2::new(*x as f32, *y as f32);
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "mouse coords fit in f32; truncation beyond 2^24 pixels is acceptable"
+                )]
+                fn f64_to_f32(v: f64) -> f32 {
+                    v as f32
+                }
+                self.mouse_position = Vec2::new(f64_to_f32(*x), f64_to_f32(*y));
             }
             WindowEvent::MouseButton { button, pressed } => {
                 if *pressed {
@@ -80,7 +87,14 @@ impl InputState {
                 }
             }
             WindowEvent::MouseScroll { delta_x, delta_y } => {
-                self.scroll_delta += Vec2::new(*delta_x as f32, *delta_y as f32);
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "scroll deltas are small; truncation is acceptable"
+                )]
+                fn f64_to_f32(v: f64) -> f32 {
+                    v as f32
+                }
+                self.scroll_delta += Vec2::new(f64_to_f32(*delta_x), f64_to_f32(*delta_y));
             }
             WindowEvent::Focused => {
                 self.focused = true;

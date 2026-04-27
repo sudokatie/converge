@@ -3,8 +3,8 @@
 //! Implements spec 6.3.4: input slot + fuel slot -> output slot,
 //! smelting time per recipe, fuel burn time tracking.
 
-use crate::crafting::{CraftingStation, Recipe, RecipeRegistry};
-use crate::inventory::{Inventory, ItemId, ItemStack};
+use crate::crafting::{CraftingStation, RecipeRegistry};
+use crate::inventory::{ItemId, ItemStack};
 
 /// Default smelting time in seconds.
 pub const DEFAULT_SMELT_TIME: f32 = 8.0;
@@ -58,7 +58,7 @@ pub struct Furnace {
     burn_time_remaining: f32,
     /// Total burn time of current fuel item (for progress display).
     burn_time_total: f32,
-    /// Smelting progress (0 to smelt_time).
+    /// Smelting progress (0 to `smelt_time`).
     smelt_progress: f32,
     /// Total smelting time for current recipe.
     smelt_time_total: f32,
@@ -155,12 +155,12 @@ impl Furnace {
         // Map item IDs to burn times
         // In a full implementation, this would come from the item registry
         match item_id.raw() {
-            5 => FUEL_COAL,       // Coal
-            6 => FUEL_CHARCOAL,   // Charcoal
-            7 => FUEL_WOOD,       // Wood/Log
-            3 => FUEL_STICK,      // Stick
+            5 => FUEL_COAL,         // Coal
+            6 => FUEL_CHARCOAL,     // Charcoal
+            7 => FUEL_WOOD,         // Wood/Log
+            3 => FUEL_STICK,        // Stick
             50 => FUEL_LAVA_BUCKET, // Lava bucket
-            _ => 0.0,             // Not a fuel
+            _ => 0.0,               // Not a fuel
         }
     }
 
@@ -186,16 +186,15 @@ impl Furnace {
         }
 
         // If fuel is spent, try to consume next fuel item
-        if self.burn_time_remaining <= 0.0 {
-            if let Some(fuel_stack) = &mut self.fuel {
-                if fuel_stack.count > 0 {
-                    self.burn_time_total = Self::fuel_burn_time(fuel_stack.item_id);
-                    self.burn_time_remaining = self.burn_time_total;
-                    fuel_stack.count -= 1;
-                    if fuel_stack.count == 0 {
-                        self.fuel = None;
-                    }
-                }
+        if self.burn_time_remaining <= 0.0
+            && let Some(fuel_stack) = &mut self.fuel
+            && fuel_stack.count > 0
+        {
+            self.burn_time_total = Self::fuel_burn_time(fuel_stack.item_id);
+            self.burn_time_remaining = self.burn_time_total;
+            fuel_stack.count -= 1;
+            if fuel_stack.count == 0 {
+                self.fuel = None;
             }
         }
 
@@ -233,7 +232,9 @@ impl Furnace {
         let output_stack = ItemStack::new(output_id, output_count);
 
         if let Some(existing) = &mut self.output {
-            if existing.item_id == output_id && existing.count + output_count <= existing.item_id.raw() as u32 * 64 {
+            if existing.item_id == output_id
+                && existing.count + output_count <= u32::from(existing.item_id.raw()) * 64
+            {
                 existing.count += output_count;
             } else {
                 // Output full or wrong type
@@ -253,15 +254,15 @@ impl Furnace {
         }
 
         self.recalculate_state();
-        Some(self.output.clone()?)
+        self.output.clone()
     }
 
     /// Recalculate furnace state based on current slots.
     fn recalculate_state(&mut self) {
         let has_input = self.input.is_some();
         let has_fuel = self.fuel.is_some() || self.burn_time_remaining > 0.0;
-        let output_full = self.output.is_some()
-            && self.output.as_ref().map_or(false, |s| s.count >= 64);
+        let output_full =
+            self.output.is_some() && self.output.as_ref().is_some_and(|s| s.count >= 64);
 
         self.state = if output_full {
             FurnaceState::OutputFull
@@ -290,9 +291,9 @@ mod tests {
 
     #[test]
     fn test_fuel_burn_times() {
-        assert_eq!(Furnace::fuel_burn_time(ItemId(5)), FUEL_COAL);
-        assert_eq!(Furnace::fuel_burn_time(ItemId(7)), FUEL_WOOD);
-        assert_eq!(Furnace::fuel_burn_time(ItemId(999)), 0.0);
+        assert!((Furnace::fuel_burn_time(ItemId(5)) - FUEL_COAL).abs() < f32::EPSILON);
+        assert!((Furnace::fuel_burn_time(ItemId(7)) - FUEL_WOOD).abs() < f32::EPSILON);
+        assert!(Furnace::fuel_burn_time(ItemId(999)).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -346,13 +347,13 @@ mod tests {
     #[test]
     fn test_burn_progress_zero_when_no_fuel() {
         let furnace = Furnace::new();
-        assert_eq!(furnace.burn_progress(), 0.0);
+        assert!(furnace.burn_progress().abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_smelt_progress_zero_when_idle() {
         let furnace = Furnace::new();
-        assert_eq!(furnace.smelt_progress(), 0.0);
+        assert!(furnace.smelt_progress().abs() < f32::EPSILON);
     }
 
     #[test]

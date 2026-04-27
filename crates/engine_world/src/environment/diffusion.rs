@@ -196,6 +196,10 @@ impl FieldSimConfig {
     }
 
     /// Create configs for all channels with default settings.
+    ///
+    /// # Panics
+    ///
+    /// Panics if internal channel indexing is inconsistent (should never happen).
     #[must_use]
     pub fn all_defaults() -> [Self; FieldChannel::COUNT] {
         std::array::from_fn(|i| {
@@ -267,6 +271,10 @@ impl SimStepResult {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

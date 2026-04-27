@@ -4,7 +4,6 @@
 //! respawn at spawn point with full health and hunger.
 
 use engine_core::coords::WorldPos;
-use engine_world::chunk::BlockId;
 
 use crate::inventory::{Inventory, ItemStack};
 
@@ -87,7 +86,7 @@ impl DeathHandler {
 
     /// Handle player death.
     ///
-    /// Drops all inventory items (unless keep_inventory is set),
+    /// Drops all inventory items (unless `keep_inventory` is set),
     /// records death position and cause.
     pub fn handle_death(
         &mut self,
@@ -252,11 +251,8 @@ mod tests {
         add_to_inventory(&mut inventory, make_stack(1, 64));
         add_to_inventory(&mut inventory, make_stack(2, 32));
 
-        let result = handler.handle_death(
-            WorldPos::new(10, 20, 30),
-            DeathCause::Fall,
-            &mut inventory,
-        );
+        let result =
+            handler.handle_death(WorldPos::new(10, 20, 30), DeathCause::Fall, &mut inventory);
 
         assert!(handler.is_dead());
         assert_eq!(result.dropped_items.len(), 2);
@@ -272,11 +268,8 @@ mod tests {
         let mut inventory = Inventory::new();
         add_to_inventory(&mut inventory, make_stack(1, 64));
 
-        let result = handler.handle_death(
-            WorldPos::new(0, 0, 0),
-            DeathCause::Combat,
-            &mut inventory,
-        );
+        let result =
+            handler.handle_death(WorldPos::new(0, 0, 0), DeathCause::Combat, &mut inventory);
 
         assert!(result.dropped_items.is_empty());
         assert!(handler.keeps_inventory());
@@ -298,7 +291,7 @@ mod tests {
         let cause = handler.respawn();
         assert!(!handler.is_dead());
         assert_eq!(cause, Some(DeathCause::Drowning));
-        assert_eq!(handler.time_since_death(), 0.0);
+        assert!(handler.time_since_death().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -316,11 +309,7 @@ mod tests {
         let mut handler = DeathHandler::new();
         let mut inventory = Inventory::new();
 
-        handler.handle_death(
-            WorldPos::new(0, 0, 0),
-            DeathCause::Other,
-            &mut inventory,
-        );
+        handler.handle_death(WorldPos::new(0, 0, 0), DeathCause::Other, &mut inventory);
 
         handler.tick(1.0);
         assert!((handler.time_since_death() - 1.0).abs() < 0.001);
@@ -334,17 +323,13 @@ mod tests {
         let mut handler = DeathHandler::new();
         let mut inventory = Inventory::new();
 
-        handler.handle_death(
-            WorldPos::new(0, 0, 0),
-            DeathCause::Other,
-            &mut inventory,
-        );
+        handler.handle_death(WorldPos::new(0, 0, 0), DeathCause::Other, &mut inventory);
 
         handler.tick(2.0);
         handler.respawn();
         handler.tick(1.0); // Should not increment after respawn
 
-        assert_eq!(handler.time_since_death(), 0.0);
+        assert!(handler.time_since_death().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -375,11 +360,7 @@ mod tests {
         assert_eq!(handler.last_death_cause(), None);
 
         let mut inventory = Inventory::new();
-        handler.handle_death(
-            WorldPos::new(42, 64, 100),
-            DeathCause::Fire,
-            &mut inventory,
-        );
+        handler.handle_death(WorldPos::new(42, 64, 100), DeathCause::Fire, &mut inventory);
 
         assert_eq!(handler.last_death_pos(), Some(WorldPos::new(42, 64, 100)));
         assert_eq!(handler.last_death_cause(), Some(DeathCause::Fire));

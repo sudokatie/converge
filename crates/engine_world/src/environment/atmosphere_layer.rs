@@ -125,9 +125,8 @@ impl AtmosphereLayer {
     pub const fn temperature_regulation(self) -> f32 {
         match self {
             AtmosphereLayer::Indoor => 1.0,
-            AtmosphereLayer::Outdoor => 0.0,
+            AtmosphereLayer::Outdoor | AtmosphereLayer::Vacuum => 0.0,
             AtmosphereLayer::Exposed => 0.3,
-            AtmosphereLayer::Vacuum => 0.0,
         }
     }
 
@@ -135,9 +134,7 @@ impl AtmosphereLayer {
     #[must_use]
     pub const fn default_oxygen(self) -> f32 {
         match self {
-            AtmosphereLayer::Indoor => 1.0,
-            AtmosphereLayer::Outdoor => 1.0,
-            AtmosphereLayer::Exposed => 1.0,
+            AtmosphereLayer::Indoor | AtmosphereLayer::Outdoor | AtmosphereLayer::Exposed => 1.0,
             AtmosphereLayer::Vacuum => 0.0,
         }
     }
@@ -146,15 +143,18 @@ impl AtmosphereLayer {
     #[must_use]
     pub const fn default_pressure(self) -> f32 {
         match self {
-            AtmosphereLayer::Indoor => 1.0,
-            AtmosphereLayer::Outdoor => 1.0,
-            AtmosphereLayer::Exposed => 1.0,
+            AtmosphereLayer::Indoor | AtmosphereLayer::Outdoor | AtmosphereLayer::Exposed => 1.0,
             AtmosphereLayer::Vacuum => 0.0,
         }
     }
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    reason = "tests check exact values; format args clearer with explicit args"
+)]
 mod tests {
     use super::*;
 

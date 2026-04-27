@@ -6,8 +6,7 @@ use thiserror::Error;
 use wgpu::{
     Adapter, Device, DeviceDescriptor, Features, Instance, InstanceDescriptor, Limits,
     PowerPreference, PresentMode, Queue, RequestAdapterOptions, Surface, SurfaceConfiguration,
-    SurfaceError, SurfaceTexture, TextureFormat, TextureUsages, TextureView,
-    TextureViewDescriptor,
+    SurfaceError, SurfaceTexture, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
 };
 use winit::window::Window;
 
@@ -66,9 +65,9 @@ impl RenderDevice {
         });
 
         // Create surface
-        let surface = instance.create_surface(window.clone()).map_err(|_| {
-            RenderDeviceError::NoAdapter
-        })?;
+        let surface = instance
+            .create_surface(window.clone())
+            .map_err(|_| RenderDeviceError::NoAdapter)?;
 
         // Request adapter
         let adapter = instance
@@ -90,7 +89,7 @@ impl RenderDevice {
                     required_features: Features::empty(),
                     required_limits: Limits::downlevel_webgl2_defaults()
                         .using_resolution(adapter.limits()),
-                    memory_hints: Default::default(),
+                    memory_hints: wgpu::MemoryHints::default(),
                 },
                 None,
             )
@@ -181,7 +180,9 @@ impl RenderDevice {
             Err(e) => return Err(e.into()),
         };
 
-        let view = texture.texture.create_view(&TextureViewDescriptor::default());
+        let view = texture
+            .texture
+            .create_view(&TextureViewDescriptor::default());
 
         Ok(FrameContext { texture, view })
     }

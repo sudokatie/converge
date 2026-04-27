@@ -196,7 +196,7 @@ impl SimulationScheduler {
     /// Get the fidelity assigned to a region, if tracked.
     #[must_use]
     pub fn get_fidelity(&self, pos: ChunkPos) -> Option<Fidelity> {
-        self.regions.get(&pos).map(|s| s.fidelity())
+        self.regions.get(&pos).map(RegionState::fidelity)
     }
 
     /// Calculate the minimum Chebyshev distance from any observer.
@@ -370,8 +370,10 @@ mod tests {
 
     #[test]
     fn tick_budget_limit() {
-        let mut config = SchedulerConfig::default();
-        config.max_jobs_per_tick = 2;
+        let config = SchedulerConfig {
+            max_jobs_per_tick: 2,
+            ..Default::default()
+        };
 
         let mut scheduler = SimulationScheduler::new(config);
         for i in 0..5 {

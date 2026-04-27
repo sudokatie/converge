@@ -391,7 +391,7 @@ mod tests {
         // Reopen and verify
         {
             let world = WorldPersistence::open(&path).unwrap();
-            assert_eq!(world.meta().game_time, 1000.0);
+            assert!((world.meta().game_time - 1000.0).abs() < f64::EPSILON);
             assert_eq!(world.meta().spawn.x(), 100);
             assert_eq!(world.meta().spawn.y(), 50);
             assert_eq!(world.meta().spawn.z(), 200);

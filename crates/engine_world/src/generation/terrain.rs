@@ -45,6 +45,10 @@ impl TerrainGenerator {
 
     /// Generate terrain for a chunk.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_wrap,
+        reason = "local coords are 0..16, always fit in i32"
+    )]
     pub fn generate(&self, chunk_pos: ChunkPos) -> Chunk {
         let mut chunk = Chunk::new();
 
@@ -64,7 +68,7 @@ impl TerrainGenerator {
                 // Fill each Y in this column
                 for ly in 0..CHUNK_SIZE as u32 {
                     let world_y = chunk_base_y + ly as i32;
-                    let block = self.block_at_height(world_y, surface_height);
+                    let block = Self::block_at_height(world_y, surface_height);
 
                     if block != AIR {
                         chunk.set(LocalPos::new(lx, ly, lz), block);
@@ -78,12 +82,16 @@ impl TerrainGenerator {
 
     /// Get the terrain height at a world position.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "height is clamped to terrain range, fits in i32"
+    )]
     pub fn height_at(&self, x: i32, z: i32) -> i32 {
-        self.noise.height_at(x as f64, z as f64).round() as i32
+        self.noise.height_at(f64::from(x), f64::from(z)).round() as i32
     }
 
     /// Get the block type at a given height relative to surface.
-    fn block_at_height(&self, y: i32, surface_height: i32) -> BlockId {
+    fn block_at_height(y: i32, surface_height: i32) -> BlockId {
         if y > surface_height {
             // Above surface - air
             AIR
@@ -101,14 +109,19 @@ impl TerrainGenerator {
 
     /// Get surface heights for a chunk (for cave generation).
     #[must_use]
+    #[expect(
+        clippy::cast_possible_wrap,
+        clippy::cast_possible_truncation,
+        reason = "loop indices are 0..16, always fit in i32"
+    )]
     pub fn surface_heights(&self, chunk_pos: ChunkPos) -> [[i32; 16]; 16] {
         let mut heights = [[0i32; 16]; 16];
 
-        for lz in 0..16 {
-            for lx in 0..16 {
+        for (lz, row) in heights.iter_mut().enumerate() {
+            for (lx, height) in row.iter_mut().enumerate() {
                 let world_x = chunk_pos.x() * CHUNK_SIZE + lx as i32;
                 let world_z = chunk_pos.z() * CHUNK_SIZE + lz as i32;
-                heights[lz][lx] = self.height_at(world_x, world_z);
+                *height = self.height_at(world_x, world_z);
             }
         }
 
@@ -170,8 +183,7 @@ mod tests {
             assert_eq!(
                 block,
                 chunk2.get(pos),
-                "Blocks should be identical at {:?}",
-                pos
+                "Blocks should be identical at {pos:?}"
             );
         }
     }
@@ -200,11 +212,7 @@ mod tests {
                 // Either the block below is solid, or we're at the bottom of a layer
                 // For this simple test, just verify grass has dirt below
                 if block == GRASS {
-                    assert_eq!(
-                        block_below, DIRT,
-                        "Grass should have dirt below at {:?}",
-                        pos
-                    );
+                    assert_eq!(block_below, DIRT, "Grass should have dirt below at {pos:?}");
                 }
             }
         }

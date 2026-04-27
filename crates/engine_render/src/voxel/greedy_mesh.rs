@@ -1,11 +1,11 @@
 //! Greedy meshing algorithm for voxel chunks.
 
-use engine_core::coords::{LocalPos, CHUNK_SIZE};
-use engine_world::chunk::{BlockId, BlockRegistry, Chunk, AIR};
+use engine_core::coords::{CHUNK_SIZE, LocalPos};
+use engine_world::chunk::{AIR, BlockId, BlockRegistry, Chunk};
 use glam::Vec3;
 
 use super::ambient_occlusion::{ao_offsets, calculate_ao};
-use super::mesh_builder::{normals, MeshBuilder, Vertex};
+use super::mesh_builder::{MeshBuilder, Vertex, normals};
 
 /// Neighbor chunk data for meshing.
 ///
@@ -26,7 +26,7 @@ pub struct ChunkNeighbors<'a> {
     pub pos_z: Option<&'a Chunk>,
 }
 
-impl<'a> ChunkNeighbors<'a> {
+impl ChunkNeighbors<'_> {
     /// Create neighbors with no adjacent chunks.
     #[must_use]
     pub fn empty() -> Self {
@@ -137,19 +137,8 @@ fn mesh_axis<const AXIS: usize>(
 
                     // Emit quad
                     emit_quad::<AXIS>(
-                        chunk,
-                        neighbors,
-                        registry,
-                        builder,
-                        d,
-                        u,
-                        v,
-                        w,
-                        h,
-                        block,
-                        back_face,
-                        u_axis,
-                        v_axis,
+                        chunk, neighbors, registry, builder, d, u, v, w, h, block, back_face,
+                        u_axis, v_axis,
                     );
                 }
             }
@@ -158,6 +147,10 @@ fn mesh_axis<const AXIS: usize>(
 }
 
 /// Build a mask of visible faces for a slice.
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "chunk coordinates are bounded by SIZE (16) which fits in u32"
+)]
 fn build_face_mask<const AXIS: usize>(
     chunk: &Chunk,
     neighbors: &ChunkNeighbors,
@@ -173,8 +166,8 @@ fn build_face_mask<const AXIS: usize>(
         _ => (0, 1),
     };
 
-    for v in 0..SIZE {
-        for u in 0..SIZE {
+    for (v, mask_row) in mask.iter_mut().enumerate() {
+        for (u, mask_cell) in mask_row.iter_mut().enumerate() {
             // Build position based on axis
             let mut pos = [0usize; 3];
             pos[AXIS] = d;
@@ -205,7 +198,7 @@ fn build_face_mask<const AXIS: usize>(
             };
 
             if show_face {
-                mask[v][u] = Some(block);
+                *mask_cell = Some(block);
             }
         }
     }
@@ -214,6 +207,12 @@ fn build_face_mask<const AXIS: usize>(
 }
 
 /// Get the block in the neighbor direction.
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    reason = "chunk coordinates are bounded by SIZE (16) which fits in i32/u32"
+)]
 fn get_neighbor_block<const AXIS: usize>(
     chunk: &Chunk,
     neighbors: &ChunkNeighbors,
@@ -254,7 +253,11 @@ fn get_neighbor_block<const AXIS: usize>(
                     (neighbor_pos[1].rem_euclid(SIZE as i32)) as u32,
                     (neighbor_pos[2].rem_euclid(SIZE as i32)) as u32,
                 ];
-                nc.get(LocalPos::new(wrapped_pos[0], wrapped_pos[1], wrapped_pos[2]))
+                nc.get(LocalPos::new(
+                    wrapped_pos[0],
+                    wrapped_pos[1],
+                    wrapped_pos[2],
+                ))
             }
             None => AIR, // No neighbor = air (show face)
         }
@@ -262,7 +265,11 @@ fn get_neighbor_block<const AXIS: usize>(
 }
 
 /// Emit a quad for a merged face region.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::many_single_char_names)]
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "chunk coordinates are small enough that precision loss is acceptable"
+)]
 fn emit_quad<const AXIS: usize>(
     chunk: &Chunk,
     neighbors: &ChunkNeighbors,
@@ -278,21 +285,13 @@ fn emit_quad<const AXIS: usize>(
     u_axis: usize,
     v_axis: usize,
 ) {
-    let face_idx = match (AXIS, back_face) {
-        (0, true) => 0,  // -X
-        (0, false) => 1, // +X
-        (1, true) => 2,  // -Y
-        (1, false) => 3, // +Y
-        (2, true) => 4,  // -Z
-        (2, false) => 5, // +Z
-        _ => 0,
-    };
+    // Calculate face index: -X=0, +X=1, -Y=2, +Y=3, -Z=4, +Z=5
+    let face_idx = AXIS * 2 + usize::from(!back_face);
 
     // Get texture index for this face (used later for texture atlas)
     let _tex_idx = registry
         .get(block)
-        .map(|p| p.texture_indices[face_idx])
-        .unwrap_or(0);
+        .map_or(0, |p| p.texture_indices[face_idx]);
 
     // Normal for this face
     let normal = match (AXIS, back_face) {
@@ -301,8 +300,7 @@ fn emit_quad<const AXIS: usize>(
         (1, true) => normals::NEG_Y,
         (1, false) => normals::POS_Y,
         (2, true) => normals::NEG_Z,
-        (2, false) => normals::POS_Z,
-        _ => 0,
+        _ => normals::POS_Z,
     };
 
     // Calculate corner positions
@@ -345,7 +343,12 @@ fn emit_quad<const AXIS: usize>(
 }
 
 /// Calculate AO for all 4 corners of a quad.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::many_single_char_names)]
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    reason = "SIZE is a small compile-time constant that fits i32"
+)]
 fn calculate_corner_ao<const AXIS: usize>(
     chunk: &Chunk,
     neighbors: &ChunkNeighbors,
@@ -377,8 +380,7 @@ fn calculate_corner_ao<const AXIS: usize>(
         (1, true) => &ao_offsets::NEG_Y,
         (1, false) => &ao_offsets::POS_Y,
         (2, true) => &ao_offsets::NEG_Z,
-        (2, false) => &ao_offsets::POS_Z,
-        _ => &ao_offsets::POS_X,
+        _ => &ao_offsets::POS_Z,
     };
 
     let mut ao = [3u8; 4];
@@ -412,6 +414,12 @@ fn calculate_corner_ao<const AXIS: usize>(
 }
 
 /// Sample a block at any position, including neighbor chunks.
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    reason = "chunk coordinates are bounded by SIZE (16) which fits in i32/u32"
+)]
 fn sample_block(chunk: &Chunk, neighbors: &ChunkNeighbors, pos: [i32; 3]) -> BlockId {
     let in_bounds = pos.iter().all(|&c| c >= 0 && c < SIZE as i32);
 

@@ -24,11 +24,9 @@ impl Biome {
     #[must_use]
     pub fn surface_block(&self) -> u16 {
         match self {
-            Biome::Plains => 3,    // Grass
-            Biome::Forest => 3,    // Grass
-            Biome::Desert => 4,    // Sand
-            Biome::Mountains => 1, // Stone
-            Biome::Ocean => 4,     // Sand (underwater)
+            Biome::Plains | Biome::Forest => 3, // Grass
+            Biome::Desert | Biome::Ocean => 4,  // Sand (underwater for Ocean)
+            Biome::Mountains => 1,              // Stone
         }
     }
 
@@ -36,11 +34,9 @@ impl Biome {
     #[must_use]
     pub fn subsurface_block(&self) -> u16 {
         match self {
-            Biome::Plains => 2,    // Dirt
-            Biome::Forest => 2,    // Dirt
-            Biome::Desert => 4,    // Sand
-            Biome::Mountains => 1, // Stone
-            Biome::Ocean => 2,     // Dirt
+            Biome::Plains | Biome::Forest | Biome::Ocean => 2, // Dirt
+            Biome::Desert => 4,                                // Sand
+            Biome::Mountains => 1,                             // Stone
         }
     }
 
@@ -50,9 +46,8 @@ impl Biome {
         match self {
             Biome::Plains => 0.02,
             Biome::Forest => 0.15,
-            Biome::Desert => 0.0,
+            Biome::Desert | Biome::Ocean => 0.0,
             Biome::Mountains => 0.01,
-            Biome::Ocean => 0.0,
         }
     }
 
@@ -66,8 +61,7 @@ impl Biome {
     #[must_use]
     pub fn height_modifier(&self) -> f64 {
         match self {
-            Biome::Plains => 0.0,
-            Biome::Forest => 0.0,
+            Biome::Plains | Biome::Forest => 0.0,
             Biome::Desert => -5.0,
             Biome::Mountains => 30.0,
             Biome::Ocean => -20.0,
@@ -94,6 +88,28 @@ pub struct BiomeSelector {
     offset: f64,
 }
 
+/// Truncate a u64 seed to u32 for noise generation.
+///
+/// Seeds are arbitrary values where truncation is acceptable for noise variety.
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "seed truncation is intentional - only need 32 bits for noise"
+)]
+const fn truncate_seed(seed: u64) -> u32 {
+    seed as u32
+}
+
+/// Convert a u64 seed to f64 for offset calculation.
+///
+/// Loss of precision is acceptable for noise offset values.
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "precision loss acceptable for noise offset calculation"
+)]
+fn seed_to_offset(seed: u64) -> f64 {
+    (seed as f64) * 3571.0 % 100_000.0
+}
+
 impl BiomeSelector {
     /// Create a new biome selector with the given seed.
     #[must_use]
@@ -103,9 +119,9 @@ impl BiomeSelector {
         let humid_seed = seed.wrapping_mul(65537);
 
         Self {
-            temperature_noise: Perlin::new(temp_seed as u32),
-            humidity_noise: Perlin::new(humid_seed as u32),
-            offset: ((seed as f64) * 3571.0) % 100_000.0,
+            temperature_noise: Perlin::new(truncate_seed(temp_seed)),
+            humidity_noise: Perlin::new(truncate_seed(humid_seed)),
+            offset: seed_to_offset(seed),
         }
     }
 
@@ -190,8 +206,8 @@ mod tests {
     #[test]
     fn test_biome_tree_density() {
         assert!(Biome::Forest.tree_density() > Biome::Plains.tree_density());
-        assert_eq!(Biome::Desert.tree_density(), 0.0);
-        assert_eq!(Biome::Ocean.tree_density(), 0.0);
+        assert!(Biome::Desert.tree_density().abs() < f32::EPSILON);
+        assert!(Biome::Ocean.tree_density().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -240,19 +256,17 @@ mod tests {
         let selector = BiomeSelector::new(42);
 
         for i in 0..100 {
-            let x = (i * 17) as f64;
-            let z = (i * 23) as f64;
+            let x = f64::from(i * 17);
+            let z = f64::from(i * 23);
             let (temp, humid) = selector.sample(x, z);
 
             assert!(
-                temp >= 0.0 && temp <= 1.0,
-                "Temperature out of range: {}",
-                temp
+                (0.0..=1.0).contains(&temp),
+                "Temperature out of range: {temp}"
             );
             assert!(
-                humid >= 0.0 && humid <= 1.0,
-                "Humidity out of range: {}",
-                humid
+                (0.0..=1.0).contains(&humid),
+                "Humidity out of range: {humid}"
             );
         }
     }

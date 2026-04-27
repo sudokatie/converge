@@ -11,7 +11,7 @@ use super::mesh_builder::Vertex;
 pub struct CameraUniform {
     pub view_proj: [[f32; 4]; 4],
     pub position: [f32; 3],
-    pub _padding: f32,
+    pub padding: f32,
 }
 
 impl CameraUniform {
@@ -21,7 +21,7 @@ impl CameraUniform {
         Self {
             view_proj: view_proj.to_cols_array_2d(),
             position: position.to_array(),
-            _padding: 0.0,
+            padding: 0.0,
         }
     }
 }
@@ -55,6 +55,10 @@ pub struct VoxelPipeline {
 
 impl VoxelPipeline {
     /// Create a new voxel pipeline.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "pipeline creation requires sequential wgpu setup"
+    )]
     pub fn new(device: &wgpu::Device, surface_format: wgpu::TextureFormat) -> Self {
         // Load shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -210,5 +214,11 @@ impl VoxelPipeline {
     #[must_use]
     pub fn chunk_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.chunk_bind_group_layout
+    }
+
+    /// Get the camera bind group layout.
+    #[must_use]
+    pub fn camera_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+        &self.camera_bind_group_layout
     }
 }

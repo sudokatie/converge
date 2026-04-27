@@ -206,13 +206,13 @@ impl BlockRegistry {
     /// Check if a block is solid.
     #[must_use]
     pub fn is_solid(&self, id: BlockId) -> bool {
-        self.get(id).map_or(false, |p| p.solid)
+        self.get(id).is_some_and(|p| p.solid)
     }
 
     /// Check if a block is transparent.
     #[must_use]
     pub fn is_transparent(&self, id: BlockId) -> bool {
-        self.get(id).map_or(true, |p| p.transparent)
+        self.get(id).is_none_or(|p| p.transparent)
     }
 
     /// Check if a block emits light.

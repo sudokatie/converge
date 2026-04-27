@@ -266,6 +266,10 @@ impl VectorFieldSimConfig {
     }
 
     /// Create configs for all channels with default settings.
+    ///
+    /// # Panics
+    ///
+    /// Panics if internal channel indexing is inconsistent (should never happen).
     #[must_use]
     pub fn all_defaults() -> [Self; VectorFieldChannel::COUNT] {
         std::array::from_fn(|i| {
@@ -282,6 +286,10 @@ impl VectorFieldSimConfig {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

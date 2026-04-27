@@ -37,6 +37,10 @@ pub struct AmbientSound {
 
 /// Ambient sound controller state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[expect(
+    dead_code,
+    reason = "public API for future ambient sound state querying"
+)]
 pub enum AmbientState {
     /// Playing an ambient sound.
     Playing,
@@ -109,12 +113,28 @@ impl AmbientSoundController {
 
     /// Get the list of ambient sounds for the current context.
     #[must_use]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "ambient sound logic is straightforward match arms"
+    )]
     pub fn current_ambient_sounds(&self) -> Vec<AmbientSound> {
         if self.underground {
             return vec![
-                AmbientSound { name: "cave_drip".into(), sound_id: 60, volume: 0.3 },
-                AmbientSound { name: "cave_wind".into(), sound_id: 61, volume: 0.15 },
-                AmbientSound { name: "lava_bubble".into(), sound_id: 62, volume: 0.2 },
+                AmbientSound {
+                    name: "cave_drip".into(),
+                    sound_id: 60,
+                    volume: 0.3,
+                },
+                AmbientSound {
+                    name: "cave_wind".into(),
+                    sound_id: 61,
+                    volume: 0.15,
+                },
+                AmbientSound {
+                    name: "lava_bubble".into(),
+                    sound_id: 62,
+                    volume: 0.2,
+                },
             ];
         }
 
@@ -122,61 +142,121 @@ impl AmbientSoundController {
 
         match self.current_biome {
             AmbientBiome::Plains => {
-                let mut sounds = vec![
-                    AmbientSound { name: "wind".into(), sound_id: 51, volume: 0.2 },
-                ];
-                if !is_night {
-                    sounds.push(AmbientSound { name: "bird".into(), sound_id: 63, volume: 0.25 });
+                let mut sounds = vec![AmbientSound {
+                    name: "wind".into(),
+                    sound_id: 51,
+                    volume: 0.2,
+                }];
+                if is_night {
+                    sounds.push(AmbientSound {
+                        name: "cricket".into(),
+                        sound_id: 64,
+                        volume: 0.15,
+                    });
                 } else {
-                    sounds.push(AmbientSound { name: "cricket".into(), sound_id: 64, volume: 0.15 });
+                    sounds.push(AmbientSound {
+                        name: "bird".into(),
+                        sound_id: 63,
+                        volume: 0.25,
+                    });
                 }
                 sounds
             }
             AmbientBiome::Forest => {
-                let mut sounds = vec![
-                    AmbientSound { name: "wind_leaves".into(), sound_id: 65, volume: 0.25 },
-                ];
-                if !is_night {
-                    sounds.push(AmbientSound { name: "bird".into(), sound_id: 63, volume: 0.3 });
-                    sounds.push(AmbientSound { name: "woodpecker".into(), sound_id: 66, volume: 0.15 });
+                let mut sounds = vec![AmbientSound {
+                    name: "wind_leaves".into(),
+                    sound_id: 65,
+                    volume: 0.25,
+                }];
+                if is_night {
+                    sounds.push(AmbientSound {
+                        name: "owl".into(),
+                        sound_id: 67,
+                        volume: 0.2,
+                    });
                 } else {
-                    sounds.push(AmbientSound { name: "owl".into(), sound_id: 67, volume: 0.2 });
+                    sounds.push(AmbientSound {
+                        name: "bird".into(),
+                        sound_id: 63,
+                        volume: 0.3,
+                    });
+                    sounds.push(AmbientSound {
+                        name: "woodpecker".into(),
+                        sound_id: 66,
+                        volume: 0.15,
+                    });
                 }
                 sounds
             }
             AmbientBiome::Desert => {
-                vec![
-                    AmbientSound { name: "desert_wind".into(), sound_id: 68, volume: 0.3 },
-                ]
+                vec![AmbientSound {
+                    name: "desert_wind".into(),
+                    sound_id: 68,
+                    volume: 0.3,
+                }]
             }
             AmbientBiome::Mountains => {
                 vec![
-                    AmbientSound { name: "mountain_wind".into(), sound_id: 69, volume: 0.35 },
-                    AmbientSound { name: "eagle".into(), sound_id: 70, volume: 0.1 },
+                    AmbientSound {
+                        name: "mountain_wind".into(),
+                        sound_id: 69,
+                        volume: 0.35,
+                    },
+                    AmbientSound {
+                        name: "eagle".into(),
+                        sound_id: 70,
+                        volume: 0.1,
+                    },
                 ]
             }
             AmbientBiome::Ocean => {
                 vec![
-                    AmbientSound { name: "waves".into(), sound_id: 71, volume: 0.4 },
-                    AmbientSound { name: "seagull".into(), sound_id: 72, volume: 0.15 },
+                    AmbientSound {
+                        name: "waves".into(),
+                        sound_id: 71,
+                        volume: 0.4,
+                    },
+                    AmbientSound {
+                        name: "seagull".into(),
+                        sound_id: 72,
+                        volume: 0.15,
+                    },
                 ]
             }
             AmbientBiome::Swamp => {
                 vec![
-                    AmbientSound { name: "swamp_bug".into(), sound_id: 73, volume: 0.2 },
-                    AmbientSound { name: "frog".into(), sound_id: 74, volume: 0.15 },
+                    AmbientSound {
+                        name: "swamp_bug".into(),
+                        sound_id: 73,
+                        volume: 0.2,
+                    },
+                    AmbientSound {
+                        name: "frog".into(),
+                        sound_id: 74,
+                        volume: 0.15,
+                    },
                 ]
             }
             AmbientBiome::Cave => {
                 vec![
-                    AmbientSound { name: "cave_drip".into(), sound_id: 60, volume: 0.3 },
-                    AmbientSound { name: "cave_wind".into(), sound_id: 61, volume: 0.15 },
+                    AmbientSound {
+                        name: "cave_drip".into(),
+                        sound_id: 60,
+                        volume: 0.3,
+                    },
+                    AmbientSound {
+                        name: "cave_wind".into(),
+                        sound_id: 61,
+                        volume: 0.15,
+                    },
                 ]
             }
             AmbientBiome::Nether => {
-                vec![
-                    AmbientSound { name: "nether_ambient".into(), sound_id: 75, volume: 0.3 },
-                ]
+                vec![AmbientSound {
+                    name: "nether_ambient".into(),
+                    sound_id: 75,
+                    volume: 0.3,
+                }]
             }
         }
     }

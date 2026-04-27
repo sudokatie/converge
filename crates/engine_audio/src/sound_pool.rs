@@ -17,7 +17,7 @@ const VOLUME_VARIATION: f32 = 0.05;
 
 /// A pool of sound variants for randomized playback.
 ///
-/// Each pool maps to a logical sound (e.g., "footstep_grass") and
+/// Each pool maps to a logical sound (e.g., `"footstep_grass"`) and
 /// contains multiple sound IDs that are randomly selected from.
 #[derive(Debug, Clone)]
 pub struct SoundPool {
@@ -68,7 +68,7 @@ impl SoundPool {
     /// Pick a random variant from the pool.
     ///
     /// Avoids repeating the same variant twice in a row.
-    /// Returns the SoundId and optional pitch/volume offsets.
+    /// Returns the `SoundId` and optional pitch/volume offsets.
     #[must_use]
     pub fn pick(&mut self) -> Option<PoolPick> {
         if self.variants.is_empty() {
@@ -87,10 +87,10 @@ impl SoundPool {
         // Pick random index, avoiding the last one played
         let mut rng = rand::thread_rng();
         let mut idx = rng.gen_range(0..self.variants.len());
-        if let Some(last) = self.last_index {
-            if idx == last {
-                idx = (idx + 1) % self.variants.len();
-            }
+        if let Some(last) = self.last_index
+            && idx == last
+        {
+            idx = (idx + 1) % self.variants.len();
         }
 
         self.last_index = Some(idx);
@@ -175,7 +175,7 @@ impl SoundPoolRegistry {
 
     /// Pick from a named pool.
     pub fn pick(&mut self, name: &str) -> Option<PoolPick> {
-        self.get_by_name_mut(name).and_then(|pool| pool.pick())
+        self.get_by_name_mut(name).and_then(SoundPool::pick)
     }
 
     /// Number of registered pools.
@@ -241,6 +241,10 @@ mod tests {
     }
 
     #[test]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "test uses small bounded indices"
+    )]
     fn test_max_pool_size() {
         let mut pool = SoundPool::new("test");
         for i in 0..MAX_POOL_SIZE + 5 {
@@ -292,6 +296,7 @@ mod tests {
     }
 
     #[test]
+    #[expect(clippy::float_cmp, reason = "testing exact zero initialization")]
     fn test_no_variation() {
         let mut pool = SoundPool::new("test");
         pool.pitch_variation = false;

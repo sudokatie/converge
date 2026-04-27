@@ -67,8 +67,7 @@ impl FluidKind {
     #[must_use]
     pub const fn default_temperature(self) -> f32 {
         match self {
-            FluidKind::Water => 20.0,
-            FluidKind::Gas => 20.0,
+            FluidKind::Water | FluidKind::Gas => 20.0,
             FluidKind::Slurry => 15.0,
             FluidKind::Lava => 1200.0,
         }
@@ -79,9 +78,8 @@ impl FluidKind {
     pub const fn evaporation_rate(self) -> f32 {
         match self {
             FluidKind::Water => 0.001,
-            FluidKind::Gas => 0.0,
+            FluidKind::Gas | FluidKind::Lava => 0.0,
             FluidKind::Slurry => 0.0005,
-            FluidKind::Lava => 0.0,
         }
     }
 
@@ -89,10 +87,8 @@ impl FluidKind {
     #[must_use]
     pub const fn evaporation_threshold(self) -> f32 {
         match self {
-            FluidKind::Water => 100.0,
-            FluidKind::Gas => f32::MAX,
-            FluidKind::Slurry => 100.0,
-            FluidKind::Lava => f32::MAX,
+            FluidKind::Water | FluidKind::Slurry => 100.0,
+            FluidKind::Gas | FluidKind::Lava => f32::MAX,
         }
     }
 

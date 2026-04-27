@@ -67,11 +67,11 @@ impl VectorFieldChannel {
     #[must_use]
     pub fn default_value(self) -> Vec3 {
         match self {
-            VectorFieldChannel::Wind => Vec3::ZERO,
-            VectorFieldChannel::WaterCurrent => Vec3::ZERO,
-            VectorFieldChannel::PressureGradient => Vec3::ZERO,
+            VectorFieldChannel::Wind
+            | VectorFieldChannel::WaterCurrent
+            | VectorFieldChannel::PressureGradient
+            | VectorFieldChannel::HazardSpread => Vec3::ZERO,
             VectorFieldChannel::GravityOverride => Vec3::new(0.0, -9.81, 0.0),
-            VectorFieldChannel::HazardSpread => Vec3::ZERO,
         }
     }
 
@@ -83,8 +83,7 @@ impl VectorFieldChannel {
         match self {
             VectorFieldChannel::Wind => Some(100.0),
             VectorFieldChannel::WaterCurrent => Some(20.0),
-            VectorFieldChannel::PressureGradient => None,
-            VectorFieldChannel::GravityOverride => None,
+            VectorFieldChannel::PressureGradient | VectorFieldChannel::GravityOverride => None,
             VectorFieldChannel::HazardSpread => Some(1.0),
         }
     }

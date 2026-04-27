@@ -49,6 +49,10 @@ impl CachedPath {
 
     /// Check if this path passes near a given position.
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "radius squared fits within f32 precision"
+    )]
     pub fn passes_near(&self, pos: IVec3, radius: i32) -> bool {
         let radius_sq = (radius * radius) as f32;
 
@@ -251,6 +255,10 @@ impl PathCache {
 
     /// Get hit rate as a fraction (0.0 to 1.0).
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "hit/miss counts are statistics where f64 precision is sufficient"
+    )]
     pub fn hit_rate(&self) -> f64 {
         let total = self.hits + self.misses;
         if total == 0 {
@@ -307,7 +315,11 @@ mod tests {
     #[test]
     fn test_invalidate_far_no_effect() {
         let mut cache = PathCache::new();
-        cache.store(IVec3::ZERO, IVec3::new(10, 0, 10), vec![IVec3::new(10, 0, 10)]);
+        cache.store(
+            IVec3::ZERO,
+            IVec3::new(10, 0, 10),
+            vec![IVec3::new(10, 0, 10)],
+        );
 
         // Change far from the path
         let count = cache.invalidate_near(IVec3::new(100, 0, 100));
@@ -330,6 +342,11 @@ mod tests {
     }
 
     #[test]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        reason = "test loop index is small and fits in i32"
+    )]
     fn test_max_cache_size() {
         let mut cache = PathCache::new();
         for i in 0..MAX_CACHE_SIZE + 10 {
@@ -353,6 +370,7 @@ mod tests {
     }
 
     #[test]
+    #[expect(clippy::float_cmp, reason = "exact zero comparison is valid here")]
     fn test_hit_rate_empty() {
         let cache = PathCache::new();
         assert_eq!(cache.hit_rate(), 0.0);

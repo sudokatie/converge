@@ -2,10 +2,10 @@
 
 use glam::Vec3;
 use kira::{
+    Volume,
     manager::{AudioManager as KiraManager, AudioManagerSettings, backend::DefaultBackend},
     sound::static_sound::StaticSoundHandle,
     tween::{Tween, Value},
-    Volume,
 };
 use std::collections::HashMap;
 use thiserror::Error;
@@ -13,11 +13,12 @@ use thiserror::Error;
 use crate::sound::{SoundId, SoundRegistry};
 
 /// Volume categories for separate volume controls.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum VolumeCategory {
     /// Master volume (affects all sounds).
     Master,
     /// Sound effects volume.
+    #[default]
     Effects,
     /// Music volume.
     Music,
@@ -25,12 +26,6 @@ pub enum VolumeCategory {
     Ambient,
     /// UI sounds volume.
     Ui,
-}
-
-impl Default for VolumeCategory {
-    fn default() -> Self {
-        Self::Effects
-    }
 }
 
 /// Errors from audio operations.
@@ -103,8 +98,8 @@ impl AudioManager {
     /// Returns error if audio backend fails to initialize.
     pub fn new() -> Result<Self, AudioError> {
         let settings = AudioManagerSettings::default();
-        let manager = KiraManager::<DefaultBackend>::new(settings)
-            .map_err(|_| AudioError::InitFailed)?;
+        let manager =
+            KiraManager::<DefaultBackend>::new(settings).map_err(|_| AudioError::InitFailed)?;
 
         let mut volumes = HashMap::new();
         volumes.insert(VolumeCategory::Master, 1.0);
@@ -210,7 +205,9 @@ impl AudioManager {
                 VolumeCategory::Ambient => ambient,
                 VolumeCategory::Ui => ui,
             };
-            let _ = playing.handle.set_volume(Volume::Amplitude(vol as f64), Tween::default());
+            playing
+                .handle
+                .set_volume(Volume::Amplitude(f64::from(vol)), Tween::default());
         }
     }
 
@@ -247,7 +244,7 @@ impl AudioManager {
         let manager = self.manager.as_mut()?;
         let volume = effective_vol * base_volume;
         let mut play_data = data;
-        play_data.settings.volume = Value::Fixed(Volume::Amplitude(volume as f64));
+        play_data.settings.volume = Value::Fixed(Volume::Amplitude(f64::from(volume)));
 
         let handle = manager.play(play_data).ok()?;
         let idx = self.playing.len();
@@ -281,7 +278,7 @@ impl AudioManager {
         let manager = self.manager.as_mut()?;
         let volume = effective_vol * base_volume * attenuation;
         let mut play_data = data;
-        play_data.settings.volume = Value::Fixed(Volume::Amplitude(volume as f64));
+        play_data.settings.volume = Value::Fixed(Volume::Amplitude(f64::from(volume)));
 
         // TODO: Add panning based on position relative to listener
 
@@ -298,14 +295,15 @@ impl AudioManager {
     /// Stop all sounds.
     pub fn stop_all(&mut self) {
         for playing in &mut self.playing {
-            let _ = playing.handle.stop(Tween::default());
+            playing.handle.stop(Tween::default());
         }
         self.playing.clear();
     }
 
     /// Clean up finished sounds.
     pub fn cleanup(&mut self) {
-        self.playing.retain(|p| p.handle.state() != kira::sound::PlaybackState::Stopped);
+        self.playing
+            .retain(|p| p.handle.state() != kira::sound::PlaybackState::Stopped);
     }
 
     /// Number of currently playing sounds.

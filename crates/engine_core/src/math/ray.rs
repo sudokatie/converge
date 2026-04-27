@@ -74,6 +74,6 @@ mod tests {
     #[test]
     fn test_with_max() {
         let ray = Ray::with_max(Vec3::ZERO, Vec3::X, 10.0);
-        assert_eq!(ray.t_max, 10.0);
+        assert_relative_eq!(ray.t_max, 10.0);
     }
 }

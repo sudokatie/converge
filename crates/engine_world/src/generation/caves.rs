@@ -6,6 +6,17 @@ use crate::chunk::{AIR, Chunk};
 
 use super::TerrainNoise;
 
+/// Convert a u32 local coordinate to i32 for world position calculation.
+///
+/// Local coordinates are always in range 0..16, so wrap is impossible.
+#[expect(
+    clippy::cast_possible_wrap,
+    reason = "local coords are 0..16, always fit in i32"
+)]
+const fn local_to_signed(local: u32) -> i32 {
+    local as i32
+}
+
 /// Threshold for cave carving (values below this become air).
 /// Higher values = more caves. Range is roughly -1 to 1.
 const CAVE_THRESHOLD: f64 = 0.0;
@@ -44,12 +55,12 @@ impl CaveCarver {
 
         for lz in 0..CHUNK_SIZE as u32 {
             for lx in 0..CHUNK_SIZE as u32 {
-                let world_x = chunk_pos.x() * CHUNK_SIZE + lx as i32;
-                let world_z = chunk_pos.z() * CHUNK_SIZE + lz as i32;
+                let world_x = chunk_pos.x() * CHUNK_SIZE + local_to_signed(lx);
+                let world_z = chunk_pos.z() * CHUNK_SIZE + local_to_signed(lz);
                 let surface_y = surface_heights[lz as usize][lx as usize];
 
                 for ly in 0..CHUNK_SIZE as u32 {
-                    let world_y = chunk_base_y + ly as i32;
+                    let world_y = chunk_base_y + local_to_signed(ly);
 
                     // Only carve if:
                     // 1. Below surface buffer
@@ -71,9 +82,11 @@ impl CaveCarver {
                     }
 
                     // Sample 3D noise at this position
-                    let noise_value =
-                        self.noise
-                            .sample_3d(world_x as f64, world_y as f64, world_z as f64);
+                    let noise_value = self.noise.sample_3d(
+                        f64::from(world_x),
+                        f64::from(world_y),
+                        f64::from(world_z),
+                    );
 
                     // Carve if below threshold
                     if noise_value < CAVE_THRESHOLD {
@@ -90,7 +103,9 @@ impl CaveCarver {
         if y < MIN_CAVE_Y {
             return false;
         }
-        let noise_value = self.noise.sample_3d(x as f64, y as f64, z as f64);
+        let noise_value = self
+            .noise
+            .sample_3d(f64::from(x), f64::from(y), f64::from(z));
         noise_value < CAVE_THRESHOLD
     }
 }
@@ -156,8 +171,7 @@ mod tests {
         // Surface buffer should prevent most caves near surface
         assert!(
             near_surface_air < 100,
-            "Too many caves near surface: {}",
-            near_surface_air
+            "Too many caves near surface: {near_surface_air}"
         );
     }
 

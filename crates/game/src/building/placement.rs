@@ -1,12 +1,12 @@
 //! Block placement and breaking.
 
 use engine_core::coords::WorldPos;
-use engine_physics::raycast::{dda_raycast, VoxelHit, VoxelWorld};
+use engine_physics::raycast::{VoxelHit, VoxelWorld, dda_raycast};
 use engine_render::camera::Camera;
 use engine_world::chunk::BlockId;
 use engine_world::manager::ChunkManager;
 
-use crate::inventory::{Inventory, INVENTORY_SIZE};
+use crate::inventory::{INVENTORY_SIZE, Inventory};
 
 /// Maximum interaction distance in blocks.
 pub const MAX_INTERACTION_DISTANCE: f32 = 5.0;
@@ -83,10 +83,10 @@ impl BlockInteraction {
         }
 
         // Resource cost check: if inventory provided, consume the block item
-        if let Some(inv) = inventory {
-            if !consume_block_item(inv, block) {
-                return false;
-            }
+        if let Some(inv) = inventory
+            && !consume_block_item(inv, block)
+        {
+            return false;
         }
 
         // Place the block
@@ -168,12 +168,13 @@ fn consume_block_item(inventory: &mut Inventory, block: BlockId) -> bool {
 
     // Search inventory for matching block item
     for slot in 0..INVENTORY_SIZE {
-        if let Some(stack) = inventory.get(slot) {
-            if stack.item_id == target_id && stack.count > 0 {
-                // Remove one item
-                inventory.remove(slot, 1);
-                return true;
-            }
+        if let Some(stack) = inventory.get(slot)
+            && stack.item_id == target_id
+            && stack.count > 0
+        {
+            // Remove one item
+            inventory.remove(slot, 1);
+            return true;
         }
     }
 
@@ -242,7 +243,10 @@ mod tests {
 
         interaction.update(&camera, &world);
 
-        assert!(!interaction.has_target(), "Should not find target in empty world");
+        assert!(
+            !interaction.has_target(),
+            "Should not find target in empty world"
+        );
     }
 
     #[test]
@@ -258,7 +262,11 @@ mod tests {
 
         // Preview should be in front of the hit block (toward camera)
         let preview = interaction.preview_pos.unwrap();
-        assert_eq!(preview, WorldPos::new(0, 0, 4), "Preview should be at z=4 (in front of block at z=5)");
+        assert_eq!(
+            preview,
+            WorldPos::new(0, 0, 4),
+            "Preview should be at z=4 (in front of block at z=5)"
+        );
     }
 
     #[test]
@@ -273,7 +281,7 @@ mod tests {
         };
 
         // Player at the preview position - should block placement
-        let player_positions = vec![WorldPos::new(0, 0, 4)];
+        let player_positions = [WorldPos::new(0, 0, 4)];
 
         // Verify the collision check logic
         assert!(interaction.preview_pos.is_some());
@@ -287,7 +295,10 @@ mod tests {
         // A block at (0,0,5) with neighbor at (1,0,5) should pass
         let pos_with_neighbor = WorldPos::new(0, 0, 5);
         let neighbor = WorldPos::new(1, 0, 5);
-        assert_ne!(pos_with_neighbor, neighbor, "Neighbor should be different position");
+        assert_ne!(
+            pos_with_neighbor, neighbor,
+            "Neighbor should be different position"
+        );
     }
 
     #[test]
@@ -301,6 +312,9 @@ mod tests {
 
         interaction.update(&camera, &world);
 
-        assert!(!interaction.has_target(), "Should not target block beyond max distance");
+        assert!(
+            !interaction.has_target(),
+            "Should not target block beyond max distance"
+        );
     }
 }

@@ -61,6 +61,10 @@ impl<'de> Deserialize<'de> for HazardLayer {
                     ));
                 }
 
+                #[expect(
+                    clippy::large_stack_arrays,
+                    reason = "Copy type array initialization, optimized by compiler"
+                )]
                 let mut cells = Box::new([HazardCell::INACTIVE; CHUNK_VOLUME]);
                 cells.copy_from_slice(&cells_vec);
 
@@ -86,6 +90,10 @@ impl std::fmt::Debug for HazardLayer {
 impl HazardLayer {
     /// Create a new empty hazard layer.
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Copy type array initialization, optimized by compiler"
+    )]
     pub fn new() -> Self {
         Self {
             cells: Box::new([HazardCell::INACTIVE; CHUNK_VOLUME]),
@@ -147,12 +155,16 @@ impl HazardLayer {
         &self.cells
     }
 
-    /// Get mutable access to cells (bypasses active_count tracking).
+    /// Get mutable access to cells (bypasses `active_count` tracking).
     pub fn cells_mut(&mut self) -> &mut [HazardCell; CHUNK_VOLUME] {
         &mut self.cells
     }
 
     /// Recalculate active count after direct cell modification.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME (4096) fits in u32"
+    )]
     pub fn recalculate_count(&mut self) {
         self.active_count = self.cells.iter().filter(|c| c.is_active()).count() as u32;
     }
@@ -255,13 +267,13 @@ impl ChunkHazards {
     /// Count allocated layers.
     #[must_use]
     pub fn allocated_count(&self) -> usize {
-        self.layers.iter().filter(|l| l.is_some()).count()
+        self.layers.iter().filter(|l| Option::is_some(l)).count()
     }
 
     /// Check if all layers are unallocated.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.layers.iter().all(|l| l.is_none())
+        self.layers.iter().all(Option::is_none)
     }
 
     /// Total active hazard cells across all layers.
@@ -270,11 +282,15 @@ impl ChunkHazards {
         self.layers
             .iter()
             .filter_map(|l| l.as_ref())
-            .map(|l| l.active_count())
+            .map(HazardLayer::active_count)
             .sum()
     }
 
     /// Iterate over all active hazards with kind and position.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic as it only iterates over valid layer indices.
     pub fn iter_all_active(&self) -> impl Iterator<Item = (HazardKind, LocalPos, HazardCell)> + '_ {
         self.layers
             .iter()
@@ -289,6 +305,10 @@ impl ChunkHazards {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

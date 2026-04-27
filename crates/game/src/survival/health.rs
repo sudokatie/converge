@@ -88,6 +88,11 @@ impl Health {
 
     /// Get health as half-hearts (0 to max*2).
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "health values are small positive floats"
+    )]
     pub fn half_hearts(&self) -> u32 {
         (self.current * 2.0).round().max(0.0) as u32
     }
@@ -223,8 +228,8 @@ mod tests {
     #[test]
     fn test_new_health() {
         let health = Health::new(20.0);
-        assert_eq!(health.current(), 20.0);
-        assert_eq!(health.max(), 20.0);
+        assert!((health.current() - 20.0).abs() < f32::EPSILON);
+        assert!((health.max() - 20.0).abs() < f32::EPSILON);
         assert!(health.is_full());
         assert!(health.is_alive());
         assert!(!health.is_dead());
@@ -257,7 +262,7 @@ mod tests {
 
         let died = health.damage(5.0, DamageSource::Attack);
         assert!(!died);
-        assert_eq!(health.current(), 15.0);
+        assert!((health.current() - 15.0).abs() < f32::EPSILON);
         assert_eq!(health.last_damage_source(), Some(DamageSource::Attack));
     }
 
@@ -268,7 +273,7 @@ mod tests {
         let died = health.damage(25.0, DamageSource::Fall);
         assert!(died);
         assert!(health.is_dead());
-        assert_eq!(health.current(), 0.0);
+        assert!(health.current().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -278,11 +283,11 @@ mod tests {
         // First damage applies and sets invincibility
         health.damage(5.0, DamageSource::Attack);
         assert!(health.is_invincible());
-        assert_eq!(health.current(), 15.0);
+        assert!((health.current() - 15.0).abs() < f32::EPSILON);
 
         // Second damage blocked by invincibility
         health.damage(5.0, DamageSource::Attack);
-        assert_eq!(health.current(), 15.0); // Unchanged
+        assert!((health.current() - 15.0).abs() < f32::EPSILON); // Unchanged
 
         // Tick down invincibility
         health.tick(0.6);
@@ -290,7 +295,7 @@ mod tests {
 
         // Now damage applies
         health.damage(5.0, DamageSource::Attack);
-        assert_eq!(health.current(), 10.0);
+        assert!((health.current() - 10.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -303,22 +308,22 @@ mod tests {
 
         // Absolute damage ignores invincibility
         health.damage_absolute(5.0, DamageSource::Void);
-        assert_eq!(health.current(), 10.0);
+        assert!((health.current() - 10.0).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_heal() {
         let mut health = Health::new(20.0);
         health.damage_absolute(15.0, DamageSource::Attack);
-        assert_eq!(health.current(), 5.0);
+        assert!((health.current() - 5.0).abs() < f32::EPSILON);
 
         let healed = health.heal(10.0);
-        assert_eq!(healed, 10.0);
-        assert_eq!(health.current(), 15.0);
+        assert!((healed - 10.0).abs() < f32::EPSILON);
+        assert!((health.current() - 15.0).abs() < f32::EPSILON);
 
         // Heal caps at max
         let healed = health.heal(10.0);
-        assert_eq!(healed, 5.0);
+        assert!((healed - 5.0).abs() < f32::EPSILON);
         assert!(health.is_full());
     }
 
@@ -330,7 +335,7 @@ mod tests {
 
         // Can't heal when dead
         let healed = health.heal(10.0);
-        assert_eq!(healed, 0.0);
+        assert!(healed.abs() < f32::EPSILON);
         assert!(health.is_dead());
     }
 
@@ -349,17 +354,17 @@ mod tests {
     #[test]
     fn test_set_max() {
         let mut health = Health::new(20.0);
-        assert_eq!(health.max(), 20.0);
+        assert!((health.max() - 20.0).abs() < f32::EPSILON);
 
         // Increase max
         health.set_max(40.0);
-        assert_eq!(health.max(), 40.0);
-        assert_eq!(health.current(), 20.0); // Current unchanged
+        assert!((health.max() - 40.0).abs() < f32::EPSILON);
+        assert!((health.current() - 20.0).abs() < f32::EPSILON); // Current unchanged
 
         // Decrease max below current
         health.set_max(10.0);
-        assert_eq!(health.max(), 10.0);
-        assert_eq!(health.current(), 10.0); // Current clamped
+        assert!((health.max() - 10.0).abs() < f32::EPSILON);
+        assert!((health.current() - 10.0).abs() < f32::EPSILON); // Current clamped
     }
 
     #[test]
@@ -369,12 +374,12 @@ mod tests {
         // Negative damage does nothing
         let died = health.damage(-5.0, DamageSource::Attack);
         assert!(!died);
-        assert_eq!(health.current(), 20.0);
+        assert!((health.current() - 20.0).abs() < f32::EPSILON);
 
         // Negative heal does nothing
         health.damage_absolute(10.0, DamageSource::Attack);
         let healed = health.heal(-5.0);
-        assert_eq!(healed, 0.0);
-        assert_eq!(health.current(), 10.0);
+        assert!(healed.abs() < f32::EPSILON);
+        assert!((health.current() - 10.0).abs() < f32::EPSILON);
     }
 }

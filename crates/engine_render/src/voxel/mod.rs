@@ -15,8 +15,8 @@ pub use dirty_tracker::ChunkDirtyTracker;
 
 pub use ambient_occlusion::calculate_ao;
 pub use chunk_mesh::{ChunkMesh, ChunkMeshCache};
-pub use greedy_mesh::{greedy_mesh, ChunkNeighbors};
+pub use greedy_mesh::{ChunkNeighbors, greedy_mesh};
 pub use mesh_builder::{MeshBuilder, Vertex};
-pub use texture_atlas::{TextureAtlas, TextureAtlasError, TEXTURE_SIZE};
+pub use texture_atlas::{TEXTURE_SIZE, TextureAtlas, TextureAtlasError};
 pub use voxel_pipeline::{CameraUniform, ChunkUniform, VoxelPipeline};
 pub use voxel_renderer::{DepthTexture, RenderStats, VoxelRenderer};

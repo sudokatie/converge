@@ -75,6 +75,10 @@ impl<'de> Deserialize<'de> for ChunkStructural {
                     ));
                 }
 
+                #[expect(
+                    clippy::large_stack_arrays,
+                    reason = "temporary array immediately moved to heap via Box"
+                )]
                 let mut cells = Box::new([StructuralCell::EMPTY; CHUNK_SIZE]);
                 cells.copy_from_slice(&cells_vec);
 
@@ -104,6 +108,10 @@ impl std::fmt::Debug for ChunkStructural {
 impl ChunkStructural {
     /// Create a new empty chunk (all cells are air/none).
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "temporary array immediately moved to heap via Box"
+    )]
     pub fn new() -> Self {
         Self {
             cells: Box::new([StructuralCell::EMPTY; CHUNK_SIZE]),
@@ -244,6 +252,11 @@ impl ChunkStructural {
 
     /// Sample structural state at fractional coordinates using nearest-neighbor.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "clamping to 0..15 ensures safe conversion"
+    )]
     pub fn sample(&self, x: f32, y: f32, z: f32) -> StructuralCell {
         let ix = (x.round() as i32).clamp(0, 15) as u32;
         let iy = (y.round() as i32).clamp(0, 15) as u32;

@@ -2,4 +2,4 @@
 
 mod capsule_aabb;
 
-pub use capsule_aabb::{capsule_aabb_intersection, Capsule, Contact};
+pub use capsule_aabb::{Capsule, Contact, capsule_aabb_intersection};

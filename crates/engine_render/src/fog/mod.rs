@@ -60,12 +60,7 @@ impl FogUniform {
         } else if sun_up > 0.0 {
             // Sunset/sunrise: warm orange-pink
             let t = sun_up / 0.4;
-            [
-                0.9 - 0.2 * t,
-                0.55 + 0.2 * t,
-                0.4 + 0.45 * t,
-                1.0,
-            ]
+            [0.9 - 0.2 * t, 0.55 + 0.2 * t, 0.4 + 0.45 * t, 1.0]
         } else {
             // Night: dark blue-grey
             [0.08, 0.08, 0.15, 1.0]
@@ -81,6 +76,10 @@ impl FogUniform {
         };
 
         // Scale distances to view distance
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "view distance is small; precision loss is acceptable"
+        )]
         let max_dist = (view_distance * 16) as f32; // chunks to blocks
         let start_distance = max_dist * 0.5;
         let end_distance = max_dist * 0.85;
@@ -148,7 +147,7 @@ impl FogConfig {
             density: uniform.density * self.density_multiplier,
             start_distance: uniform.start_distance * self.start_multiplier,
             end_distance: uniform.end_distance * self.end_multiplier,
-            enabled: if self.enabled { 1 } else { 0 },
+            enabled: u32::from(self.enabled),
             ..uniform
         }
     }
@@ -190,7 +189,12 @@ mod tests {
         let fog = FogUniform::from_time_of_day(0.74, 12);
         assert_eq!(fog.enabled, 1);
         // Sunset color should be warm (red > blue)
-        assert!(fog.color[0] > fog.color[2], "Sunset fog should be warm, got R={} B={}", fog.color[0], fog.color[2]);
+        assert!(
+            fog.color[0] > fog.color[2],
+            "Sunset fog should be warm, got R={} B={}",
+            fog.color[0],
+            fog.color[2]
+        );
     }
 
     #[test]
@@ -221,7 +225,6 @@ mod tests {
             density_multiplier: 2.0,
             start_multiplier: 0.5,
             end_multiplier: 1.5,
-            ..Default::default()
         };
 
         let base = FogUniform::from_time_of_day(0.5, 12);

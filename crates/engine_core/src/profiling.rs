@@ -104,7 +104,12 @@ impl FrameTimer {
 
         // Calculate average
         let sum: f32 = self.samples.iter().sum();
-        self.stats.avg_frame_time_ms = sum / self.samples.len() as f32;
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "sample count is small (max 120); precision loss is negligible"
+        )]
+        let count = self.samples.len() as f32;
+        self.stats.avg_frame_time_ms = sum / count;
 
         // Calculate min/max
         self.stats.min_frame_time_ms = self.samples.iter().copied().fold(f32::MAX, f32::min);

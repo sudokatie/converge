@@ -91,7 +91,7 @@ mod tests {
     fn test_new() {
         let p = Plane::new(Vec3::Y, 5.0);
         assert_relative_eq!(p.normal.length(), 1.0, epsilon = 1e-6);
-        assert_eq!(p.distance, 5.0);
+        assert_relative_eq!(p.distance, 5.0);
     }
 
     #[test]
@@ -117,8 +117,17 @@ mod tests {
     #[test]
     fn test_classify_point() {
         let p = Plane::new(Vec3::Y, 0.0);
-        assert_eq!(p.classify_point(Vec3::new(0.0, 1.0, 0.0), 0.001), PlaneSide::Front);
-        assert_eq!(p.classify_point(Vec3::new(0.0, -1.0, 0.0), 0.001), PlaneSide::Back);
-        assert_eq!(p.classify_point(Vec3::new(0.0, 0.0, 0.0), 0.001), PlaneSide::On);
+        assert_eq!(
+            p.classify_point(Vec3::new(0.0, 1.0, 0.0), 0.001),
+            PlaneSide::Front
+        );
+        assert_eq!(
+            p.classify_point(Vec3::new(0.0, -1.0, 0.0), 0.001),
+            PlaneSide::Back
+        );
+        assert_eq!(
+            p.classify_point(Vec3::new(0.0, 0.0, 0.0), 0.001),
+            PlaneSide::On
+        );
     }
 }

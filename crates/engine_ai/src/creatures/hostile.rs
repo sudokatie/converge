@@ -25,9 +25,10 @@ pub const PATROL_RADIUS: f32 = 8.0;
 pub const ALERT_DURATION: f32 = 5.0;
 
 /// State of a hostile creature.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HostileState {
     /// Patrolling around home area.
+    #[default]
     Patrol,
     /// Heard/saw something, investigating.
     Alert,
@@ -37,12 +38,6 @@ pub enum HostileState {
     Attack,
     /// Returning home after losing target.
     Returning,
-}
-
-impl Default for HostileState {
-    fn default() -> Self {
-        Self::Patrol
-    }
 }
 
 /// Result of an AI update tick.
@@ -160,9 +155,7 @@ impl HostileAI {
         self.attack_cooldown = (self.attack_cooldown - dt).max(0.0);
 
         // Check for target detection
-        let target_visible = target_pos
-            .map(|tp| self.has_line_of_sight(self_pos, tp))
-            .unwrap_or(false);
+        let target_visible = target_pos.is_some_and(|tp| self.has_line_of_sight(self_pos, tp));
 
         if target_visible {
             self.time_since_seen = 0.0;
@@ -172,11 +165,15 @@ impl HostileAI {
         }
 
         match self.state {
-            HostileState::Patrol => self.update_patrol(self_pos, target_pos, target_visible, rng_value),
+            HostileState::Patrol => {
+                self.update_patrol(self_pos, target_pos, target_visible, rng_value)
+            }
             HostileState::Alert => self.update_alert(self_pos, target_pos, target_visible),
             HostileState::Chase => self.update_chase(self_pos, target_pos, target_visible),
             HostileState::Attack => self.update_attack(self_pos, target_pos, target_visible),
-            HostileState::Returning => self.update_returning(self_pos, target_pos, target_visible, rng_value),
+            HostileState::Returning => {
+                self.update_returning(self_pos, target_pos, target_visible, rng_value)
+            }
         }
     }
 
@@ -229,14 +226,13 @@ impl HostileAI {
         target_pos: Option<Vec3>,
         target_visible: bool,
     ) -> HostileAction {
-        if target_visible {
-            if let Some(tp) = target_pos {
-                if self.can_detect(self_pos, tp) {
-                    // Target confirmed, start chase
-                    self.state = HostileState::Chase;
-                    return self.move_toward(self_pos, tp);
-                }
-            }
+        if target_visible
+            && let Some(tp) = target_pos
+            && self.can_detect(self_pos, tp)
+        {
+            // Target confirmed, start chase
+            self.state = HostileState::Chase;
+            return self.move_toward(self_pos, tp);
         }
 
         // Look around at last known position
@@ -346,14 +342,13 @@ impl HostileAI {
         rng_value: f32,
     ) -> HostileAction {
         // Check if we spot target while returning
-        if target_visible {
-            if let Some(tp) = target_pos {
-                // Only re-engage if not too far from home
-                if !self.too_far_from_home(self_pos) {
-                    self.state = HostileState::Chase;
-                    return self.move_toward(self_pos, tp);
-                }
-            }
+        if target_visible
+            && let Some(tp) = target_pos
+            && !self.too_far_from_home(self_pos)
+        {
+            // Only re-engage if not too far from home
+            self.state = HostileState::Chase;
+            return self.move_toward(self_pos, tp);
         }
 
         // Move toward home
@@ -382,6 +377,7 @@ impl HostileAI {
         )
     }
 
+    #[allow(clippy::unused_self)]
     fn move_toward(&self, self_pos: Vec3, target: Vec3) -> HostileAction {
         let to_target = target - self_pos;
         let dir = Vec3::new(to_target.x, 0.0, to_target.z).normalize_or_zero();
@@ -393,6 +389,7 @@ impl HostileAI {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn look_at(&self, self_pos: Vec3, target: Vec3) -> HostileAction {
         let to_target = target - self_pos;
         let dir = Vec3::new(to_target.x, 0.0, to_target.z).normalize_or_zero();
@@ -553,7 +550,13 @@ mod tests {
 
         assert_eq!(ai.state(), HostileState::Patrol);
         assert!(ai.last_target_pos.is_none());
-        assert_eq!(ai.attack_cooldown, 0.0);
+        #[expect(
+            clippy::float_cmp,
+            reason = "exact zero comparison after reset is valid"
+        )]
+        {
+            assert_eq!(ai.attack_cooldown, 0.0);
+        }
     }
 
     #[test]

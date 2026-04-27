@@ -65,6 +65,10 @@ impl<'de> Deserialize<'de> for ChunkAtmosphere {
                         &"4096 AtmosphereCell values",
                     ));
                 }
+                #[expect(
+                    clippy::large_stack_arrays,
+                    reason = "Copy type array initialization, optimized by compiler"
+                )]
                 let mut cells = Box::new([AtmosphereCell::outdoor(); CHUNK_VOLUME]);
                 cells.copy_from_slice(&vec);
                 Ok(Self { cells: Some(cells) })
@@ -90,6 +94,10 @@ impl ChunkAtmosphere {
 
     /// Create chunk atmosphere with all cells set to outdoor.
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Copy type array initialization, optimized by compiler"
+    )]
     pub fn with_outdoor() -> Self {
         Self {
             cells: Some(Box::new([AtmosphereCell::outdoor(); CHUNK_VOLUME])),
@@ -98,6 +106,10 @@ impl ChunkAtmosphere {
 
     /// Create chunk atmosphere filled with a specific cell state.
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Copy type array initialization, optimized by compiler"
+    )]
     pub fn filled(cell: AtmosphereCell) -> Self {
         Self {
             cells: Some(Box::new([cell; CHUNK_VOLUME])),
@@ -146,12 +158,21 @@ impl ChunkAtmosphere {
     }
 
     /// Get mutable reference to a cell, allocating if needed.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic under normal usage as it ensures
+    /// storage is allocated before access.
     pub fn get_mut(&mut self, pos: LocalPos) -> &mut AtmosphereCell {
         self.ensure_allocated();
         &mut self.cells.as_mut().expect("just allocated")[pos.to_index()]
     }
 
     /// Ensure storage is allocated with outdoor defaults.
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Copy type array initialization, optimized by compiler"
+    )]
     fn ensure_allocated(&mut self) {
         if self.cells.is_none() {
             self.cells = Some(Box::new([AtmosphereCell::outdoor(); CHUNK_VOLUME]));
@@ -161,10 +182,15 @@ impl ChunkAtmosphere {
     /// Get direct read-only access to cells if allocated.
     #[must_use]
     pub fn cells(&self) -> Option<&[AtmosphereCell; CHUNK_VOLUME]> {
-        self.cells.as_ref().map(|b| b.as_ref())
+        self.cells.as_ref().map(std::convert::AsRef::as_ref)
     }
 
     /// Get mutable access to cells, allocating if needed.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic under normal usage as it ensures
+    /// storage is allocated before access.
     pub fn cells_mut(&mut self) -> &mut [AtmosphereCell; CHUNK_VOLUME] {
         self.ensure_allocated();
         self.cells.as_mut().expect("just allocated")
@@ -214,10 +240,18 @@ impl ChunkAtmosphere {
     /// Returns interpolated seal quality, ventilation, and contamination.
     /// Layer is taken from the nearest cell (no interpolation for categorical).
     #[must_use]
+    #[expect(
+        clippy::similar_names,
+        reason = "trilinear interpolation uses standard naming v000..v111 and v00..v11"
+    )]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "coordinates clamped to [0, 15.999] guarantee safe u32 conversion"
+    )]
     pub fn sample(&self, x: f32, y: f32, z: f32) -> AtmosphereSample {
-        let cells = match &self.cells {
-            Some(c) => c,
-            None => return AtmosphereSample::outdoor(),
+        let Some(cells) = &self.cells else {
+            return AtmosphereSample::outdoor();
         };
 
         let x = x.clamp(0.0, 15.999);
@@ -282,20 +316,16 @@ impl ChunkAtmosphere {
     /// Modifies the provided field values for oxygen and pressure based on
     /// the atmosphere layer at each cell.
     pub fn apply_to_fields(&self, fields: &mut super::ChunkFields) {
-        match &self.cells {
-            Some(cells) => {
-                for (idx, cell) in cells.iter().enumerate() {
-                    let pos = LocalPos::from_index(idx);
-                    let layer = cell.layer();
+        if let Some(cells) = &self.cells {
+            for (idx, cell) in cells.iter().enumerate() {
+                let pos = LocalPos::from_index(idx);
+                let layer = cell.layer();
 
-                    fields.set(FieldChannel::Oxygen, pos, layer.default_oxygen());
-                    fields.set(FieldChannel::Pressure, pos, layer.default_pressure());
-                }
-            }
-            None => {
-                // Outdoor defaults already match field defaults for O2/pressure
+                fields.set(FieldChannel::Oxygen, pos, layer.default_oxygen());
+                fields.set(FieldChannel::Pressure, pos, layer.default_pressure());
             }
         }
+        // Outdoor defaults already match field defaults for O2/pressure
     }
 }
 
@@ -326,6 +356,11 @@ impl AtmosphereSample {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    reason = "tests check exact values; format args clearer with explicit args"
+)]
 mod tests {
     use super::*;
 

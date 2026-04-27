@@ -160,11 +160,16 @@ mod tests {
     use super::*;
 
     fn make_job(x: i32, fidelity: Fidelity, priority: i64) -> SimulationJob {
+        #[expect(
+            clippy::cast_possible_wrap,
+            reason = "test values are small, wrapping is acceptable"
+        )]
+        let distance = x.unsigned_abs() as i32;
         SimulationJob::new(
             ChunkPos::new(x, 0, 0),
             fidelity,
             0.1,
-            x.unsigned_abs() as i32,
+            distance,
             EnvironmentHint::NONE,
             priority,
         )
@@ -208,7 +213,7 @@ mod tests {
 
     #[test]
     fn job_ordering_stability() {
-        let mut jobs = vec![
+        let mut jobs = [
             make_job(10, Fidelity::Distant, 100),
             make_job(5, Fidelity::Immediate, 1000),
             make_job(3, Fidelity::Near, 500),

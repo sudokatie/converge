@@ -97,6 +97,10 @@ impl ItemTooltip {
 
     /// Get durability fraction (0.0 to 1.0).
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "durability values always small enough for f32"
+    )]
     pub fn durability_fraction(&self) -> Option<f32> {
         match (self.current_durability, self.max_durability) {
             (Some(cur), Some(max)) if max > 0 => Some(cur as f32 / max as f32),
@@ -132,6 +136,10 @@ impl ItemTooltip {
 }
 
 /// Draw an item tooltip at the cursor.
+#[expect(
+    clippy::missing_panics_doc,
+    reason = "unwraps guarded by durability_fraction check"
+)]
 pub fn draw_tooltip(ui: &mut egui::Ui, tooltip: &ItemTooltip) {
     let mut frame = egui::Frame::popup(ui.style());
     frame.fill = Color32::from_rgba_unmultiplied(20, 20, 30, 240);
@@ -141,7 +149,11 @@ pub fn draw_tooltip(ui: &mut egui::Ui, tooltip: &ItemTooltip) {
         ui.set_min_width(160.0);
 
         // Item name
-        ui.label(RichText::new(&tooltip.name).size(14.0).color(Color32::WHITE));
+        ui.label(
+            RichText::new(&tooltip.name)
+                .size(14.0)
+                .color(Color32::WHITE),
+        );
 
         // Category
         if !tooltip.category.is_empty() {
@@ -155,35 +167,34 @@ pub fn draw_tooltip(ui: &mut egui::Ui, tooltip: &ItemTooltip) {
         ui.add_space(4.0);
 
         // Durability bar
-        if let Some(frac) = tooltip.durability_fraction() {
-            if let Some(color) = tooltip.durability_color() {
-                let label = format!(
-                    "Durability: {}/{}",
-                    tooltip.current_durability.unwrap(),
-                    tooltip.max_durability.unwrap()
-                );
-                ui.label(RichText::new(label).size(11.0).color(color));
+        if let Some(frac) = tooltip.durability_fraction()
+            && let Some(color) = tooltip.durability_color()
+        {
+            let label = format!(
+                "Durability: {}/{}",
+                tooltip.current_durability.unwrap(),
+                tooltip.max_durability.unwrap()
+            );
+            ui.label(RichText::new(label).size(11.0).color(color));
 
-                let bar_width = 140.0;
-                let bar_height = 4.0;
-                let (rect, _) = ui.allocate_exact_size(
-                    egui::vec2(bar_width, bar_height),
-                    egui::Sense::hover(),
-                );
-                let bg_rect = rect;
-                let fill_rect = egui::Rect::from_min_max(
-                    rect.left_top(),
-                    egui::pos2(rect.left() + bar_width * frac, rect.bottom()),
-                );
-                ui.painter().rect_filled(bg_rect, 0.0, Color32::from_rgb(40, 40, 40));
-                ui.painter().rect_filled(fill_rect, 0.0, color);
-            }
+            let bar_width = 140.0;
+            let bar_height = 4.0;
+            let (rect, _) =
+                ui.allocate_exact_size(egui::vec2(bar_width, bar_height), egui::Sense::hover());
+            let bg_rect = rect;
+            let fill_rect = egui::Rect::from_min_max(
+                rect.left_top(),
+                egui::pos2(rect.left() + bar_width * frac, rect.bottom()),
+            );
+            ui.painter()
+                .rect_filled(bg_rect, 0.0, Color32::from_rgb(40, 40, 40));
+            ui.painter().rect_filled(fill_rect, 0.0, color);
         }
 
         // Stats
         if let Some(speed) = tooltip.mining_speed {
             ui.label(
-                RichText::new(format!("Mining Speed: {:.1}", speed))
+                RichText::new(format!("Mining Speed: {speed:.1}"))
                     .size(11.0)
                     .color(Color32::LIGHT_BLUE),
             );
@@ -191,7 +202,7 @@ pub fn draw_tooltip(ui: &mut egui::Ui, tooltip: &ItemTooltip) {
 
         if let Some(dmg) = tooltip.damage {
             ui.label(
-                RichText::new(format!("Attack Damage: {:.1}", dmg))
+                RichText::new(format!("Attack Damage: {dmg:.1}"))
                     .size(11.0)
                     .color(Color32::from_rgb(255, 100, 100)),
             );
@@ -199,7 +210,7 @@ pub fn draw_tooltip(ui: &mut egui::Ui, tooltip: &ItemTooltip) {
 
         if let Some(food) = tooltip.food_value {
             ui.label(
-                RichText::new(format!("Food: {:.0}", food))
+                RichText::new(format!("Food: {food:.0}"))
                     .size(11.0)
                     .color(Color32::from_rgb(200, 150, 50)),
             );

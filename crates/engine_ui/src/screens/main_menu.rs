@@ -58,12 +58,14 @@ impl WorldInfo {
     }
 
     /// Set last played timestamp.
+    #[must_use]
     pub fn with_last_played(mut self, timestamp: impl Into<String>) -> Self {
         self.last_played = Some(timestamp.into());
         self
     }
 
     /// Set seed display.
+    #[must_use]
     pub fn with_seed(mut self, seed: impl Into<String>) -> Self {
         self.seed = Some(seed.into());
         self
@@ -172,23 +174,21 @@ impl MainMenuScreen {
             }
 
             // View content
-            ui.vertical_centered(|ui| {
-                match self.view {
-                    MainMenuView::Main => {
-                        action = self.draw_main_view(ui);
-                    }
-                    MainMenuView::Singleplayer => {
-                        action = self.draw_singleplayer_view(ui);
-                    }
-                    MainMenuView::CreateWorld => {
-                        action = self.draw_create_world_view(ui);
-                    }
-                    MainMenuView::Multiplayer => {
-                        action = self.draw_multiplayer_view(ui);
-                    }
-                    MainMenuView::ConfirmDelete => {
-                        action = self.draw_confirm_delete_view(ui);
-                    }
+            ui.vertical_centered(|ui| match self.view {
+                MainMenuView::Main => {
+                    action = self.draw_main_view(ui);
+                }
+                MainMenuView::Singleplayer => {
+                    action = self.draw_singleplayer_view(ui);
+                }
+                MainMenuView::CreateWorld => {
+                    action = self.draw_create_world_view(ui);
+                }
+                MainMenuView::Multiplayer => {
+                    action = self.draw_multiplayer_view(ui);
+                }
+                MainMenuView::ConfirmDelete => {
+                    action = self.draw_confirm_delete_view(ui);
                 }
             });
 
@@ -249,24 +249,22 @@ impl MainMenuScreen {
         ui.add_space(16.0);
 
         // World list
-        ScrollArea::vertical()
-            .max_height(200.0)
-            .show(ui, |ui| {
-                for (idx, world) in self.worlds.iter().enumerate() {
-                    let is_selected = self.selected_world == Some(idx);
-                    let response = ui.selectable_label(is_selected, &world.name);
-                    if response.clicked() {
-                        self.selected_world = Some(idx);
-                    }
-                    if let Some(ref last_played) = world.last_played {
-                        ui.label(RichText::new(format!("  Last played: {last_played}")).size(12.0));
-                    }
+        ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
+            for (idx, world) in self.worlds.iter().enumerate() {
+                let is_selected = self.selected_world == Some(idx);
+                let response = ui.selectable_label(is_selected, &world.name);
+                if response.clicked() {
+                    self.selected_world = Some(idx);
                 }
+                if let Some(ref last_played) = world.last_played {
+                    ui.label(RichText::new(format!("  Last played: {last_played}")).size(12.0));
+                }
+            }
 
-                if self.worlds.is_empty() {
-                    ui.label(RichText::new("No worlds found").color(Color32::GRAY));
-                }
-            });
+            if self.worlds.is_empty() {
+                ui.label(RichText::new("No worlds found").color(Color32::GRAY));
+            }
+        });
 
         ui.add_space(16.0);
 

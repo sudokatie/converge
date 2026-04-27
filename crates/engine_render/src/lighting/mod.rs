@@ -9,11 +9,10 @@ mod light_uniform;
 mod light_update;
 mod point_light;
 
-pub use block_light::{BlockLightMap, LightValue, LIGHT_MAX};
+pub use block_light::{BlockLightMap, LIGHT_MAX, LightValue};
 pub use directional::DirectionalLight;
 pub use light_uniform::{LightUniform, LightUniformBuffer};
 pub use light_update::{
-    LightUpdate, LightUpdateManager, affected_positions, is_affected,
-    LIGHT_INVALIDATION_RADIUS,
+    LIGHT_INVALIDATION_RADIUS, LightUpdate, LightUpdateManager, affected_positions, is_affected,
 };
-pub use point_light::{PointLight, PointLightManager, MAX_POINT_LIGHTS};
+pub use point_light::{MAX_POINT_LIGHTS, PointLight, PointLightManager};

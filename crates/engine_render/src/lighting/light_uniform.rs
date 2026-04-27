@@ -4,10 +4,9 @@
 //! that can be bound to the voxel rendering pipeline.
 
 use bytemuck::{Pod, Zeroable};
-use glam::Vec3;
 
 use super::directional::DirectionalLight;
-use super::point_light::{PointLightGpuData, PointLightManager, MAX_POINT_LIGHTS};
+use super::point_light::{MAX_POINT_LIGHTS, PointLightGpuData, PointLightManager};
 
 /// GPU-friendly directional light data.
 #[repr(C)]
@@ -61,7 +60,11 @@ pub struct LightUniform {
     pub ambient_intensity: f32,
     /// Number of active point lights.
     pub num_point_lights: u32,
-    /// Padding for alignment.
+    /// Padding for alignment (required for GPU uniform buffer layout).
+    #[expect(
+        clippy::pub_underscore_fields,
+        reason = "padding field must be pub for bytemuck derive but is intentionally unused"
+    )]
     pub _padding0: [u32; 3],
     /// Point light data (max 64).
     pub point_lights: [PointLightGpuData; MAX_POINT_LIGHTS],
@@ -103,7 +106,13 @@ impl LightUniform {
 
         // Copy active point lights
         let active_data = point_manager.active_light_data();
-        uniform.num_point_lights = active_data.len() as u32;
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "active_data is bounded by MAX_POINT_LIGHTS (64)"
+        )]
+        {
+            uniform.num_point_lights = active_data.len() as u32;
+        }
         for (i, light_data) in active_data.into_iter().enumerate() {
             if i < MAX_POINT_LIGHTS {
                 uniform.point_lights[i] = light_data;
@@ -114,11 +123,7 @@ impl LightUniform {
     }
 
     /// Update from new light data.
-    pub fn update(
-        &mut self,
-        directional: &DirectionalLight,
-        point_manager: &PointLightManager,
-    ) {
+    pub fn update(&mut self, directional: &DirectionalLight, point_manager: &PointLightManager) {
         self.dir_direction = directional.direction.to_array();
         self.dir_color = directional.color.to_array();
         self.dir_light_view_proj = directional.light_view_proj.to_cols_array_2d();
@@ -134,7 +139,13 @@ impl LightUniform {
 
         // Update point lights
         let active_data = point_manager.active_light_data();
-        self.num_point_lights = active_data.len() as u32;
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "active_data is bounded by MAX_POINT_LIGHTS (64)"
+        )]
+        {
+            self.num_point_lights = active_data.len() as u32;
+        }
 
         // Clear all slots first
         for slot in &mut self.point_lights {
@@ -174,11 +185,7 @@ impl LightUniformBuffer {
     }
 
     /// Update the buffer with current light data.
-    pub fn update(
-        &mut self,
-        directional: &DirectionalLight,
-        point_manager: &PointLightManager,
-    ) {
+    pub fn update(&mut self, directional: &DirectionalLight, point_manager: &PointLightManager) {
         self.data.update(directional, point_manager);
         self.dirty = true;
     }
@@ -212,6 +219,7 @@ mod tests {
     use super::*;
     use crate::lighting::directional::DirectionalLight;
     use crate::lighting::point_light::PointLight;
+    use glam::Vec3;
 
     #[test]
     fn test_default_light_uniform() {
@@ -237,7 +245,10 @@ mod tests {
             + uniform.dir_direction[1].powi(2)
             + uniform.dir_direction[2].powi(2))
         .sqrt();
-        assert!(dir_len > 0.99 && dir_len < 1.01, "Direction should be normalized");
+        assert!(
+            dir_len > 0.99 && dir_len < 1.01,
+            "Direction should be normalized"
+        );
 
         // Should have one active point light
         assert_eq!(uniform.num_point_lights, 1);

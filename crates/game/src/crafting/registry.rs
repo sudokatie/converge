@@ -25,7 +25,7 @@ pub enum CraftingStation {
 /// An ingredient in a recipe (item + count).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ingredient {
-    /// Item name (resolved to ItemId at runtime).
+    /// Item name (resolved to `ItemId` at runtime).
     pub item: String,
     /// Required count.
     pub count: u32,
@@ -34,7 +34,7 @@ pub struct Ingredient {
 /// Output of a recipe.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RecipeOutput {
-    /// Item name (resolved to ItemId at runtime).
+    /// Item name (resolved to `ItemId` at runtime).
     pub item: String,
     /// Output count.
     pub count: u32,
@@ -57,12 +57,12 @@ pub struct RecipeDef {
     pub category: Option<String>,
 }
 
-/// A resolved recipe with ItemIds.
+/// A resolved recipe with `ItemId`s.
 #[derive(Clone, Debug)]
 pub struct Recipe {
     /// Unique recipe ID.
     pub id: String,
-    /// Required inputs (resolved to ItemIds).
+    /// Required inputs (resolved to `ItemId`s).
     pub inputs: Vec<(ItemId, u32)>,
     /// Output item and count.
     pub output: (ItemId, u32),
@@ -112,8 +112,7 @@ impl RecipeRegistry {
     ///
     /// Returns an error if parsing fails or item names are invalid.
     pub fn from_ron(content: &str, items: &ItemRegistry) -> Result<Self> {
-        let defs: Vec<RecipeDef> = ron::from_str(content)
-            .context("Failed to parse recipes RON")?;
+        let defs: Vec<RecipeDef> = ron::from_str(content).context("Failed to parse recipes RON")?;
 
         let mut registry = Self::new();
 
@@ -121,20 +120,19 @@ impl RecipeRegistry {
             // Resolve input items
             let mut inputs = Vec::with_capacity(def.inputs.len());
             for ingredient in &def.inputs {
-                let item_id = items
-                    .by_name(&ingredient.item)
-                    .with_context(|| {
-                        format!("Unknown item '{}' in recipe '{}'", ingredient.item, def.id)
-                    })?;
+                let item_id = items.by_name(&ingredient.item).with_context(|| {
+                    format!("Unknown item '{}' in recipe '{}'", ingredient.item, def.id)
+                })?;
                 inputs.push((item_id, ingredient.count));
             }
 
             // Resolve output item
-            let output_id = items
-                .by_name(&def.output.item)
-                .with_context(|| {
-                    format!("Unknown output item '{}' in recipe '{}'", def.output.item, def.id)
-                })?;
+            let output_id = items.by_name(&def.output.item).with_context(|| {
+                format!(
+                    "Unknown output item '{}' in recipe '{}'",
+                    def.output.item, def.id
+                )
+            })?;
             let output = (output_id, def.output.count);
 
             let recipe = Recipe {
@@ -191,9 +189,10 @@ impl RecipeRegistry {
             }
 
             // Check all inputs are available
-            recipe.inputs.iter().all(|(item_id, count)| {
-                inventory.count_item(*item_id) >= *count
-            })
+            recipe
+                .inputs
+                .iter()
+                .all(|(item_id, count)| inventory.count_item(*item_id) >= *count)
         })
     }
 
@@ -214,10 +213,11 @@ impl RecipeRegistry {
     /// Check if a specific recipe can be crafted.
     #[must_use]
     pub fn can_craft(&self, id: &str, inventory: &Inventory) -> bool {
-        self.get(id).map_or(false, |recipe| {
-            recipe.inputs.iter().all(|(item_id, count)| {
-                inventory.count_item(*item_id) >= *count
-            })
+        self.get(id).is_some_and(|recipe| {
+            recipe
+                .inputs
+                .iter()
+                .all(|(item_id, count)| inventory.count_item(*item_id) >= *count)
         })
     }
 
@@ -296,7 +296,7 @@ mod tests {
     #[test]
     fn test_get_by_id() {
         let (items, recipes) = setup();
-        
+
         let recipe = recipes.get("oak_planks").unwrap();
         assert_eq!(recipe.inputs.len(), 1);
         assert_eq!(recipe.inputs[0], (items.by_name("Oak Log").unwrap(), 1));
@@ -331,10 +331,10 @@ mod tests {
         ));
 
         let available: Vec<_> = recipes.available(&inventory, None).collect();
-        
+
         // Should be able to craft oak_planks (1 log -> 4 planks)
         assert!(available.iter().any(|r| r.id == "oak_planks"));
-        
+
         // Should NOT be able to craft sticks (need planks)
         assert!(!available.iter().any(|r| r.id == "sticks"));
     }
@@ -392,7 +392,7 @@ mod tests {
         assert!(hand.iter().any(|r| r.id == "oak_planks"));
         assert!(hand.iter().any(|r| r.id == "torch"));
         // Pickaxe requires table, but None returns it too (station-less always accessible)
-        
+
         // Crafting table recipes (includes hand recipes too)
         let table: Vec<_> = recipes
             .for_station(Some(CraftingStation::CraftingTable))

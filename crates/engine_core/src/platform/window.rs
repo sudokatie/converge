@@ -32,7 +32,7 @@ pub struct WindowConfig {
     pub height: u32,
     /// Start in fullscreen mode.
     pub fullscreen: bool,
-    /// Enable VSync (hint only, actual VSync is set in renderer).
+    /// Enable vsync (hint only, actual vsync is set in renderer).
     pub vsync: bool,
     /// Allow window resizing.
     pub resizable: bool,
@@ -239,7 +239,7 @@ where
             }
             winit::event::WindowEvent::MouseWheel { delta, .. } => {
                 let (dx, dy) = match delta {
-                    winit::event::MouseScrollDelta::LineDelta(x, y) => (x as f64, y as f64),
+                    winit::event::MouseScrollDelta::LineDelta(x, y) => (f64::from(x), f64::from(y)),
                     winit::event::MouseScrollDelta::PixelDelta(pos) => (pos.x, pos.y),
                 };
                 (self.callback)(
@@ -267,6 +267,7 @@ where
 ///
 /// # Errors
 /// Returns an error if the event loop fails to start.
+#[expect(dead_code, reason = "public API for future application entry point")]
 pub fn run<F>(config: WindowConfig, callback: F) -> Result<(), WindowError>
 where
     F: FnMut(&mut Window, WindowEvent),

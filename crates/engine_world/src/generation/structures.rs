@@ -6,6 +6,7 @@ use super::Biome;
 
 /// Block IDs for structure generation.
 pub mod blocks {
+    #[expect(dead_code, reason = "reserved for future structure placement")]
     pub const AIR: u16 = 0;
     pub const OAK_LOG: u16 = 6;
     pub const OAK_LEAVES: u16 = 7;
@@ -178,8 +179,7 @@ impl Structure {
     #[must_use]
     pub fn tree_for_biome(biome: Biome) -> Option<Self> {
         match biome {
-            Biome::Plains => Some(Self::oak_tree()),
-            Biome::Forest => Some(Self::oak_tree()), // Could randomize oak/birch
+            Biome::Plains | Biome::Forest => Some(Self::oak_tree()),
             Biome::Mountains => Some(Self::birch_tree()),
             Biome::Desert => Some(Self::cactus(2)),
             Biome::Ocean => None,
@@ -202,7 +202,11 @@ impl Structure {
 
     /// Get blocks that fall within a specific chunk.
     ///
-    /// Returns (local_pos, block_id) pairs for blocks in the chunk.
+    /// Returns (`LocalPos`, block ID) pairs for blocks in the chunk.
+    #[expect(
+        clippy::cast_sign_loss,
+        reason = "bounds check ensures lx/ly/lz are non-negative before cast"
+    )]
     pub fn blocks_in_chunk(&self, origin: WorldPos, chunk_pos: ChunkPos) -> Vec<(LocalPos, u16)> {
         let chunk_min_x = chunk_pos.x() * CHUNK_SIZE;
         let chunk_min_y = chunk_pos.y() * CHUNK_SIZE;
@@ -220,12 +224,9 @@ impl Structure {
                 let ly = wy - chunk_min_y;
                 let lz = wz - chunk_min_z;
 
-                if lx >= 0
-                    && lx < CHUNK_SIZE
-                    && ly >= 0
-                    && ly < CHUNK_SIZE
-                    && lz >= 0
-                    && lz < CHUNK_SIZE
+                if (0..CHUNK_SIZE).contains(&lx)
+                    && (0..CHUNK_SIZE).contains(&ly)
+                    && (0..CHUNK_SIZE).contains(&lz)
                 {
                     Some((LocalPos::new(lx as u32, ly as u32, lz as u32), sb.block))
                 } else {
@@ -238,13 +239,21 @@ impl Structure {
 
 /// Simple deterministic random for structure placement.
 #[must_use]
+#[expect(
+    clippy::cast_sign_loss,
+    reason = "hash function intentionally uses wrapping arithmetic on signed values"
+)]
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "16-bit value fits precisely in f32 mantissa"
+)]
 pub fn structure_random(x: i32, z: i32, seed: u64) -> f32 {
     // Simple hash-based random
     let mut h = seed.wrapping_mul(31337);
-    h = h.wrapping_add(x as u64 * 73856093);
-    h = h.wrapping_add(z as u64 * 19349663);
+    h = h.wrapping_add(x as u64 * 73_856_093);
+    h = h.wrapping_add(z as u64 * 19_349_663);
     h ^= h >> 17;
-    h = h.wrapping_mul(0xed5ad4bb);
+    h = h.wrapping_mul(0xed5a_d4bb);
     h ^= h >> 11;
 
     (h & 0xFFFF) as f32 / 65535.0
@@ -331,10 +340,11 @@ mod tests {
         let r1 = structure_random(10, 20, 12345);
         let r2 = structure_random(10, 20, 12345);
 
-        assert_eq!(r1, r2);
+        assert!((r1 - r2).abs() < f32::EPSILON);
     }
 
     #[test]
+    #[expect(clippy::cast_precision_loss, reason = "samples count fits in f32")]
     fn test_structure_random_distribution() {
         let mut sum = 0.0;
         let samples = 1000;
@@ -345,7 +355,7 @@ mod tests {
 
         let avg = sum / samples as f32;
         // Should be roughly centered around 0.5
-        assert!(avg > 0.4 && avg < 0.6, "Average was {}", avg);
+        assert!(avg > 0.4 && avg < 0.6, "Average was {avg}");
     }
 
     #[test]

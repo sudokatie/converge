@@ -37,10 +37,16 @@ impl ChunkMesh {
             usage: wgpu::BufferUsages::INDEX,
         });
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "mesh index count is bounded by practical limits far below u32::MAX"
+        )]
+        let index_count = builder.index_count() as u32;
+
         Self {
             vertex_buffer,
             index_buffer,
-            index_count: builder.index_count() as u32,
+            index_count,
             position,
         }
     }

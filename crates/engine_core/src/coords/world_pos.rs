@@ -3,7 +3,7 @@
 use glam::IVec3;
 use serde::{Deserialize, Serialize};
 
-use super::{ChunkPos, LocalPos, CHUNK_SIZE};
+use super::{CHUNK_SIZE, ChunkPos, LocalPos};
 
 /// Global voxel position in the world.
 ///
@@ -41,10 +41,17 @@ impl WorldPos {
     /// Create a world position from chunk and local coordinates.
     #[must_use]
     pub fn from_chunk_and_local(chunk: ChunkPos, local: LocalPos) -> Self {
+        #[expect(
+            clippy::cast_possible_wrap,
+            reason = "local coords are 0..CHUNK_SIZE (0..16) which never wraps"
+        )]
+        fn u32_to_i32(x: u32) -> i32 {
+            x as i32
+        }
         Self(IVec3::new(
-            chunk.0.x * CHUNK_SIZE + local.0.x as i32,
-            chunk.0.y * CHUNK_SIZE + local.0.y as i32,
-            chunk.0.z * CHUNK_SIZE + local.0.z as i32,
+            chunk.0.x * CHUNK_SIZE + u32_to_i32(local.0.x),
+            chunk.0.y * CHUNK_SIZE + u32_to_i32(local.0.y),
+            chunk.0.z * CHUNK_SIZE + u32_to_i32(local.0.z),
         ))
     }
 

@@ -2,4 +2,4 @@
 
 mod dda;
 
-pub use dda::{dda_raycast, VoxelHit, VoxelWorld};
+pub use dda::{VoxelHit, VoxelWorld, dda_raycast};

@@ -16,7 +16,7 @@ pub fn calculate_ao(side1: bool, side2: bool, corner: bool) -> u8 {
         0
     } else {
         // Count solid neighbors
-        3 - (side1 as u8 + side2 as u8 + corner as u8)
+        3 - (u8::from(side1) + u8::from(side2) + u8::from(corner))
     }
 }
 

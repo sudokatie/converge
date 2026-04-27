@@ -63,7 +63,7 @@ pub enum ControlSetting {
 pub struct VideoSettings {
     /// Fullscreen mode.
     pub fullscreen: bool,
-    /// VSync enabled.
+    /// `VSync` enabled.
     pub vsync: bool,
     /// View distance in chunks.
     pub view_distance: i32,
@@ -145,6 +145,7 @@ impl ControlBinding {
     }
 
     /// Add a secondary binding.
+    #[must_use]
     pub fn with_secondary(mut self, key: impl Into<String>) -> Self {
         self.secondary = Some(key.into());
         self
@@ -291,7 +292,7 @@ impl SettingsScreen {
             // Update the binding in our list
             for binding in &mut self.controls.bindings {
                 if binding.action_id == action {
-                    binding.primary = key.clone();
+                    binding.primary.clone_from(&key);
                     break;
                 }
             }
@@ -389,7 +390,10 @@ impl SettingsScreen {
         ui.add_space(8.0);
 
         // Fullscreen
-        if ui.checkbox(&mut self.video.fullscreen, "Fullscreen").changed() {
+        if ui
+            .checkbox(&mut self.video.fullscreen, "Fullscreen")
+            .changed()
+        {
             self.has_changes = true;
             action = Some(SettingsAction::VideoChanged(VideoSetting::Fullscreen(
                 self.video.fullscreen,
@@ -413,7 +417,7 @@ impl SettingsScreen {
             ui.label("View Distance:");
             let slider = Slider::new(&mut self.video.view_distance, 4..=24)
                 .suffix(" chunks")
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::VideoChanged(VideoSetting::ViewDistance(
@@ -427,7 +431,7 @@ impl SettingsScreen {
             ui.label("Field of View:");
             let slider = Slider::new(&mut self.video.fov, 60.0..=120.0)
                 .suffix("deg")
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::VideoChanged(VideoSetting::Fov(
@@ -439,6 +443,10 @@ impl SettingsScreen {
         action
     }
 
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "percentage display truncation is intentional"
+    )]
     fn draw_audio_tab(&mut self, ui: &mut egui::Ui) -> Option<SettingsAction> {
         let mut action = None;
 
@@ -450,7 +458,7 @@ impl SettingsScreen {
             ui.label("Master:");
             let slider = Slider::new(&mut self.audio.master, 0.0..=1.0)
                 .show_value(false)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::AudioChanged(AudioSetting::MasterVolume(
@@ -465,7 +473,7 @@ impl SettingsScreen {
             ui.label("Effects:");
             let slider = Slider::new(&mut self.audio.effects, 0.0..=1.0)
                 .show_value(false)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::AudioChanged(AudioSetting::EffectsVolume(
@@ -480,7 +488,7 @@ impl SettingsScreen {
             ui.label("Music:");
             let slider = Slider::new(&mut self.audio.music, 0.0..=1.0)
                 .show_value(false)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::AudioChanged(AudioSetting::MusicVolume(
@@ -495,7 +503,7 @@ impl SettingsScreen {
             ui.label("Ambient:");
             let slider = Slider::new(&mut self.audio.ambient, 0.0..=1.0)
                 .show_value(false)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::AudioChanged(AudioSetting::AmbientVolume(
@@ -510,7 +518,7 @@ impl SettingsScreen {
             ui.label("Interface:");
             let slider = Slider::new(&mut self.audio.ui, 0.0..=1.0)
                 .show_value(false)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::AudioChanged(AudioSetting::UiVolume(
@@ -534,7 +542,7 @@ impl SettingsScreen {
             ui.label("Sensitivity:");
             let slider = Slider::new(&mut self.controls.mouse_sensitivity, 0.01..=1.0)
                 .logarithmic(true)
-                .clamp_to_range(true);
+                .clamping(egui::SliderClamping::Always);
             if ui.add(slider).changed() {
                 self.has_changes = true;
                 action = Some(SettingsAction::ControlChanged(
@@ -561,8 +569,7 @@ impl SettingsScreen {
         // Rebinding overlay
         if let Some(ref action_id) = self.rebinding {
             ui.label(
-                RichText::new(format!("Press a key for '{}'...", action_id))
-                    .color(Color32::YELLOW),
+                RichText::new(format!("Press a key for '{action_id}'...")).color(Color32::YELLOW),
             );
             ui.label(RichText::new("Press Escape to cancel").color(Color32::GRAY));
             ui.add_space(8.0);
@@ -586,7 +593,7 @@ impl SettingsScreen {
                     let is_rebinding = self
                         .rebinding
                         .as_ref()
-                        .map_or(false, |a| a == &binding.action_id);
+                        .is_some_and(|a| a == &binding.action_id);
 
                     if is_rebinding {
                         if ui.button("...").clicked() {

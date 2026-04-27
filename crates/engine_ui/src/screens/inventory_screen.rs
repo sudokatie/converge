@@ -79,6 +79,7 @@ pub struct InventoryScreen {
 
 /// Item held by the cursor during drag.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct CursorItem {
     /// Item name.
     name: String,
@@ -90,6 +91,7 @@ struct CursorItem {
 
 /// Where a cursor item came from.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 enum CursorSource {
     /// From inventory slot index.
     Slot(usize),
@@ -216,6 +218,10 @@ impl InventoryScreen {
     }
 
     /// Draw the equipment slots panel.
+    #[expect(
+        clippy::unused_self,
+        reason = "method will use self when cursor drag is implemented"
+    )]
     fn draw_equipment(
         &mut self,
         ui: &mut egui::Ui,
@@ -225,11 +231,7 @@ impl InventoryScreen {
         let mut action = None;
 
         ui.vertical(|ui| {
-            ui.label(
-                RichText::new("Equipment")
-                    .size(16.0)
-                    .color(Color32::WHITE),
-            );
+            ui.label(RichText::new("Equipment").size(16.0).color(Color32::WHITE));
             ui.add_space(8.0);
 
             for (slot_type, item_name) in equipment {
@@ -237,8 +239,7 @@ impl InventoryScreen {
                 let response = ui.add_sized(
                     slot_size,
                     egui::Button::new(
-                        RichText::new(item_name.as_deref().unwrap_or(slot_type.label()))
-                            .size(11.0),
+                        RichText::new(item_name.as_deref().unwrap_or(slot_type.label())).size(11.0),
                     ),
                 );
 
@@ -297,6 +298,10 @@ impl InventoryScreen {
     }
 
     /// Draw a row of inventory slots.
+    #[expect(
+        clippy::unused_self,
+        reason = "method will use self when cursor drag is implemented"
+    )]
     fn draw_slot_row(
         &mut self,
         ui: &mut egui::Ui,
@@ -311,11 +316,17 @@ impl InventoryScreen {
             for i in start..end {
                 let slot_data = slots.get(i);
                 let label = slot_data
-                    .and_then(|s| if s.count > 0 { Some(s.item_name.as_str()) } else { None })
+                    .and_then(|s| {
+                        if s.count > 0 {
+                            Some(s.item_name.as_str())
+                        } else {
+                            None
+                        }
+                    })
                     .unwrap_or("");
 
                 let count = slot_data.map_or(0, |s| s.count);
-                let is_selected = slot_data.map_or(false, |s| s.selected);
+                let is_selected = slot_data.is_some_and(|s| s.selected);
 
                 let slot_size = Vec2::splat(config.slot_size);
 
@@ -449,6 +460,6 @@ mod tests {
     fn test_screen_config_defaults() {
         let config = InventoryScreenConfig::default();
         assert_eq!(config.columns, 9);
-        assert_eq!(config.slot_size, 40.0);
+        assert!((config.slot_size - 40.0).abs() < f32::EPSILON);
     }
 }

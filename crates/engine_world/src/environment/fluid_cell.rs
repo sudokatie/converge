@@ -167,6 +167,10 @@ impl Default for FluidCell {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

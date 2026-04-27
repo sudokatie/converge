@@ -4,8 +4,8 @@ use engine_core::coords::LocalPos;
 
 use super::{ChunkHazards, DecayConfig, HazardCell, HazardKind, PropagationConfig, Resistance};
 
-/// Offset to a neighbor cell (dx, dy, dz, weight_type).
-/// Weight type: 0 = face, 1 = edge, 2 = corner.
+/// Offset to a neighbor cell (dx, dy, dz, `weight_type`).
+/// `weight_type`: 0 = face, 1 = edge, 2 = corner.
 const NEIGHBOR_OFFSETS: [(i32, i32, i32, u8); 26] = [
     // 6 face neighbors
     (-1, 0, 0, 0),
@@ -187,10 +187,20 @@ pub fn propagation_step<R: ResistanceMap>(
             );
         }
 
-        if new_cell.intensity() != cell.intensity()
-            || new_cell.spread_timer() != cell.spread_timer()
-            || new_cell.decay_timer() != cell.decay_timer()
-        {
+        #[expect(
+            clippy::float_cmp,
+            reason = "exact comparison intentional: detecting timer changes for state tracking"
+        )]
+        let timers_changed = new_cell.spread_timer() != cell.spread_timer()
+            || new_cell.decay_timer() != cell.decay_timer();
+
+        #[expect(
+            clippy::float_cmp,
+            reason = "exact comparison intentional: detecting intensity changes for state tracking"
+        )]
+        let intensity_changed = new_cell.intensity() != cell.intensity();
+
+        if intensity_changed || timers_changed {
             result
                 .deltas
                 .push(CellDelta::set(pos, new_cell.intensity()));
@@ -230,15 +240,31 @@ fn spread_to_neighbors<R: ResistanceMap>(
             transfer *= spread.gravity_multiplier;
         }
 
+        #[expect(
+            clippy::cast_possible_wrap,
+            reason = "pos coordinates are 0..16, so cast to i32 is safe"
+        )]
         let nx = pos.x() as i32 + dx;
+        #[expect(
+            clippy::cast_possible_wrap,
+            reason = "pos coordinates are 0..16, so cast to i32 is safe"
+        )]
         let ny = pos.y() as i32 + dy;
+        #[expect(
+            clippy::cast_possible_wrap,
+            reason = "pos coordinates are 0..16, so cast to i32 is safe"
+        )]
         let nz = pos.z() as i32 + dz;
 
-        if nx < 0 || nx >= 16 || ny < 0 || ny >= 16 || nz < 0 || nz >= 16 {
+        if !(0..16).contains(&nx) || !(0..16).contains(&ny) || !(0..16).contains(&nz) {
             result.boundary_spreads.push((pos, (dx, dy, dz), transfer));
             continue;
         }
 
+        #[expect(
+            clippy::cast_sign_loss,
+            reason = "bounds check above guarantees nx, ny, nz are in 0..16"
+        )]
         let neighbor_pos = LocalPos::new(nx as u32, ny as u32, nz as u32);
         let resistance = resistance_map.resistance(kind, neighbor_pos);
 
@@ -311,7 +337,7 @@ pub fn decay_step(
         if new_cell.intensity() < extinction_threshold {
             result.deltas.push(CellDelta::deactivate(pos));
             result.extinguished_count += 1;
-        } else if new_cell.intensity() != cell.intensity() {
+        } else if (new_cell.intensity() - cell.intensity()).abs() > f32::EPSILON {
             result
                 .deltas
                 .push(CellDelta::set(pos, new_cell.intensity()));
@@ -322,6 +348,11 @@ pub fn decay_step(
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    reason = "tests check exact values; format args clearer with explicit args"
+)]
 mod tests {
     use super::*;
 

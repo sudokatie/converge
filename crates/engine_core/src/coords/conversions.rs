@@ -1,43 +1,78 @@
-//! Coordinate conversion utilities.
+//! Coordinate conversion utilities between [`Vec3`], [`WorldPos`], and [`ChunkPos`].
+//!
+//! These functions convert between floating-point render coordinates and
+//! integer voxel/chunk coordinates. Chunk size is [`CHUNK_SIZE`] voxels per axis.
 
 use glam::Vec3;
 
-use super::{ChunkPos, WorldPos, CHUNK_SIZE};
+use super::{CHUNK_SIZE, ChunkPos, WorldPos};
 
 /// Convert a floating-point position to the nearest world position.
 #[must_use]
+#[allow(dead_code)]
 pub fn vec3_to_world_pos(v: Vec3) -> WorldPos {
-    WorldPos::new(v.x.floor() as i32, v.y.floor() as i32, v.z.floor() as i32)
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "voxel coords are intentionally i32; overflow beyond i32::MAX is acceptable"
+    )]
+    fn floor_to_i32(x: f32) -> i32 {
+        x.floor() as i32
+    }
+    WorldPos::new(floor_to_i32(v.x), floor_to_i32(v.y), floor_to_i32(v.z))
 }
 
 /// Convert a world position to its center as a floating-point position.
 #[must_use]
+#[allow(dead_code)]
 pub fn world_pos_to_vec3(pos: WorldPos) -> Vec3 {
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "voxel coordinates are small; precision loss beyond 2^24 is acceptable"
+    )]
+    fn i32_to_f32(x: i32) -> f32 {
+        x as f32
+    }
     Vec3::new(
-        pos.x() as f32 + 0.5,
-        pos.y() as f32 + 0.5,
-        pos.z() as f32 + 0.5,
+        i32_to_f32(pos.x()) + 0.5,
+        i32_to_f32(pos.y()) + 0.5,
+        i32_to_f32(pos.z()) + 0.5,
     )
 }
 
 /// Get the world-space origin of a chunk (minimum corner).
 #[must_use]
+#[allow(dead_code)]
 pub fn chunk_origin(chunk: ChunkPos) -> Vec3 {
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "chunk coordinates are small; precision loss beyond 2^24 chunks is acceptable"
+    )]
+    fn i32_to_f32(x: i32) -> f32 {
+        x as f32
+    }
     Vec3::new(
-        (chunk.x() * CHUNK_SIZE) as f32,
-        (chunk.y() * CHUNK_SIZE) as f32,
-        (chunk.z() * CHUNK_SIZE) as f32,
+        i32_to_f32(chunk.x() * CHUNK_SIZE),
+        i32_to_f32(chunk.y() * CHUNK_SIZE),
+        i32_to_f32(chunk.z() * CHUNK_SIZE),
     )
 }
 
 /// Get the world-space center of a chunk.
 #[must_use]
+#[allow(dead_code)]
 pub fn chunk_center(chunk: ChunkPos) -> Vec3 {
-    let half = CHUNK_SIZE as f32 * 0.5;
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "chunk coordinates are small; precision loss beyond 2^24 chunks is acceptable"
+    )]
+    fn i32_to_f32(x: i32) -> f32 {
+        x as f32
+    }
+    let half = i32_to_f32(CHUNK_SIZE) * 0.5;
     Vec3::new(
-        (chunk.x() * CHUNK_SIZE) as f32 + half,
-        (chunk.y() * CHUNK_SIZE) as f32 + half,
-        (chunk.z() * CHUNK_SIZE) as f32 + half,
+        i32_to_f32(chunk.x() * CHUNK_SIZE) + half,
+        i32_to_f32(chunk.y() * CHUNK_SIZE) + half,
+        i32_to_f32(chunk.z() * CHUNK_SIZE) + half,
     )
 }
 

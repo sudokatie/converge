@@ -97,12 +97,20 @@ impl PlayerPhysics {
         let new_position = *position + self.velocity * dt;
 
         // Simple collision detection - check ground
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "player coords are within i32 range; truncation beyond that is acceptable"
+        )]
         let feet_pos = WorldPos::new(
             new_position.x.floor() as i32,
             (new_position.y - 0.1).floor() as i32,
             new_position.z.floor() as i32,
         );
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "player coords are within i32 range; truncation beyond that is acceptable"
+        )]
         let head_pos = WorldPos::new(
             new_position.x.floor() as i32,
             (new_position.y + 1.7).floor() as i32,
@@ -115,7 +123,13 @@ impl PlayerPhysics {
             self.on_ground = true;
             self.velocity.y = 0.0;
             position.x = new_position.x;
-            position.y = (feet_pos.y() + 1) as f32 + 0.001;
+            #[expect(
+                clippy::cast_precision_loss,
+                reason = "voxel coords are small; precision loss beyond 2^24 is acceptable"
+            )]
+            {
+                position.y = (feet_pos.y() + 1) as f32 + 0.001;
+            }
             position.z = new_position.z;
         } else if self.velocity.y > 0.0 && world.is_solid(head_pos) {
             // Hit ceiling
@@ -134,27 +148,41 @@ impl PlayerPhysics {
 
     /// Check and resolve horizontal collisions.
     fn check_horizontal_collision(&mut self, position: &mut Vec3, world: &impl VoxelQuery) {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "player coords are intentionally i32; values beyond i32 range are not supported"
+        )]
+        fn f32_to_i32(v: f32) -> i32 {
+            v.floor() as i32
+        }
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "voxel coords are small; precision loss beyond 2^24 is acceptable"
+        )]
+        fn i32_to_f32(v: i32) -> f32 {
+            v as f32
+        }
         let check_positions = [
             // Check at feet level
             WorldPos::new(
-                (position.x + 0.3).floor() as i32,
-                position.y.floor() as i32,
-                position.z.floor() as i32,
+                f32_to_i32(position.x + 0.3),
+                f32_to_i32(position.y),
+                f32_to_i32(position.z),
             ),
             WorldPos::new(
-                (position.x - 0.3).floor() as i32,
-                position.y.floor() as i32,
-                position.z.floor() as i32,
+                f32_to_i32(position.x - 0.3),
+                f32_to_i32(position.y),
+                f32_to_i32(position.z),
             ),
             WorldPos::new(
-                position.x.floor() as i32,
-                position.y.floor() as i32,
-                (position.z + 0.3).floor() as i32,
+                f32_to_i32(position.x),
+                f32_to_i32(position.y),
+                f32_to_i32(position.z + 0.3),
             ),
             WorldPos::new(
-                position.x.floor() as i32,
-                position.y.floor() as i32,
-                (position.z - 0.3).floor() as i32,
+                f32_to_i32(position.x),
+                f32_to_i32(position.y),
+                f32_to_i32(position.z - 0.3),
             ),
         ];
 
@@ -162,26 +190,25 @@ impl PlayerPhysics {
         for check_pos in &check_positions {
             if world.is_solid(*check_pos) {
                 let block_center = Vec3::new(
-                    check_pos.x() as f32 + 0.5,
-                    check_pos.y() as f32 + 0.5,
-                    check_pos.z() as f32 + 0.5,
+                    i32_to_f32(check_pos.x()) + 0.5,
+                    i32_to_f32(check_pos.y()) + 0.5,
+                    i32_to_f32(check_pos.z()) + 0.5,
                 );
                 let diff = *position - block_center;
 
                 // Push in the direction of least penetration
                 if diff.x.abs() > diff.z.abs() {
                     if diff.x > 0.0 {
-                        position.x = (check_pos.x() + 1) as f32 + 0.31;
+                        position.x = i32_to_f32(check_pos.x() + 1) + 0.31;
                     } else {
-                        position.x = check_pos.x() as f32 - 0.31;
+                        position.x = i32_to_f32(check_pos.x()) - 0.31;
                     }
                     self.velocity.x = 0.0;
+                } else if diff.z > 0.0 {
+                    position.z = i32_to_f32(check_pos.z() + 1) + 0.31;
+                    self.velocity.z = 0.0;
                 } else {
-                    if diff.z > 0.0 {
-                        position.z = (check_pos.z() + 1) as f32 + 0.31;
-                    } else {
-                        position.z = check_pos.z() as f32 - 0.31;
-                    }
+                    position.z = i32_to_f32(check_pos.z()) - 0.31;
                     self.velocity.z = 0.0;
                 }
             }

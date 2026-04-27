@@ -9,6 +9,10 @@ use super::health::{DamageSource, Health};
 pub const ATTACK_COOLDOWN: f32 = 0.5;
 
 /// Default invincibility duration after being hit.
+#[expect(
+    dead_code,
+    reason = "constant reserved for damage invincibility system"
+)]
 pub const DAMAGE_INVINCIBILITY: f32 = 0.5;
 
 /// Default knockback velocity (blocks/second).
@@ -242,10 +246,10 @@ pub fn attempt_attack(
     let killed = target_health.damage(attacker_stats.attack_damage, DamageSource::Attack);
 
     // Calculate knockback
-    let knockback = if !target_health.is_dead() {
-        calculate_knockback(attacker_pos, target_pos, target_stats.knockback_resistance)
-    } else {
+    let knockback = if target_health.is_dead() {
         Vec3::ZERO
+    } else {
+        calculate_knockback(attacker_pos, target_pos, target_stats.knockback_resistance)
     };
 
     AttackResult::hit(attacker_stats.attack_damage, killed, knockback)
@@ -274,17 +278,17 @@ mod tests {
     #[test]
     fn test_combat_stats_default() {
         let stats = CombatStats::default();
-        assert_eq!(stats.attack_damage, 1.0);
-        assert_eq!(stats.attack_cooldown, ATTACK_COOLDOWN);
+        assert!((stats.attack_damage - 1.0).abs() < f32::EPSILON);
+        assert!((stats.attack_cooldown - ATTACK_COOLDOWN).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_combat_stats_presets() {
         let zombie = CombatStats::zombie();
-        assert_eq!(zombie.attack_damage, 3.0);
+        assert!((zombie.attack_damage - 3.0).abs() < f32::EPSILON);
 
         let skeleton = CombatStats::skeleton();
-        assert_eq!(skeleton.attack_damage, 2.0);
+        assert!((skeleton.attack_damage - 2.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -295,21 +299,21 @@ mod tests {
             .with_reach(4.0)
             .with_knockback_resistance(0.5);
 
-        assert_eq!(stats.attack_damage, 5.0);
-        assert_eq!(stats.attack_cooldown, 1.0);
-        assert_eq!(stats.attack_reach, 4.0);
-        assert_eq!(stats.knockback_resistance, 0.5);
+        assert!((stats.attack_damage - 5.0).abs() < f32::EPSILON);
+        assert!((stats.attack_cooldown - 1.0).abs() < f32::EPSILON);
+        assert!((stats.attack_reach - 4.0).abs() < f32::EPSILON);
+        assert!((stats.knockback_resistance - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_attack_cooldown() {
         let mut cooldown = AttackCooldown::new();
         assert!(cooldown.is_ready());
-        assert_eq!(cooldown.progress(), 1.0);
+        assert!((cooldown.progress() - 1.0).abs() < f32::EPSILON);
 
         cooldown.start(1.0);
         assert!(!cooldown.is_ready());
-        assert_eq!(cooldown.progress(), 0.0);
+        assert!(cooldown.progress().abs() < f32::EPSILON);
 
         cooldown.tick(0.5);
         assert!(!cooldown.is_ready());
@@ -317,7 +321,7 @@ mod tests {
 
         cooldown.tick(0.6);
         assert!(cooldown.is_ready());
-        assert_eq!(cooldown.progress(), 1.0);
+        assert!((cooldown.progress() - 1.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -343,7 +347,7 @@ mod tests {
         let no_knockback = calculate_knockback(attacker, target, 1.0);
 
         assert!(half_knockback.length() < full_knockback.length());
-        assert_eq!(no_knockback, Vec3::ZERO);
+        assert!(no_knockback.length().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -366,9 +370,9 @@ mod tests {
         );
 
         assert!(result.hit);
-        assert_eq!(result.damage, 5.0);
+        assert!((result.damage - 5.0).abs() < f32::EPSILON);
         assert!(!result.killed);
-        assert_eq!(target_health.current(), 15.0);
+        assert!((target_health.current() - 15.0).abs() < f32::EPSILON);
         assert!(!attacker_cooldown.is_ready());
     }
 
@@ -392,7 +396,7 @@ mod tests {
         );
 
         assert!(!result.hit);
-        assert_eq!(target_health.current(), 20.0); // Unchanged
+        assert!((target_health.current() - 20.0).abs() < f32::EPSILON); // Unchanged
     }
 
     #[test]
@@ -416,7 +420,7 @@ mod tests {
         );
 
         assert!(!result.hit);
-        assert_eq!(target_health.current(), 20.0); // Unchanged
+        assert!((target_health.current() - 20.0).abs() < f32::EPSILON); // Unchanged
     }
 
     #[test]
@@ -442,7 +446,7 @@ mod tests {
         assert!(result.killed);
         assert!(target_health.is_dead());
         // No knockback on kill
-        assert_eq!(result.knockback, Vec3::ZERO);
+        assert!(result.knockback.length().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -475,7 +479,7 @@ mod tests {
 
         let hit = AttackResult::hit(5.0, false, Vec3::ONE);
         assert!(hit.hit);
-        assert_eq!(hit.damage, 5.0);
+        assert!((hit.damage - 5.0).abs() < f32::EPSILON);
         assert!(!hit.killed);
     }
 }

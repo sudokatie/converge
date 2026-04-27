@@ -235,6 +235,11 @@ impl Default for StructuralConfig {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::assertions_on_constants,
+    reason = "tests check exact const values"
+)]
 mod tests {
     use super::*;
 

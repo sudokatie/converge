@@ -77,6 +77,11 @@ impl Hunger {
 
     /// Get hunger as half-drumsticks (0 to max*2).
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "hunger values are small positive floats"
+    )]
     pub fn half_drumsticks(&self) -> u32 {
         (self.current * 2.0).round().max(0.0) as u32
     }
@@ -176,8 +181,8 @@ mod tests {
     #[test]
     fn test_new_hunger() {
         let hunger = Hunger::new(20.0);
-        assert_eq!(hunger.current(), 20.0);
-        assert_eq!(hunger.max(), 20.0);
+        assert!((hunger.current() - 20.0).abs() < f32::EPSILON);
+        assert!((hunger.max() - 20.0).abs() < f32::EPSILON);
         assert!(hunger.is_full());
         assert!(hunger.can_sprint());
         assert!(!hunger.should_damage());
@@ -211,9 +216,9 @@ mod tests {
         hunger.saturation = 0.0;
 
         let restored = hunger.eat(5.0, 3.0);
-        assert_eq!(restored, 5.0);
-        assert_eq!(hunger.current(), 15.0);
-        assert_eq!(hunger.saturation(), 3.0);
+        assert!((restored - 5.0).abs() < f32::EPSILON);
+        assert!((hunger.current() - 15.0).abs() < f32::EPSILON);
+        assert!((hunger.saturation() - 3.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -223,17 +228,17 @@ mod tests {
         hunger.saturation = 0.0;
 
         let restored = hunger.eat(10.0, 10.0);
-        assert_eq!(restored, 2.0); // Only 2 was needed
+        assert!((restored - 2.0).abs() < f32::EPSILON); // Only 2 was needed
         assert!(hunger.is_full());
         // Saturation capped at current hunger (which is now 20)
-        assert_eq!(hunger.saturation(), 10.0); // Added 10, capped at current=20
+        assert!((hunger.saturation() - 10.0).abs() < f32::EPSILON); // Added 10, capped at current=20
     }
 
     #[test]
     fn test_tick_drains_saturation_first() {
         let mut hunger = Hunger::new(20.0);
         hunger.saturation = 5.0;
-        let initial_hunger = hunger.current();
+        let _initial_hunger = hunger.current();
 
         // Tick for 60 seconds (should drain about 1 point)
         for _ in 0..60 {
@@ -302,7 +307,7 @@ mod tests {
 
         hunger.restore();
         assert!(hunger.is_full());
-        assert_eq!(hunger.saturation(), 20.0);
+        assert!((hunger.saturation() - 20.0).abs() < f32::EPSILON);
     }
 
     #[test]

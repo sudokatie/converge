@@ -211,14 +211,12 @@ pub const ICON_SIZE: f32 = 24.0;
 /// Draw status effect icons at the given position.
 ///
 /// Returns the shapes to render.
-pub fn draw_status_effects(
-    position: Pos2,
-    effects: &[ActiveStatusEffect],
-) -> Vec<Shape> {
+pub fn draw_status_effects(position: Pos2, effects: &[ActiveStatusEffect]) -> Vec<Shape> {
     let mut shapes = Vec::new();
     let padding = 2.0;
 
     for (i, effect) in effects.iter().enumerate() {
+        #[expect(clippy::cast_precision_loss, reason = "icon indices always small")]
         let x = position.x + i as f32 * (ICON_SIZE + padding);
         let y = position.y;
 
@@ -240,7 +238,11 @@ pub fn draw_status_effects(
                 Pos2::new(x, y + ICON_SIZE - bar_height),
                 egui::vec2(bar_width, bar_height),
             );
-            shapes.push(Shape::rect_filled(bar_rect, Rounding::same(1.0), effect.kind.color()));
+            shapes.push(Shape::rect_filled(
+                bar_rect,
+                Rounding::same(1.0),
+                effect.kind.color(),
+            ));
         }
 
         // Label
@@ -259,7 +261,7 @@ mod tests {
         // Just verify colors are non-transparent
         for kind in StatusEffectKind::all() {
             let color = kind.color();
-            assert_ne!(color, Color32::TRANSPARENT, "{:?} should have a color", kind);
+            assert_ne!(color, Color32::TRANSPARENT, "{kind:?} should have a color");
         }
     }
 

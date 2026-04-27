@@ -18,6 +18,10 @@ pub struct FluidLayer {
 impl FluidLayer {
     /// Create a new empty layer.
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "Copy type array initialization, optimized by compiler"
+    )]
     pub fn new() -> Self {
         Self {
             cells: Box::new([FluidCell::EMPTY; CHUNK_VOLUME]),
@@ -86,6 +90,10 @@ impl FluidLayer {
     }
 
     /// Fill all cells with the same state.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME (4096) fits in u32"
+    )]
     pub fn fill(&mut self, cell: FluidCell) {
         self.cells.fill(cell);
         self.active_count = if cell.is_empty() {
@@ -135,6 +143,15 @@ impl FluidLayer {
 
     /// Trilinear interpolation sample.
     #[must_use]
+    #[expect(
+        clippy::similar_names,
+        reason = "trilinear interpolation uses standard naming c000..c111 and c00..c11"
+    )]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "coordinates clamped to [0, 15.999] guarantee safe u32 conversion"
+    )]
     pub fn sample(&self, x: f32, y: f32, z: f32) -> FluidSample {
         let x = x.clamp(0.0, 15.999);
         let y = y.clamp(0.0, 15.999);
@@ -199,6 +216,10 @@ impl FluidLayer {
     }
 
     /// Recount active cells (use after bulk operations).
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME (4096) fits in u32"
+    )]
     pub fn recount(&mut self) {
         self.active_count = self.cells.iter().filter(|c| !c.is_empty()).count() as u32;
     }
@@ -272,6 +293,10 @@ impl<'de> Deserialize<'de> for FluidLayer {
                     ));
                 }
 
+                #[expect(
+                    clippy::large_stack_arrays,
+                    reason = "Copy type array initialization, optimized by compiler"
+                )]
                 let mut cells = Box::new([FluidCell::EMPTY; CHUNK_VOLUME]);
                 cells.copy_from_slice(&cells_vec);
 
@@ -412,20 +437,20 @@ impl ChunkFluids {
         self.layers
             .iter()
             .filter_map(|l| l.as_ref())
-            .map(|l| l.active_count())
+            .map(FluidLayer::active_count)
             .sum()
     }
 
     /// Number of allocated layers.
     #[must_use]
     pub fn allocated_count(&self) -> usize {
-        self.layers.iter().filter(|l| l.is_some()).count()
+        self.layers.iter().filter(|l| Option::is_some(l)).count()
     }
 
     /// Check if all layers are empty/unallocated.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.layers.iter().all(|l| l.is_none())
+        self.layers.iter().all(Option::is_none)
     }
 
     fn ensure_layer(&mut self, kind: FluidKind) -> &mut FluidLayer {
@@ -438,6 +463,11 @@ impl ChunkFluids {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::cast_possible_truncation,
+    reason = "tests check exact values; CHUNK_VOLUME fits in u32"
+)]
 mod tests {
     use super::*;
 

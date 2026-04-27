@@ -7,11 +7,14 @@ use serde::{Deserialize, Serialize};
 /// Higher fidelity levels receive more frequent updates and may run
 /// more detailed simulation logic. The scheduler assigns fidelity
 /// based on distance from observers.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 #[repr(u8)]
 pub enum Fidelity {
     /// Highest fidelity: immediate vicinity of observers.
     /// Updates every tick for full simulation detail.
+    #[default]
     Immediate = 0,
 
     /// High fidelity: nearby regions visible to observers.
@@ -79,12 +82,6 @@ impl Fidelity {
     #[must_use]
     pub const fn is_at_least(self, other: Fidelity) -> bool {
         self.priority() >= other.priority()
-    }
-}
-
-impl Default for Fidelity {
-    fn default() -> Self {
-        Fidelity::Immediate
     }
 }
 

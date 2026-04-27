@@ -56,7 +56,7 @@ pub struct WorldSnapshot {
 pub enum ServerMessage {
     /// Full world snapshot (sent at tick rate).
     Snapshot(WorldSnapshot),
-    
+
     /// Entity spawned in view.
     EntitySpawn {
         /// Network entity ID.
@@ -68,13 +68,13 @@ pub enum ServerMessage {
         /// Initial rotation.
         rotation: Quat,
     },
-    
+
     /// Entity despawned or left view.
     EntityDespawn {
         /// Network entity ID.
         id: u64,
     },
-    
+
     /// Entity position/rotation update (for entities not in snapshot).
     EntityUpdate {
         /// Network entity ID.
@@ -84,7 +84,7 @@ pub enum ServerMessage {
         /// New rotation.
         rotation: Quat,
     },
-    
+
     /// Block changed in world.
     BlockChange {
         /// World position of change.
@@ -92,7 +92,7 @@ pub enum ServerMessage {
         /// New block type.
         block: u16,
     },
-    
+
     /// Chunk data response.
     ChunkData {
         /// Chunk position.
@@ -100,7 +100,7 @@ pub enum ServerMessage {
         /// Compressed chunk data.
         data: Vec<u8>,
     },
-    
+
     /// Chat message received.
     ChatReceive {
         /// Sender name.
@@ -108,7 +108,7 @@ pub enum ServerMessage {
         /// Message content.
         message: String,
     },
-    
+
     /// Player joined notification.
     PlayerJoined {
         /// Player's network ID.
@@ -116,13 +116,13 @@ pub enum ServerMessage {
         /// Player's display name.
         name: String,
     },
-    
+
     /// Player left notification.
     PlayerLeft {
         /// Player's network ID.
         id: u64,
     },
-    
+
     /// Connection accepted with player's assigned ID.
     Welcome {
         /// Assigned player ID.

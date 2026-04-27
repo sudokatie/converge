@@ -4,7 +4,7 @@ use crate::behavior::blackboard::Blackboard;
 use crate::behavior::tree::{BehaviorNode, NodeStatus};
 
 /// Selector node - tries each child in order until one succeeds
-/// 
+///
 /// - Returns Success if any child succeeds
 /// - Returns Failure if all children fail
 /// - Returns Running if current child is running
@@ -35,7 +35,7 @@ impl BehaviorNode for Selector {
     fn tick(&mut self, blackboard: &mut Blackboard) -> NodeStatus {
         while self.current_index < self.children.len() {
             let status = self.children[self.current_index].tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     self.current_index = 0;
@@ -89,7 +89,7 @@ impl BehaviorNode for ReactiveSelector {
     fn tick(&mut self, blackboard: &mut Blackboard) -> NodeStatus {
         for (i, child) in self.children.iter_mut().enumerate() {
             let status = child.tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     // If a higher priority child succeeds, reset lower ones
@@ -167,7 +167,9 @@ impl RandomSelector {
             let j = (std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
-                .subsec_nanos() as usize + i) % (i + 1);
+                .subsec_nanos() as usize
+                + i)
+                % (i + 1);
             self.order.swap(i, j);
         }
         self.shuffled = true;
@@ -183,7 +185,7 @@ impl BehaviorNode for RandomSelector {
         while self.current_index < self.order.len() {
             let child_index = self.order[self.current_index];
             let status = self.children[child_index].tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     self.current_index = 0;
@@ -230,7 +232,7 @@ mod tests {
         ];
         let mut selector = Selector::new("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(selector.tick(&mut bb), NodeStatus::Success);
     }
 
@@ -243,7 +245,7 @@ mod tests {
         ];
         let mut selector = Selector::new("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(selector.tick(&mut bb), NodeStatus::Success);
     }
 
@@ -255,7 +257,7 @@ mod tests {
         ];
         let mut selector = Selector::new("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(selector.tick(&mut bb), NodeStatus::Failure);
     }
 }

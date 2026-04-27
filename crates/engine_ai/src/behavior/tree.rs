@@ -252,10 +252,10 @@ impl Repeater {
 
 impl BehaviorNode for Repeater {
     fn tick(&mut self, blackboard: &mut Blackboard) -> NodeStatus {
-        if let Some(max) = self.max_count {
-            if self.current_count >= max {
-                return NodeStatus::Success;
-            }
+        if let Some(max) = self.max_count
+            && self.current_count >= max
+        {
+            return NodeStatus::Success;
         }
 
         match self.child.tick(blackboard) {
@@ -329,9 +329,9 @@ mod tests {
             bb.get::<bool>("flag").copied().unwrap_or(false)
         });
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(cond.tick(&mut bb), NodeStatus::Failure);
-        
+
         bb.set("flag", true);
         assert_eq!(cond.tick(&mut bb), NodeStatus::Success);
     }
@@ -341,7 +341,7 @@ mod tests {
         let action = ActionNode::new("success", |_| NodeStatus::Success);
         let mut inverter = Inverter::new("invert", Box::new(action));
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(inverter.tick(&mut bb), NodeStatus::Failure);
     }
 }

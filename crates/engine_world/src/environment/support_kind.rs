@@ -3,10 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 /// Types of structural support that cells can provide.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum SupportKind {
     /// No structural support (air, liquids).
+    #[default]
     None = 0,
 
     /// Solid ground or bedrock - provides absolute support.
@@ -131,13 +132,13 @@ impl SupportKind {
     }
 }
 
-impl Default for SupportKind {
-    fn default() -> Self {
-        SupportKind::None
-    }
-}
-
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    clippy::manual_range_contains,
+    reason = "tests check exact values; format args and range checks clearer in tests"
+)]
 mod tests {
     use super::*;
 

@@ -2,9 +2,9 @@
 
 use bytemuck::{Pod, Zeroable};
 use wgpu::{
-    include_wgsl, util::DeviceExt, vertex_attr_array, Buffer, BufferUsages, Color,
-    LoadOp, Operations, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, StoreOp, VertexBufferLayout, VertexStepMode,
+    Buffer, BufferUsages, Color, LoadOp, Operations, RenderPassColorAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, VertexBufferLayout,
+    VertexStepMode, include_wgsl, util::DeviceExt, vertex_attr_array,
 };
 
 use crate::backend::RenderDevice;
@@ -18,8 +18,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    const ATTRIBS: [wgpu::VertexAttribute; 2] =
-        vertex_attr_array![0 => Float32x3, 1 => Float32x3];
+    const ATTRIBS: [wgpu::VertexAttribute; 2] = vertex_attr_array![0 => Float32x3, 1 => Float32x3];
 
     /// Get the vertex buffer layout.
     #[must_use]
@@ -43,6 +42,10 @@ pub struct TriangleRenderer {
 impl TriangleRenderer {
     /// Create a new triangle renderer.
     #[must_use]
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "internal vertex array has known small size"
+    )]
     pub fn new(device: &RenderDevice) -> Self {
         let shader = device
             .device()
@@ -57,42 +60,41 @@ impl TriangleRenderer {
                     push_constant_ranges: &[],
                 });
 
-        let pipeline =
-            device
-                .device()
-                .create_render_pipeline(&RenderPipelineDescriptor {
-                    label: Some("Triangle Pipeline"),
-                    layout: Some(&pipeline_layout),
-                    vertex: wgpu::VertexState {
-                        module: &shader,
-                        entry_point: Some("vs_main"),
-                        buffers: &[Vertex::layout()],
-                        compilation_options: Default::default(),
-                    },
-                    fragment: Some(wgpu::FragmentState {
-                        module: &shader,
-                        entry_point: Some("fs_main"),
-                        targets: &[Some(wgpu::ColorTargetState {
-                            format: device.surface_format(),
-                            blend: Some(wgpu::BlendState::REPLACE),
-                            write_mask: wgpu::ColorWrites::ALL,
-                        })],
-                        compilation_options: Default::default(),
-                    }),
-                    primitive: wgpu::PrimitiveState {
-                        topology: wgpu::PrimitiveTopology::TriangleList,
-                        strip_index_format: None,
-                        front_face: wgpu::FrontFace::Ccw,
-                        cull_mode: Some(wgpu::Face::Back),
-                        polygon_mode: wgpu::PolygonMode::Fill,
-                        unclipped_depth: false,
-                        conservative: false,
-                    },
-                    depth_stencil: None,
-                    multisample: wgpu::MultisampleState::default(),
-                    multiview: None,
-                    cache: None,
-                });
+        let pipeline = device
+            .device()
+            .create_render_pipeline(&RenderPipelineDescriptor {
+                label: Some("Triangle Pipeline"),
+                layout: Some(&pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[Vertex::layout()],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: device.surface_format(),
+                        blend: Some(wgpu::BlendState::REPLACE),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
+                },
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState::default(),
+                multiview: None,
+                cache: None,
+            });
 
         // Default triangle vertices
         let vertices = [
@@ -110,19 +112,18 @@ impl TriangleRenderer {
             },
         ];
 
-        let vertex_buffer =
-            device
-                .device()
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Triangle Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: BufferUsages::VERTEX,
-                });
+        let vertex_buffer = device
+            .device()
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Triangle Vertex Buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: BufferUsages::VERTEX,
+            });
 
         Self {
             pipeline,
             vertex_buffer,
-            num_vertices: vertices.len() as u32,
+            num_vertices: u32::try_from(vertices.len()).expect("vertex count fits u32"),
             clear_color: Color {
                 r: 0.1,
                 g: 0.1,

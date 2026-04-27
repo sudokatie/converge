@@ -35,7 +35,7 @@ impl BehaviorNode for Sequence {
     fn tick(&mut self, blackboard: &mut Blackboard) -> NodeStatus {
         while self.current_index < self.children.len() {
             let status = self.children[self.current_index].tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     self.current_index += 1;
@@ -87,7 +87,7 @@ impl BehaviorNode for ReactiveSequence {
     fn tick(&mut self, blackboard: &mut Blackboard) -> NodeStatus {
         for child in &mut self.children {
             let status = child.tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     // Continue to next child
@@ -224,7 +224,7 @@ impl BehaviorNode for MemorySequence {
         // Start from where we left off
         while self.current_index < self.children.len() {
             let status = self.children[self.current_index].tick(blackboard);
-            
+
             match status {
                 NodeStatus::Success => {
                     self.current_index += 1;
@@ -269,7 +269,7 @@ mod tests {
         ];
         let mut sequence = Sequence::new("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(sequence.tick(&mut bb), NodeStatus::Success);
     }
 
@@ -282,7 +282,7 @@ mod tests {
         ];
         let mut sequence = Sequence::new("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(sequence.tick(&mut bb), NodeStatus::Failure);
     }
 
@@ -294,7 +294,7 @@ mod tests {
         ];
         let mut parallel = Parallel::all("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(parallel.tick(&mut bb), NodeStatus::Success);
     }
 
@@ -306,7 +306,7 @@ mod tests {
         ];
         let mut parallel = Parallel::any("test", children);
         let mut bb = Blackboard::new();
-        
+
         assert_eq!(parallel.tick(&mut bb), NodeStatus::Success);
     }
 }

@@ -41,12 +41,7 @@ impl Frustum {
     /// The matrix should be projection * view (clip space).
     #[must_use]
     pub fn from_view_projection(vp: Mat4) -> Self {
-        let rows = [
-            vp.row(0),
-            vp.row(1),
-            vp.row(2),
-            vp.row(3),
-        ];
+        let rows = [vp.row(0), vp.row(1), vp.row(2), vp.row(3)];
 
         let extract_plane = |row_a: glam::Vec4, row_b: glam::Vec4, sign: f32| {
             let combined = row_a + row_b * sign;
@@ -173,16 +168,40 @@ impl Frustum {
         for plane in self.planes() {
             // Positive vertex (most aligned with plane normal)
             let p_vertex = Vec3::new(
-                if plane.normal.x >= 0.0 { aabb.max.x } else { aabb.min.x },
-                if plane.normal.y >= 0.0 { aabb.max.y } else { aabb.min.y },
-                if plane.normal.z >= 0.0 { aabb.max.z } else { aabb.min.z },
+                if plane.normal.x >= 0.0 {
+                    aabb.max.x
+                } else {
+                    aabb.min.x
+                },
+                if plane.normal.y >= 0.0 {
+                    aabb.max.y
+                } else {
+                    aabb.min.y
+                },
+                if plane.normal.z >= 0.0 {
+                    aabb.max.z
+                } else {
+                    aabb.min.z
+                },
             );
 
             // Negative vertex (least aligned with plane normal)
             let n_vertex = Vec3::new(
-                if plane.normal.x >= 0.0 { aabb.min.x } else { aabb.max.x },
-                if plane.normal.y >= 0.0 { aabb.min.y } else { aabb.max.y },
-                if plane.normal.z >= 0.0 { aabb.min.z } else { aabb.max.z },
+                if plane.normal.x >= 0.0 {
+                    aabb.min.x
+                } else {
+                    aabb.max.x
+                },
+                if plane.normal.y >= 0.0 {
+                    aabb.min.y
+                } else {
+                    aabb.max.y
+                },
+                if plane.normal.z >= 0.0 {
+                    aabb.min.z
+                } else {
+                    aabb.max.z
+                },
             );
 
             if plane.signed_distance(p_vertex) < 0.0 {

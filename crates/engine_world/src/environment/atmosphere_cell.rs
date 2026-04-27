@@ -209,6 +209,10 @@ impl AtmosphereCell {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 
@@ -222,16 +226,16 @@ mod tests {
     fn outdoor_properties() {
         let cell = AtmosphereCell::outdoor();
         assert_eq!(cell.layer(), AtmosphereLayer::Outdoor);
-        assert_eq!(cell.seal_quality(), 0.0);
-        assert_eq!(cell.ventilation(), 1.0);
-        assert_eq!(cell.contamination(), 0.0);
+        assert!(cell.seal_quality().abs() < f32::EPSILON);
+        assert!((cell.ventilation() - 1.0).abs() < f32::EPSILON);
+        assert!(cell.contamination().abs() < f32::EPSILON);
     }
 
     #[test]
     fn indoor_sealed_properties() {
         let cell = AtmosphereCell::indoor_sealed();
         assert_eq!(cell.layer(), AtmosphereLayer::Indoor);
-        assert_eq!(cell.seal_quality(), 1.0);
+        assert!((cell.seal_quality() - 1.0).abs() < f32::EPSILON);
         assert!(cell.is_sealed_indoor());
     }
 
@@ -239,7 +243,7 @@ mod tests {
     fn indoor_with_seal() {
         let cell = AtmosphereCell::indoor(0.8);
         assert_eq!(cell.layer(), AtmosphereLayer::Indoor);
-        assert_eq!(cell.seal_quality(), 0.8);
+        assert!((cell.seal_quality() - 0.8).abs() < f32::EPSILON);
         assert!(!cell.is_sealed_indoor()); // < 0.9
     }
 

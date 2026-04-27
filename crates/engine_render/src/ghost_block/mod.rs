@@ -6,10 +6,10 @@
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
 use wgpu::{
-    include_wgsl, util::DeviceExt, vertex_attr_array, Buffer, BufferUsages, ColorTargetState,
-    FragmentState, LoadOp, Operations, PrimitiveState, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, VertexBufferLayout, VertexStepMode,
+    Buffer, BufferUsages, ColorTargetState, FragmentState, LoadOp, Operations, PrimitiveState,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, VertexBufferLayout, VertexStepMode, include_wgsl,
+    util::DeviceExt, vertex_attr_array,
 };
 
 use crate::backend::RenderDevice;
@@ -71,6 +71,10 @@ impl GhostBlockRenderer {
 
     /// Create a new ghost block renderer.
     #[must_use]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "pipeline creation requires sequential wgpu setup"
+    )]
     pub fn new(device: &RenderDevice) -> Self {
         let shader = device
             .device()
@@ -102,70 +106,68 @@ impl GhostBlockRenderer {
                     push_constant_ranges: &[],
                 });
 
-        let pipeline =
-            device
-                .device()
-                .create_render_pipeline(&RenderPipelineDescriptor {
-                    label: Some("Ghost Block Pipeline"),
-                    layout: Some(&pipeline_layout),
-                    vertex: wgpu::VertexState {
-                        module: &shader,
-                        entry_point: Some("vs_main"),
-                        buffers: &[GhostVertex::layout()],
-                        compilation_options: Default::default(),
-                    },
-                    fragment: Some(FragmentState {
-                        module: &shader,
-                        entry_point: Some("fs_main"),
-                        targets: &[Some(ColorTargetState {
-                            format: device.surface_format(),
-                            blend: Some(wgpu::BlendState {
-                                color: wgpu::BlendComponent {
-                                    src_factor: wgpu::BlendFactor::SrcAlpha,
-                                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                                    operation: wgpu::BlendOperation::Add,
-                                },
-                                alpha: wgpu::BlendComponent {
-                                    src_factor: wgpu::BlendFactor::One,
-                                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                                    operation: wgpu::BlendOperation::Add,
-                                },
-                            }),
-                            write_mask: wgpu::ColorWrites::ALL,
-                        })],
-                        compilation_options: Default::default(),
-                    }),
-                    primitive: PrimitiveState {
-                        topology: wgpu::PrimitiveTopology::TriangleList,
-                        strip_index_format: None,
-                        front_face: wgpu::FrontFace::Ccw,
-                        cull_mode: Some(wgpu::Face::Back),
-                        polygon_mode: wgpu::PolygonMode::Fill,
-                        unclipped_depth: false,
-                        conservative: false,
-                    },
-                    depth_stencil: Some(wgpu::DepthStencilState {
-                        format: wgpu::TextureFormat::Depth24PlusStencil8,
-                        depth_write_enabled: false, // Don't write depth for transparent
-                        depth_compare: wgpu::CompareFunction::LessEqual,
-                        stencil: wgpu::StencilState::default(),
-                        bias: wgpu::DepthBiasState::default(),
-                    }),
-                    multisample: wgpu::MultisampleState::default(),
-                    multiview: None,
-                    cache: None,
-                });
+        let pipeline = device
+            .device()
+            .create_render_pipeline(&RenderPipelineDescriptor {
+                label: Some("Ghost Block Pipeline"),
+                layout: Some(&pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[GhostVertex::layout()],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                },
+                fragment: Some(FragmentState {
+                    module: &shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(ColorTargetState {
+                        format: device.surface_format(),
+                        blend: Some(wgpu::BlendState {
+                            color: wgpu::BlendComponent {
+                                src_factor: wgpu::BlendFactor::SrcAlpha,
+                                dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                                operation: wgpu::BlendOperation::Add,
+                            },
+                            alpha: wgpu::BlendComponent {
+                                src_factor: wgpu::BlendFactor::One,
+                                dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                                operation: wgpu::BlendOperation::Add,
+                            },
+                        }),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                }),
+                primitive: PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
+                },
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: wgpu::TextureFormat::Depth24PlusStencil8,
+                    depth_write_enabled: false, // Don't write depth for transparent
+                    depth_compare: wgpu::CompareFunction::LessEqual,
+                    stencil: wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                }),
+                multisample: wgpu::MultisampleState::default(),
+                multiview: None,
+                cache: None,
+            });
 
         // Create unit cube vertices
         let vertices = Self::cube_vertices();
-        let vertex_buffer =
-            device
-                .device()
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Ghost Block Vertex Buffer"),
-                    contents: bytemuck::cast_slice(&vertices),
-                    usage: BufferUsages::VERTEX,
-                });
+        let vertex_buffer = device
+            .device()
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Ghost Block Vertex Buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: BufferUsages::VERTEX,
+            });
 
         // Create uniform buffer
         let uniform = GhostUniform {
@@ -182,14 +184,16 @@ impl GhostBlockRenderer {
                     usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
                 });
 
-        let bind_group = device.device().create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Ghost Block Bind Group"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
+        let bind_group = device
+            .device()
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Ghost Block Bind Group"),
+                layout: &bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                }],
+            });
 
         Self {
             pipeline,
@@ -250,6 +254,15 @@ impl GhostBlockRenderer {
     }
 
     /// Render the ghost block.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called when `preview_pos` is `None` and visibility check passes.
+    /// This should not happen in normal usage as the method returns early when no preview exists.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "world positions are small enough that precision loss is acceptable"
+    )]
     pub fn render(
         &self,
         device: &RenderDevice,
@@ -257,16 +270,16 @@ impl GhostBlockRenderer {
         depth_view: &wgpu::TextureView,
         view_proj: Mat4,
     ) {
-        if !self.visible || self.preview_pos.is_none() {
+        let Some(pos) = self.preview_pos else {
+            return;
+        };
+
+        if !self.visible {
             return;
         }
 
-        let pos = self.preview_pos.unwrap();
-        let model = Mat4::from_translation(Vec3::new(
-            pos.x() as f32,
-            pos.y() as f32,
-            pos.z() as f32,
-        ));
+        let model =
+            Mat4::from_translation(Vec3::new(pos.x() as f32, pos.y() as f32, pos.z() as f32));
 
         // Color: green for valid, red for invalid
         let color = if self.is_valid {
@@ -368,8 +381,13 @@ mod tests {
     #[test]
     fn test_ghost_vertex_layout() {
         let layout = GhostVertex::layout();
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "vertex stride is always small enough to fit in usize"
+        )]
+        let stride = layout.array_stride as usize;
         assert_eq!(
-            layout.array_stride as usize,
+            stride,
             std::mem::size_of::<GhostVertex>(),
             "Stride should match vertex size"
         );
@@ -473,8 +491,7 @@ mod tests {
                         && (p[1] - corner[1]).abs() < 0.001
                         && (p[2] - corner[2]).abs() < 0.001
                 }),
-                "Corner {:?} should appear in cube vertices",
-                corner
+                "Corner {corner:?} should appear in cube vertices"
             );
         }
     }

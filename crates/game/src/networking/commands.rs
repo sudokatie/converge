@@ -26,13 +26,19 @@ impl CommandResult {
     /// Create a successful result.
     #[must_use]
     pub fn ok(message: &str) -> Self {
-        Self { message: message.to_string(), success: true }
+        Self {
+            message: message.to_string(),
+            success: true,
+        }
     }
 
     /// Create an error result.
     #[must_use]
     pub fn err(message: &str) -> Self {
-        Self { message: message.to_string(), success: false }
+        Self {
+            message: message.to_string(),
+            success: false,
+        }
     }
 }
 
@@ -54,7 +60,7 @@ pub fn parse_command(input: &str) -> Option<ChatCommand> {
 
     Some(ChatCommand {
         name: parts[0].to_lowercase(),
-        args: parts[1..].iter().map(|s| s.to_string()).collect(),
+        args: parts[1..].iter().map(ToString::to_string).collect(),
     })
 }
 
@@ -83,29 +89,64 @@ impl CommandRegistry {
             help_entries: Vec::new(),
         };
 
-        registry.register("help", "Show available commands", "/help [command]", cmd_help);
-        registry.register("time", "Get or set time of day", "/time [set <value>]", cmd_time);
+        registry.register(
+            "help",
+            "Show available commands",
+            "/help [command]",
+            cmd_help,
+        );
+        registry.register(
+            "time",
+            "Get or set time of day",
+            "/time [set <value>]",
+            cmd_time,
+        );
         registry.register("tp", "Teleport to coordinates", "/tp <x> <y> <z>", cmd_tp);
-        registry.register("give", "Give items to player", "/give <item> [count]", cmd_give);
-        registry.register("gamemode", "Change game mode", "/gamemode <survival|creative>", cmd_gamemode);
+        registry.register(
+            "give",
+            "Give items to player",
+            "/give <item> [count]",
+            cmd_give,
+        );
+        registry.register(
+            "gamemode",
+            "Change game mode",
+            "/gamemode <survival|creative>",
+            cmd_gamemode,
+        );
         registry.register("kill", "Kill entities", "/kill [player]", cmd_kill);
-        registry.register("weather", "Set weather", "/weather <clear|rain|thunder>", cmd_weather);
+        registry.register(
+            "weather",
+            "Set weather",
+            "/weather <clear|rain|thunder>",
+            cmd_weather,
+        );
         registry.register("seed", "Show world seed", "/seed", cmd_seed);
 
         registry
     }
 
     /// Register a command.
-    pub fn register(&mut self, name: &str, description: &str, usage: &str, handler: CommandHandler) {
+    pub fn register(
+        &mut self,
+        name: &str,
+        description: &str,
+        usage: &str,
+        handler: CommandHandler,
+    ) {
         self.handlers.insert(name.to_lowercase(), handler);
-        self.help_entries.push((name.to_string(), description.to_string(), usage.to_string()));
+        self.help_entries
+            .push((name.to_string(), description.to_string(), usage.to_string()));
     }
 
     /// Execute a parsed command.
     pub fn execute(&self, command: &ChatCommand) -> CommandResult {
         match self.handlers.get(&command.name) {
             Some(handler) => handler(command),
-            None => CommandResult::err(&format!("Unknown command: /{}. Type /help for available commands.", command.name)),
+            None => CommandResult::err(&format!(
+                "Unknown command: /{}. Type /help for available commands.",
+                &command.name
+            )),
         }
     }
 
@@ -124,7 +165,7 @@ impl CommandRegistry {
     /// List all registered command names.
     #[must_use]
     pub fn command_names(&self) -> Vec<&str> {
-        self.handlers.keys().map(|s| s.as_str()).collect()
+        self.handlers.keys().map(String::as_str).collect()
     }
 }
 
@@ -133,7 +174,7 @@ impl CommandRegistry {
 fn cmd_help(cmd: &ChatCommand) -> CommandResult {
     // This is a placeholder - in practice the registry would pass itself
     if let Some(name) = cmd.args.first() {
-        CommandResult::ok(&format!("Help for /{}: see /help", name))
+        CommandResult::ok(&format!("Help for /{name}: see /help"))
     } else {
         CommandResult::ok("Available commands: help, time, tp, give, gamemode, kill, weather, seed")
     }
@@ -148,8 +189,8 @@ fn cmd_time(cmd: &ChatCommand) -> CommandResult {
             return CommandResult::err("Usage: /time set <value>");
         }
         match cmd.args[1].parse::<f32>() {
-            Ok(val) if val >= 0.0 && val <= 1.0 => {
-                CommandResult::ok(&format!("Time set to {}", val))
+            Ok(val) if (0.0..=1.0).contains(&val) => {
+                CommandResult::ok(&format!("Time set to {val}"))
             }
             _ => CommandResult::err("Time must be between 0.0 and 1.0"),
         }
@@ -170,7 +211,7 @@ fn cmd_tp(cmd: &ChatCommand) -> CommandResult {
     };
 
     match parse() {
-        Some((x, y, z)) => CommandResult::ok(&format!("Teleported to ({}, {}, {})", x, y, z)),
+        Some((x, y, z)) => CommandResult::ok(&format!("Teleported to ({x}, {y}, {z})")),
         None => CommandResult::err("Invalid coordinates. Usage: /tp <x> <y> <z>"),
     }
 }
@@ -181,7 +222,7 @@ fn cmd_give(cmd: &ChatCommand) -> CommandResult {
     }
     let item = &cmd.args[0];
     let count: u32 = cmd.args.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
-    CommandResult::ok(&format!("Gave {} x{}", item, count))
+    CommandResult::ok(&format!("Gave {item} x{count}"))
 }
 
 fn cmd_gamemode(cmd: &ChatCommand) -> CommandResult {
@@ -252,7 +293,10 @@ mod tests {
     #[test]
     fn test_execute_help() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "help".into(), args: vec![] };
+        let cmd = ChatCommand {
+            name: "help".into(),
+            args: vec![],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }
@@ -260,7 +304,10 @@ mod tests {
     #[test]
     fn test_execute_unknown() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "foobar".into(), args: vec![] };
+        let cmd = ChatCommand {
+            name: "foobar".into(),
+            args: vec![],
+        };
         let result = registry.execute(&cmd);
         assert!(!result.success);
     }
@@ -268,7 +315,10 @@ mod tests {
     #[test]
     fn test_time_set_valid() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "time".into(), args: vec!["set".into(), "0.5".into()] };
+        let cmd = ChatCommand {
+            name: "time".into(),
+            args: vec!["set".into(), "0.5".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }
@@ -276,7 +326,10 @@ mod tests {
     #[test]
     fn test_time_set_invalid() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "time".into(), args: vec!["set".into(), "2.0".into()] };
+        let cmd = ChatCommand {
+            name: "time".into(),
+            args: vec!["set".into(), "2.0".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(!result.success);
     }
@@ -284,7 +337,10 @@ mod tests {
     #[test]
     fn test_tp_valid() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "tp".into(), args: vec!["100".into(), "64".into(), "200".into()] };
+        let cmd = ChatCommand {
+            name: "tp".into(),
+            args: vec!["100".into(), "64".into(), "200".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }
@@ -292,7 +348,10 @@ mod tests {
     #[test]
     fn test_tp_missing_coords() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "tp".into(), args: vec!["100".into()] };
+        let cmd = ChatCommand {
+            name: "tp".into(),
+            args: vec!["100".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(!result.success);
     }
@@ -300,7 +359,10 @@ mod tests {
     #[test]
     fn test_give_default_count() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "give".into(), args: vec!["diamond".into()] };
+        let cmd = ChatCommand {
+            name: "give".into(),
+            args: vec!["diamond".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
         assert!(result.message.contains("x1"));
@@ -309,7 +371,10 @@ mod tests {
     #[test]
     fn test_gamemode_survival() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "gamemode".into(), args: vec!["survival".into()] };
+        let cmd = ChatCommand {
+            name: "gamemode".into(),
+            args: vec!["survival".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }
@@ -317,7 +382,10 @@ mod tests {
     #[test]
     fn test_gamemode_short() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "gamemode".into(), args: vec!["c".into()] };
+        let cmd = ChatCommand {
+            name: "gamemode".into(),
+            args: vec!["c".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }
@@ -325,7 +393,10 @@ mod tests {
     #[test]
     fn test_weather() {
         let registry = CommandRegistry::new();
-        let cmd = ChatCommand { name: "weather".into(), args: vec!["rain".into()] };
+        let cmd = ChatCommand {
+            name: "weather".into(),
+            args: vec!["rain".into()],
+        };
         let result = registry.execute(&cmd);
         assert!(result.success);
     }

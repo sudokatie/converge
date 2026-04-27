@@ -40,6 +40,10 @@
 mod config;
 mod fidelity;
 mod job;
+#[expect(
+    clippy::module_inception,
+    reason = "scheduler is the core type, renaming would be confusing"
+)]
 mod scheduler;
 mod state;
 

@@ -31,7 +31,7 @@ pub enum CraftError {
 pub struct CraftRequirements {
     /// Whether the craft can proceed.
     pub can_craft: bool,
-    /// Missing items (item_id, needed, have).
+    /// Missing items (`item_id`, needed, have).
     pub missing: Vec<(ItemId, u32, u32)>,
 }
 
@@ -127,19 +127,23 @@ fn can_fit_items(inventory: &Inventory, item_id: ItemId, count: u32, stack_size:
 
     // First check existing stacks of same item
     for slot in 0..crate::inventory::INVENTORY_SIZE {
-        if let Some(stack) = inventory.get(slot) {
-            if stack.item_id == item_id {
-                let space = stack_size.saturating_sub(stack.count);
-                remaining = remaining.saturating_sub(space);
-                if remaining == 0 {
-                    return true;
-                }
+        if let Some(stack) = inventory.get(slot)
+            && stack.item_id == item_id
+        {
+            let space = stack_size.saturating_sub(stack.count);
+            remaining = remaining.saturating_sub(space);
+            if remaining == 0 {
+                return true;
             }
         }
     }
 
     // Count empty slots
     let empty_slots = crate::inventory::INVENTORY_SIZE - inventory.occupied_slots();
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "inventory slot count fits in u32"
+    )]
     let can_fit_in_empty = empty_slots as u32 * stack_size;
 
     remaining <= can_fit_in_empty
@@ -152,12 +156,12 @@ fn remove_items(inventory: &mut Inventory, item_id: ItemId, mut count: u32) {
             break;
         }
 
-        if let Some(stack) = inventory.get(slot) {
-            if stack.item_id == item_id {
-                let take = stack.count.min(count);
-                inventory.remove(slot, take);
-                count -= take;
-            }
+        if let Some(stack) = inventory.get(slot)
+            && stack.item_id == item_id
+        {
+            let take = stack.count.min(count);
+            inventory.remove(slot, take);
+            count -= take;
         }
     }
 }
@@ -205,7 +209,7 @@ mod tests {
     fn test_check_craft_success() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         inventory.add(ItemStack::new(items.by_name("Oak Log").unwrap(), 5));
 
         let recipe = recipes.get("oak_planks").unwrap();
@@ -234,10 +238,10 @@ mod tests {
     fn test_execute_craft_success() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         let log_id = items.by_name("Oak Log").unwrap();
         let planks_id = items.by_name("Oak Planks").unwrap();
-        
+
         inventory.add(ItemStack::new(log_id, 5));
 
         let recipe = recipes.get("oak_planks").unwrap();
@@ -263,11 +267,11 @@ mod tests {
     fn test_execute_craft_multiple_inputs() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         let planks_id = items.by_name("Oak Planks").unwrap();
         let stick_id = items.by_name("Stick").unwrap();
         let pickaxe_id = items.by_name("Wooden Pickaxe").unwrap();
-        
+
         inventory.add(ItemStack::new(planks_id, 10));
         inventory.add(ItemStack::new(stick_id, 10));
 
@@ -284,10 +288,10 @@ mod tests {
     fn test_execute_craft_by_id() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         let log_id = items.by_name("Oak Log").unwrap();
         let planks_id = items.by_name("Oak Planks").unwrap();
-        
+
         inventory.add(ItemStack::new(log_id, 5));
 
         let result = execute_craft_by_id("oak_planks", &recipes, &mut inventory, &items);
@@ -310,7 +314,7 @@ mod tests {
     fn test_craft_atomic_on_failure() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         // Add only planks, no sticks - pickaxe craft should fail
         let planks_id = items.by_name("Oak Planks").unwrap();
         inventory.add(ItemStack::new(planks_id, 10));
@@ -328,10 +332,10 @@ mod tests {
     fn test_craft_multiple_times() {
         let (items, recipes) = setup();
         let mut inventory = Inventory::new();
-        
+
         let log_id = items.by_name("Oak Log").unwrap();
         let planks_id = items.by_name("Oak Planks").unwrap();
-        
+
         inventory.add(ItemStack::new(log_id, 10));
 
         let recipe = recipes.get("oak_planks").unwrap();

@@ -48,7 +48,7 @@ impl FallDamageTracker {
 
     /// Update fall damage state each frame.
     ///
-    /// Call every frame with the player's current on_ground state and Y position.
+    /// Call every frame with the player's current `on_ground` state and Y position.
     /// Returns the fall damage taken this frame (non-zero only on the landing frame).
     pub fn update(&mut self, on_ground: bool, position_y: f32) -> f32 {
         if !on_ground {
@@ -99,7 +99,7 @@ impl FallDamageTracker {
 
 /// Calculate fall damage from fall distance.
 ///
-/// Damage = max(0, fall_distance - FALL_DAMAGE_THRESHOLD) * FALL_DAMAGE_PER_BLOCK
+/// `Damage = max(0, fall_distance - FALL_DAMAGE_THRESHOLD) * FALL_DAMAGE_PER_BLOCK`
 #[must_use]
 pub fn calculate_fall_damage(fall_distance: f32) -> f32 {
     if fall_distance <= FALL_DAMAGE_THRESHOLD {
@@ -159,7 +159,7 @@ impl DrowningTracker {
         self.pending_damage
     }
 
-    /// Get current air supply (0.0 to MAX_AIR_SUPPLY).
+    /// Get current air supply (0.0 to `MAX_AIR_SUPPLY`).
     #[must_use]
     pub fn air_supply(&self) -> f32 {
         self.air_supply
@@ -184,10 +184,10 @@ mod tests {
 
     #[test]
     fn test_no_damage_short_fall() {
-        assert_eq!(calculate_fall_damage(0.0), 0.0);
-        assert_eq!(calculate_fall_damage(1.0), 0.0);
-        assert_eq!(calculate_fall_damage(2.9), 0.0);
-        assert_eq!(calculate_fall_damage(3.0), 0.0);
+        assert!((calculate_fall_damage(0.0) - 0.0).abs() < f32::EPSILON);
+        assert!((calculate_fall_damage(1.0) - 0.0).abs() < f32::EPSILON);
+        assert!((calculate_fall_damage(2.9) - 0.0).abs() < f32::EPSILON);
+        assert!((calculate_fall_damage(3.0) - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod tests {
     #[test]
     fn test_negative_fall_distance() {
         // Should not happen in practice, but handle gracefully
-        assert_eq!(calculate_fall_damage(-1.0), 0.0);
+        assert!((calculate_fall_damage(-1.0) - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -212,7 +212,7 @@ mod tests {
 
         // Start on ground, stay on ground
         let damage = tracker.update(true, 10.0);
-        assert_eq!(damage, 0.0);
+        assert!((damage - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -221,15 +221,18 @@ mod tests {
 
         // Walk off edge (y=10)
         let damage = tracker.update(false, 10.0);
-        assert_eq!(damage, 0.0); // No damage yet
+        assert!((damage - 0.0).abs() < f32::EPSILON); // No damage yet
 
         // Falling (y=8)
         let damage = tracker.update(false, 8.0);
-        assert_eq!(damage, 0.0);
+        assert!((damage - 0.0).abs() < f32::EPSILON);
 
         // Land (y=4, fell 6 blocks = 3 damage)
         let damage = tracker.update(true, 4.0);
-        assert!((damage - 3.0).abs() < 0.001, "Expected 3 damage from 6-block fall, got {damage}");
+        assert!(
+            (damage - 3.0).abs() < 0.001,
+            "Expected 3 damage from 6-block fall, got {damage}"
+        );
     }
 
     #[test]
@@ -241,7 +244,7 @@ mod tests {
 
         // Land quickly (y=8, only 2 blocks = no damage)
         let damage = tracker.update(true, 8.0);
-        assert_eq!(damage, 0.0);
+        assert!((damage - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -256,7 +259,7 @@ mod tests {
         // Second fall from lower height
         tracker.update(false, 14.0);
         let damage2 = tracker.update(true, 12.0); // 2 blocks = no damage
-        assert_eq!(damage2, 0.0);
+        assert!((damage2 - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -269,7 +272,7 @@ mod tests {
         tracker.update(false, 12.0);
         // Land at y=9, only fell 3 blocks from y=12
         let damage = tracker.update(true, 9.0); // 3 blocks = no damage
-        assert_eq!(damage, 0.0);
+        assert!((damage - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -282,7 +285,7 @@ mod tests {
         assert!((damage - 3.0).abs() < 0.001);
 
         // Should be consumed
-        assert_eq!(tracker.take_pending_damage(), 0.0);
+        assert!((tracker.take_pending_damage() - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -292,7 +295,10 @@ mod tests {
         // Underwater for 5 seconds (within grace period)
         for _ in 0..50 {
             let damage = tracker.update(true, 0.1);
-            assert_eq!(damage, 0.0, "No damage while air supply remains");
+            assert!(
+                damage.abs() < f32::EPSILON,
+                "No damage while air supply remains"
+            );
         }
 
         assert!(tracker.air_supply() > 0.0, "Should still have air");
@@ -337,6 +343,9 @@ mod tests {
     #[test]
     fn test_drowning_air_fraction() {
         let tracker = DrowningTracker::new();
-        assert!((tracker.air_fraction() - 1.0).abs() < 0.001, "Should start with full air");
+        assert!(
+            (tracker.air_fraction() - 1.0).abs() < 0.001,
+            "Should start with full air"
+        );
     }
 }

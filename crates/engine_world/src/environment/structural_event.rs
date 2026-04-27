@@ -51,11 +51,10 @@ impl StructuralEventKind {
     #[must_use]
     pub const fn severity(self) -> u8 {
         match self {
-            StructuralEventKind::SupportLost => 1,
-            StructuralEventKind::IntegrityLost => 1,
-            StructuralEventKind::Collapse => 2,
-            StructuralEventKind::StressFailure => 2,
-            StructuralEventKind::Decompression => 2,
+            StructuralEventKind::SupportLost | StructuralEventKind::IntegrityLost => 1,
+            StructuralEventKind::Collapse
+            | StructuralEventKind::StressFailure
+            | StructuralEventKind::Decompression => 2,
             StructuralEventKind::CaveIn => 3,
         }
     }

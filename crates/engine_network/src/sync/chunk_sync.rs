@@ -29,6 +29,10 @@ pub enum ChunkPriority {
 impl ChunkPriority {
     /// Determine priority based on distance from player.
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "view_distance is a small integer that fits f32"
+    )]
     pub fn from_distance(distance_squared: f32, view_distance: i32) -> Self {
         let vd = view_distance as f32;
         let critical_dist = 2.0 * 2.0; // Within 2 chunks
@@ -61,6 +65,10 @@ pub struct ChunkRequest {
 impl ChunkRequest {
     /// Create a new chunk request.
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "chunk coordinates are small integers that fit f32"
+    )]
     pub fn new(pos: ChunkPos, player_pos: Vec3, view_distance: i32) -> Self {
         let chunk_center = Vec3::new(
             (pos.x() * 16 + 8) as f32,
@@ -105,6 +113,14 @@ impl ClientChunkSync {
     /// Update based on player position, returning chunks to request.
     ///
     /// Returns a list of chunk positions to request from the server.
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "internal panic on NaN comparison"
+    )]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "world coordinates converted to chunk indices"
+    )]
     pub fn update(&mut self, player_pos: Vec3) -> Vec<ChunkRequest> {
         let player_chunk = ChunkPos::new(
             (player_pos.x / 16.0).floor() as i32,
@@ -160,6 +176,10 @@ impl ClientChunkSync {
     /// Unload chunks far from player.
     ///
     /// Returns positions of chunks that were unloaded.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "world coordinates converted to chunk indices"
+    )]
     pub fn unload_distant(&mut self, player_pos: Vec3) -> Vec<ChunkPos> {
         let player_chunk = ChunkPos::new(
             (player_pos.x / 16.0).floor() as i32,
@@ -169,7 +189,7 @@ impl ClientChunkSync {
 
         // Unload at view_distance + 2 for hysteresis
         let unload_dist = self.view_distance + 2;
-        let unload_dist_sq = (unload_dist * unload_dist) as i32;
+        let unload_dist_sq = unload_dist * unload_dist;
 
         let mut to_unload = Vec::new();
         self.loaded.retain(|&pos| {
@@ -281,9 +301,8 @@ impl ServerChunkSync {
     ///
     /// Returns up to `max_per_tick` chunk positions to send.
     pub fn next_chunks(&mut self, client_id: u64) -> Vec<ChunkPos> {
-        let queue = match self.client_requests.get_mut(&client_id) {
-            Some(q) => q,
-            None => return Vec::new(),
+        let Some(queue) = self.client_requests.get_mut(&client_id) else {
+            return Vec::new();
         };
 
         let count = self.max_per_tick.min(queue.len());
@@ -308,8 +327,7 @@ impl ServerChunkSync {
     pub fn pending_count(&self, client_id: u64) -> usize {
         self.client_requests
             .get(&client_id)
-            .map(VecDeque::len)
-            .unwrap_or(0)
+            .map_or(0, VecDeque::len)
     }
 
     /// Set maximum chunks to send per tick.
@@ -438,6 +456,10 @@ mod tests {
     }
 
     #[test]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "test loop index is a small integer that fits f32"
+    )]
     fn test_server_chunk_sync_max_per_tick() {
         let mut sync = ServerChunkSync::new();
         sync.set_max_per_tick(2);

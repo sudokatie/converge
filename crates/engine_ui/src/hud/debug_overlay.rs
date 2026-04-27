@@ -39,6 +39,7 @@ impl DebugStats {
     }
 
     /// Set FPS stats.
+    #[must_use]
     pub fn with_fps(mut self, fps: f32, frame_time_ms: f32) -> Self {
         self.fps = fps;
         self.frame_time_ms = frame_time_ms;
@@ -46,18 +47,21 @@ impl DebugStats {
     }
 
     /// Set average frame time.
+    #[must_use]
     pub fn with_avg_frame_time(mut self, avg_ms: f32) -> Self {
         self.avg_frame_time_ms = avg_ms;
         self
     }
 
     /// Set 1% low FPS.
+    #[must_use]
     pub fn with_fps_1_low(mut self, fps_1_low: f32) -> Self {
         self.fps_1_low = fps_1_low;
         self
     }
 
     /// Set render stats.
+    #[must_use]
     pub fn with_render_stats(mut self, draw_calls: u32, triangles: u32) -> Self {
         self.draw_calls = draw_calls;
         self.triangles = triangles;
@@ -65,6 +69,7 @@ impl DebugStats {
     }
 
     /// Set chunk stats.
+    #[must_use]
     pub fn with_chunk_stats(mut self, rendered: u32, loaded: u32) -> Self {
         self.chunks_rendered = rendered;
         self.chunks_loaded = loaded;
@@ -72,18 +77,21 @@ impl DebugStats {
     }
 
     /// Set entity count.
+    #[must_use]
     pub fn with_entity_count(mut self, count: u32) -> Self {
         self.entity_count = count;
         self
     }
 
     /// Set player position.
+    #[must_use]
     pub fn with_player_pos(mut self, pos: [f32; 3]) -> Self {
         self.player_pos = Some(pos);
         self
     }
 
     /// Set chunk position.
+    #[must_use]
     pub fn with_chunk_pos(mut self, pos: [i32; 3]) -> Self {
         self.chunk_pos = Some(pos);
         self
@@ -265,18 +273,18 @@ impl DebugOverlay {
                 .monospace(),
         );
 
-        if let Some(pos) = stats.player_pos {
+        if let Some([pos_0, pos_1, pos_2]) = stats.player_pos {
             ui.separator();
             ui.label(
-                RichText::new(format!("Pos: {:.1}, {:.1}, {:.1}", pos[0], pos[1], pos[2]))
+                RichText::new(format!("Pos: {pos_0:.1}, {pos_1:.1}, {pos_2:.1}"))
                     .color(Color32::LIGHT_BLUE)
                     .monospace(),
             );
         }
 
-        if let Some(chunk) = stats.chunk_pos {
+        if let Some([chunk_0, chunk_1, chunk_2]) = stats.chunk_pos {
             ui.label(
-                RichText::new(format!("Chunk: {}, {}, {}", chunk[0], chunk[1], chunk[2]))
+                RichText::new(format!("Chunk: {chunk_0}, {chunk_1}, {chunk_2}"))
                     .color(Color32::LIGHT_BLUE)
                     .monospace(),
             );
@@ -285,6 +293,10 @@ impl DebugOverlay {
 }
 
 /// Format large numbers with K/M suffixes.
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "display formatting tolerates precision loss"
+)]
 fn format_number(n: u32) -> String {
     if n >= 1_000_000 {
         format!("{:.1}M", n as f32 / 1_000_000.0)

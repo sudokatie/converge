@@ -74,16 +74,24 @@ impl HungerBarState {
 /// * `current` - Current hunger (0.0 to max)
 /// * `max` - Maximum hunger (typically 20.0)
 /// * `state` - Animation state
-pub fn draw_hunger_bar(
-    ctx: &egui::Context,
-    current: f32,
-    max: f32,
-    state: &HungerBarState,
-) {
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "DRUMSTICK_COUNT and loop index are small constants; precision loss is acceptable for UI layout"
+)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "half_drumsticks is bounded by DRUMSTICK_COUNT*2 which fits in i32"
+)]
+#[expect(
+    clippy::cast_possible_wrap,
+    reason = "loop index i is bounded by DRUMSTICK_COUNT (10) which fits in i32"
+)]
+pub fn draw_hunger_bar(ctx: &egui::Context, current: f32, max: f32, state: &HungerBarState) {
     let screen_rect = ctx.screen_rect();
 
     // Position at top-right (opposite of health bar)
-    let total_width = DRUMSTICK_COUNT as f32 * (DRUMSTICK_SIZE + DRUMSTICK_SPACING) - DRUMSTICK_SPACING;
+    let total_width =
+        DRUMSTICK_COUNT as f32 * (DRUMSTICK_SIZE + DRUMSTICK_SPACING) - DRUMSTICK_SPACING;
     let bar_x = screen_rect.width() - total_width - BAR_PADDING * 2.0 - 10.0;
     let bar_y = BAR_PADDING + 10.0 + state.shake_offset();
 
@@ -93,7 +101,10 @@ pub fn draw_hunger_bar(
         .show(ctx, |ui| {
             let bar_rect = Rect::from_min_size(
                 Pos2::ZERO,
-                Vec2::new(total_width + BAR_PADDING * 2.0, DRUMSTICK_SIZE + BAR_PADDING * 2.0),
+                Vec2::new(
+                    total_width + BAR_PADDING * 2.0,
+                    DRUMSTICK_SIZE + BAR_PADDING * 2.0,
+                ),
             );
 
             let painter = ui.painter();
@@ -108,7 +119,8 @@ pub fn draw_hunger_bar(
             for i in 0..DRUMSTICK_COUNT {
                 // Draw from right to left
                 let reversed_i = DRUMSTICK_COUNT - 1 - i;
-                let drumstick_x = BAR_PADDING + reversed_i as f32 * (DRUMSTICK_SIZE + DRUMSTICK_SPACING);
+                let drumstick_x =
+                    BAR_PADDING + reversed_i as f32 * (DRUMSTICK_SIZE + DRUMSTICK_SPACING);
                 let drumstick_rect = Rect::from_min_size(
                     Pos2::new(drumstick_x, BAR_PADDING),
                     Vec2::splat(DRUMSTICK_SIZE),
@@ -132,14 +144,8 @@ fn draw_drumstick(painter: &egui::Painter, rect: Rect, is_full: bool, is_half: b
         painter.rect_filled(rect, Rounding::same(2.0), DRUMSTICK_FULL);
     } else if is_half {
         // Draw half drumstick (left half filled)
-        let left_rect = Rect::from_min_max(
-            rect.min,
-            Pos2::new(rect.center().x, rect.max.y),
-        );
-        let right_rect = Rect::from_min_max(
-            Pos2::new(rect.center().x, rect.min.y),
-            rect.max,
-        );
+        let left_rect = Rect::from_min_max(rect.min, Pos2::new(rect.center().x, rect.max.y));
+        let right_rect = Rect::from_min_max(Pos2::new(rect.center().x, rect.min.y), rect.max);
 
         painter.rect_filled(left_rect, Rounding::same(2.0), DRUMSTICK_FULL);
         painter.rect_filled(right_rect, Rounding::same(2.0), DRUMSTICK_EMPTY);
@@ -156,7 +162,7 @@ mod tests {
     fn test_hunger_bar_state_new() {
         let state = HungerBarState::new();
         assert!(!state.is_shaking());
-        assert_eq!(state.shake_offset(), 0.0);
+        assert!((state.shake_offset() - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -179,7 +185,7 @@ mod tests {
         state.update(15.0, 0.1);
 
         assert!(!state.is_shaking());
-        assert_eq!(state.shake_offset(), 0.0);
+        assert!((state.shake_offset() - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -189,7 +195,7 @@ mod tests {
         // Empty hunger (0) shouldn't shake either
         state.update(0.0, 0.1);
 
-        assert_eq!(state.shake_offset(), 0.0);
+        assert!((state.shake_offset() - 0.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -203,6 +209,6 @@ mod tests {
         state.update(15.0, 0.1);
 
         assert!(!state.is_shaking());
-        assert_eq!(state.shake_timer, 0.0);
+        assert!((state.shake_timer - 0.0).abs() < f32::EPSILON);
     }
 }

@@ -14,6 +14,7 @@ const BAR_PADDING: f32 = 4.0;
 
 /// Heart colors.
 const HEART_FULL: Color32 = Color32::from_rgb(200, 40, 40);
+#[allow(dead_code)]
 const HEART_HALF: Color32 = Color32::from_rgb(200, 40, 40);
 const HEART_EMPTY: Color32 = Color32::from_rgb(60, 30, 30);
 const HEART_FLASH: Color32 = Color32::from_rgb(255, 100, 100);
@@ -78,6 +79,18 @@ impl HealthBarState {
 /// * `max` - Maximum health (typically 20.0)
 /// * `state` - Animation state
 /// * `poisoned` - Whether player is poisoned (green hearts)
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "HEART_COUNT and loop index are small constants; precision loss is acceptable for UI layout"
+)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "half_hearts is bounded by HEART_COUNT*2 which fits in i32"
+)]
+#[expect(
+    clippy::cast_possible_wrap,
+    reason = "loop index i is bounded by HEART_COUNT (10) which fits in i32"
+)]
 pub fn draw_health_bar(
     ctx: &egui::Context,
     current: f32,
@@ -85,7 +98,7 @@ pub fn draw_health_bar(
     state: &HealthBarState,
     poisoned: bool,
 ) {
-    let screen_rect = ctx.screen_rect();
+    let _screen_rect = ctx.screen_rect();
 
     // Position at top-left
     let bar_x = BAR_PADDING + 10.0;
@@ -98,7 +111,10 @@ pub fn draw_health_bar(
             let total_width = HEART_COUNT as f32 * (HEART_SIZE + HEART_SPACING) - HEART_SPACING;
             let bar_rect = Rect::from_min_size(
                 Pos2::ZERO,
-                Vec2::new(total_width + BAR_PADDING * 2.0, HEART_SIZE + BAR_PADDING * 2.0),
+                Vec2::new(
+                    total_width + BAR_PADDING * 2.0,
+                    HEART_SIZE + BAR_PADDING * 2.0,
+                ),
             );
 
             let painter = ui.painter();
@@ -112,10 +128,8 @@ pub fn draw_health_bar(
             // Draw hearts
             for i in 0..HEART_COUNT {
                 let heart_x = BAR_PADDING + i as f32 * (HEART_SIZE + HEART_SPACING);
-                let heart_rect = Rect::from_min_size(
-                    Pos2::new(heart_x, BAR_PADDING),
-                    Vec2::splat(HEART_SIZE),
-                );
+                let heart_rect =
+                    Rect::from_min_size(Pos2::new(heart_x, BAR_PADDING), Vec2::splat(HEART_SIZE));
 
                 let heart_index = i as i32;
                 let full_threshold = heart_index * 2 + 2;
@@ -139,7 +153,12 @@ pub fn draw_health_bar(
                 };
 
                 // Draw heart shape (simplified as rounded rect for now)
-                draw_heart(painter, heart_rect, color, half_hearts >= half_threshold && half_hearts < full_threshold);
+                draw_heart(
+                    painter,
+                    heart_rect,
+                    color,
+                    half_hearts >= half_threshold && half_hearts < full_threshold,
+                );
             }
         });
 }
@@ -148,14 +167,8 @@ pub fn draw_health_bar(
 fn draw_heart(painter: &egui::Painter, rect: Rect, color: Color32, is_half: bool) {
     if is_half {
         // Draw half heart (left half filled, right half empty)
-        let left_rect = Rect::from_min_max(
-            rect.min,
-            Pos2::new(rect.center().x, rect.max.y),
-        );
-        let right_rect = Rect::from_min_max(
-            Pos2::new(rect.center().x, rect.min.y),
-            rect.max,
-        );
+        let left_rect = Rect::from_min_max(rect.min, Pos2::new(rect.center().x, rect.max.y));
+        let right_rect = Rect::from_min_max(Pos2::new(rect.center().x, rect.min.y), rect.max);
 
         painter.rect_filled(left_rect, Rounding::same(2.0), color);
         painter.rect_filled(right_rect, Rounding::same(2.0), HEART_EMPTY);
@@ -169,6 +182,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[expect(clippy::float_cmp, reason = "testing exact zero initialization")]
     fn test_health_bar_state_new() {
         let state = HealthBarState::new();
         assert!(!state.is_flashing());

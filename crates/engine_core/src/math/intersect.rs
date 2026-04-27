@@ -17,8 +17,9 @@ pub struct Intersection {
 
 /// Test ray intersection with AABB.
 ///
-/// Returns the intersection if hit within ray's t_max.
+/// Returns the intersection if hit within ray's `t_max`.
 #[must_use]
+#[allow(dead_code)]
 pub fn ray_aabb(ray: &Ray, aabb: &Aabb) -> Option<Intersection> {
     let inv_dir = Vec3::new(
         1.0 / ray.direction.x,
@@ -68,8 +69,9 @@ pub fn ray_aabb(ray: &Ray, aabb: &Aabb) -> Option<Intersection> {
 
 /// Test ray intersection with sphere.
 ///
-/// Returns the intersection if hit within ray's t_max.
+/// Returns the intersection if hit within ray's `t_max`.
 #[must_use]
+#[allow(dead_code)]
 pub fn ray_sphere(ray: &Ray, sphere: &Sphere) -> Option<Intersection> {
     let oc = ray.origin - sphere.center;
     let a = ray.direction.dot(ray.direction);
@@ -101,8 +103,9 @@ pub fn ray_sphere(ray: &Ray, sphere: &Sphere) -> Option<Intersection> {
 
 /// Test ray intersection with plane.
 ///
-/// Returns the intersection if hit within ray's t_max.
+/// Returns the intersection if hit within ray's `t_max`.
 #[must_use]
+#[allow(dead_code)]
 pub fn ray_plane(ray: &Ray, plane: &Plane) -> Option<Intersection> {
     let denom = plane.normal.dot(ray.direction);
 
@@ -129,6 +132,7 @@ pub fn ray_plane(ray: &Ray, plane: &Plane) -> Option<Intersection> {
 
 /// Test if AABB intersects sphere.
 #[must_use]
+#[allow(dead_code)]
 pub fn aabb_sphere(aabb: &Aabb, sphere: &Sphere) -> bool {
     // Find closest point on AABB to sphere center
     let closest = Vec3::new(

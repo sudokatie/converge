@@ -103,6 +103,9 @@ impl SoundRegistry {
     }
 
     /// Load a sound with custom settings.
+    ///
+    /// # Errors
+    /// Returns error if the sound file cannot be loaded.
     pub fn load_with_settings(
         &mut self,
         id: SoundId,

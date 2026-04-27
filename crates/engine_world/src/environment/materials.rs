@@ -297,14 +297,13 @@ impl MaterialRegistry {
     /// # Errors
     /// Returns an error if the file cannot be read or parsed.
     pub fn load(path: &Path) -> Result<Self, MaterialRegistryError> {
-        let contents = fs::read_to_string(path)?;
-
         #[derive(Deserialize)]
         struct MaterialFile {
             materials: HashMap<u16, MaterialProperties>,
             block_bindings: HashMap<u16, u16>,
         }
 
+        let contents = fs::read_to_string(path)?;
         let file: MaterialFile = ron::from_str(&contents)?;
 
         let mut registry = Self::new();
@@ -353,49 +352,49 @@ impl MaterialRegistry {
     #[must_use]
     pub fn burn_resistance(&self, block_id: BlockId) -> f32 {
         self.block_properties(block_id)
-            .map_or(1.0, |p| p.burn_resistance())
+            .map_or(1.0, MaterialProperties::burn_resistance)
     }
 
     /// Get thermal conductivity for a block (returns 0.5 for unknown blocks).
     #[must_use]
     pub fn thermal_conductivity(&self, block_id: BlockId) -> f32 {
         self.block_properties(block_id)
-            .map_or(0.5, |p| p.thermal_conductivity())
+            .map_or(0.5, MaterialProperties::thermal_conductivity)
     }
 
     /// Get airtightness for a block (returns 0.0 for unknown blocks).
     #[must_use]
     pub fn airtightness(&self, block_id: BlockId) -> f32 {
         self.block_properties(block_id)
-            .map_or(0.0, |p| p.airtightness())
+            .map_or(0.0, MaterialProperties::airtightness)
     }
 
     /// Get buoyancy for a block (returns 0.5 for unknown blocks).
     #[must_use]
     pub fn buoyancy(&self, block_id: BlockId) -> f32 {
         self.block_properties(block_id)
-            .map_or(0.5, |p| p.buoyancy())
+            .map_or(0.5, MaterialProperties::buoyancy)
     }
 
     /// Get brittleness for a block (returns 0.0 for unknown blocks).
     #[must_use]
     pub fn brittleness(&self, block_id: BlockId) -> f32 {
         self.block_properties(block_id)
-            .map_or(0.0, |p| p.brittleness())
+            .map_or(0.0, MaterialProperties::brittleness)
     }
 
     /// Check if a block is flammable.
     #[must_use]
     pub fn is_flammable(&self, block_id: BlockId) -> bool {
         self.block_properties(block_id)
-            .map_or(false, MaterialProperties::is_flammable)
+            .is_some_and(MaterialProperties::is_flammable)
     }
 
     /// Check if a block is airtight.
     #[must_use]
     pub fn is_airtight(&self, block_id: BlockId) -> bool {
         self.block_properties(block_id)
-            .map_or(false, MaterialProperties::is_airtight)
+            .is_some_and(MaterialProperties::is_airtight)
     }
 
     /// Get the number of registered materials.
@@ -418,7 +417,7 @@ impl MaterialRegistry {
 
 /// Convert material properties to hazard resistance for propagation.
 pub mod hazard_integration {
-    use super::*;
+    use super::MaterialProperties;
     use crate::environment::Resistance;
 
     /// Get fire spread resistance from material properties.
@@ -449,6 +448,10 @@ pub mod hazard_integration {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
     use crate::chunk::{AIR, DIRT, GRASS, SAND, STONE, WATER};

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// Chunk index in the world grid.
 ///
-/// Each chunk contains CHUNK_SIZE^3 voxels.
+/// Each chunk contains `CHUNK_SIZE`^3 voxels.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ChunkPos(pub IVec3);
 
@@ -50,9 +50,7 @@ impl ChunkPos {
     /// Manhattan distance to another chunk position.
     #[must_use]
     pub fn manhattan_distance(&self, other: ChunkPos) -> i32 {
-        (self.0.x - other.0.x).abs()
-            + (self.0.y - other.0.y).abs()
-            + (self.0.z - other.0.z).abs()
+        (self.0.x - other.0.x).abs() + (self.0.y - other.0.y).abs() + (self.0.z - other.0.z).abs()
     }
 
     /// Chebyshev (chessboard) distance to another chunk position.

@@ -221,6 +221,10 @@ impl FluidTransportResult {
 }
 
 /// Execute a deterministic transport step for one fluid kind.
+#[expect(
+    clippy::too_many_lines,
+    reason = "complex simulation logic kept together for clarity"
+)]
 pub fn transport_step<R: FluidResistanceMap>(
     fluids: &ChunkFluids,
     kind: FluidKind,
@@ -251,11 +255,23 @@ pub fn transport_step<R: FluidResistanceMap>(
         let mut new_temperature = cell.temperature();
 
         for &(dx, dy, dz) in &FACE_NEIGHBORS {
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let nx = pos.x() as i32 + dx;
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let ny = pos.y() as i32 + dy;
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let nz = pos.z() as i32 + dz;
 
-            if nx < 0 || nx >= 16 || ny < 0 || ny >= 16 || nz < 0 || nz >= 16 {
+            if !(0..16).contains(&nx) || !(0..16).contains(&ny) || !(0..16).contains(&nz) {
                 let gravity_factor = compute_gravity_factor(dy, rises, config.gravity_bias);
                 if gravity_factor > 0.0 {
                     let flow_amount = (cell.volume() * effective_flow * dt * gravity_factor)
@@ -274,6 +290,10 @@ pub fn transport_step<R: FluidResistanceMap>(
                 continue;
             }
 
+            #[expect(
+                clippy::cast_sign_loss,
+                reason = "bounds check above guarantees nx, ny, nz are in 0..16"
+            )]
             let neighbor_pos = LocalPos::new(nx as u32, ny as u32, nz as u32);
             let resistance = resistance_map.resistance(kind, neighbor_pos);
 
@@ -385,6 +405,13 @@ fn compute_gravity_factor(dy: i32, rises: bool, gravity_bias: f32) -> f32 {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    clippy::collapsible_if,
+    clippy::cast_sign_loss,
+    reason = "tests check exact values; format args clearer; test arithmetic is bounded"
+)]
 mod tests {
     use super::*;
 

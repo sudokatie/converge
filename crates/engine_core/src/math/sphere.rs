@@ -55,12 +55,13 @@ impl Default for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx::assert_relative_eq;
 
     #[test]
     fn test_new() {
         let s = Sphere::new(Vec3::ONE, 2.0);
         assert_eq!(s.center, Vec3::ONE);
-        assert_eq!(s.radius, 2.0);
+        assert_relative_eq!(s.radius, 2.0);
     }
 
     #[test]

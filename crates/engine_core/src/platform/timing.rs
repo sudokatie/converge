@@ -118,7 +118,7 @@ impl FixedTimestep {
     /// Check if a fixed step should run.
     ///
     /// Returns true and subtracts from accumulator if enough time has passed.
-    /// Limited to MAX_FIXED_STEPS per frame to prevent spiral of death.
+    /// Limited to `MAX_FIXED_STEPS` per frame to prevent spiral of death.
     pub fn should_step(&mut self) -> bool {
         if self.accumulator >= self.step && self.step_count < MAX_FIXED_STEPS {
             self.accumulator -= self.step;
@@ -192,7 +192,7 @@ mod tests {
         }
 
         // 50ms / 16.67ms = ~3 steps
-        assert!(count >= 2 && count <= 4, "Expected 2-4 steps, got {count}");
+        assert!((2..=4).contains(&count), "Expected 2-4 steps, got {count}");
     }
 
     #[test]

@@ -225,6 +225,11 @@ pub struct PointLightGpuData {
     pub color: [f32; 3],
     pub intensity: f32,
     pub attenuation: f32,
+    /// Padding for GPU uniform buffer alignment (required but unused).
+    #[expect(
+        clippy::pub_underscore_fields,
+        reason = "padding field must be pub for bytemuck derive but is intentionally unused"
+    )]
     pub _padding: [f32; 3],
 }
 
@@ -262,12 +267,13 @@ mod tests {
         let mut manager = PointLightManager::new();
 
         // Add more than max lights
-        for i in 0..100 {
-            manager.add(PointLight::new(
-                Vec3::new(i as f32, 0.0, 0.0),
-                Vec3::ONE,
-                1.0,
-            ));
+        for i in 0..100i32 {
+            #[expect(
+                clippy::cast_precision_loss,
+                reason = "test values are small; precision loss is acceptable"
+            )]
+            let x = i as f32;
+            manager.add(PointLight::new(Vec3::new(x, 0.0, 0.0), Vec3::ONE, 1.0));
         }
 
         manager.update_active(Vec3::ZERO);

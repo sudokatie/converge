@@ -264,6 +264,10 @@ impl PropagationConfig {
     }
 
     /// Create configs for all hazard kinds with default settings.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic as it only iterates over valid hazard indices.
     #[must_use]
     pub fn all_defaults() -> [Self; HazardKind::COUNT] {
         std::array::from_fn(|i| {
@@ -280,6 +284,10 @@ impl PropagationConfig {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

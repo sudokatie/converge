@@ -1,9 +1,10 @@
 //! Chunk lifecycle state machine.
 
 /// State of a chunk in its lifecycle.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ChunkState {
     /// Not loaded - no data in memory.
+    #[default]
     Unloaded,
     /// Currently generating terrain.
     Generating,
@@ -86,12 +87,6 @@ impl ChunkState {
             ChunkState::Generated | ChunkState::Dirty => ChunkState::Meshing,
             _ => self,
         }
-    }
-}
-
-impl Default for ChunkState {
-    fn default() -> Self {
-        ChunkState::Unloaded
     }
 }
 

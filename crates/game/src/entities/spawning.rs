@@ -43,17 +43,7 @@ impl BiomeType {
     #[must_use]
     pub fn allowed_spawns(&self) -> &[CreatureKind] {
         match self {
-            BiomeType::Plains => &[
-                CreatureKind::Pig,
-                CreatureKind::Cow,
-                CreatureKind::Sheep,
-                CreatureKind::Chicken,
-                CreatureKind::Zombie,
-                CreatureKind::Skeleton,
-                CreatureKind::Spider,
-                CreatureKind::Creeper,
-            ],
-            BiomeType::Forest => &[
+            BiomeType::Plains | BiomeType::Forest => &[
                 CreatureKind::Pig,
                 CreatureKind::Cow,
                 CreatureKind::Sheep,
@@ -69,27 +59,20 @@ impl BiomeType {
                 CreatureKind::Spider,
                 CreatureKind::Creeper,
             ],
-            BiomeType::Mountains => &[
+            BiomeType::Mountains | BiomeType::Taiga => &[
                 CreatureKind::Sheep,
                 CreatureKind::Chicken,
                 CreatureKind::Zombie,
                 CreatureKind::Skeleton,
                 CreatureKind::Spider,
             ],
-            BiomeType::Ocean => &[],
+            BiomeType::Ocean | BiomeType::Nether | BiomeType::End => &[],
             BiomeType::Swamp => &[
                 CreatureKind::Chicken,
                 CreatureKind::Zombie,
                 CreatureKind::Skeleton,
                 CreatureKind::Spider,
                 CreatureKind::Creeper,
-            ],
-            BiomeType::Taiga => &[
-                CreatureKind::Sheep,
-                CreatureKind::Chicken,
-                CreatureKind::Zombie,
-                CreatureKind::Skeleton,
-                CreatureKind::Spider,
             ],
             BiomeType::Jungle => &[
                 CreatureKind::Pig,
@@ -99,8 +82,6 @@ impl BiomeType {
                 CreatureKind::Spider,
                 CreatureKind::Creeper,
             ],
-            BiomeType::Nether => &[],
-            BiomeType::End => &[],
         }
     }
 }
@@ -191,7 +172,7 @@ impl SpawnSystem {
     #[must_use]
     pub fn is_valid_spawn_position(&self, spawn_pos: Vec3, player_pos: Vec3) -> bool {
         let distance = spawn_pos.distance(player_pos);
-        distance >= MIN_SPAWN_DISTANCE && distance <= MAX_SPAWN_DISTANCE
+        (MIN_SPAWN_DISTANCE..=MAX_SPAWN_DISTANCE).contains(&distance)
     }
 
     /// Check if a creature can spawn at a position in a given biome.
@@ -286,7 +267,7 @@ impl SpawnSystem {
     /// Rebuild population counts from the world.
     pub fn rebuild_population(&mut self, world: &World) {
         self.population.clear();
-        for (_id, creature) in world.query::<&CreatureKind>().iter() {
+        for (_id, creature) in &mut world.query::<&CreatureKind>() {
             *self.population.entry(*creature).or_insert(0) += 1;
         }
     }
@@ -306,7 +287,7 @@ mod tests {
     fn test_new_system_is_enabled() {
         let system = SpawnSystem::new();
         assert!(system.is_enabled());
-        assert_eq!(system.time_since_check, 0.0);
+        assert!(system.time_since_check.abs() < f32::EPSILON);
     }
 
     #[test]
@@ -370,12 +351,28 @@ mod tests {
         assert!(BiomeType::Ocean.allowed_spawns().is_empty());
 
         // Plains has passive and hostile
-        assert!(BiomeType::Plains.allowed_spawns().contains(&CreatureKind::Pig));
-        assert!(BiomeType::Plains.allowed_spawns().contains(&CreatureKind::Zombie));
+        assert!(
+            BiomeType::Plains
+                .allowed_spawns()
+                .contains(&CreatureKind::Pig)
+        );
+        assert!(
+            BiomeType::Plains
+                .allowed_spawns()
+                .contains(&CreatureKind::Zombie)
+        );
 
         // Desert has no passive animals
-        assert!(!BiomeType::Desert.allowed_spawns().contains(&CreatureKind::Pig));
-        assert!(BiomeType::Desert.allowed_spawns().contains(&CreatureKind::Skeleton));
+        assert!(
+            !BiomeType::Desert
+                .allowed_spawns()
+                .contains(&CreatureKind::Pig)
+        );
+        assert!(
+            BiomeType::Desert
+                .allowed_spawns()
+                .contains(&CreatureKind::Skeleton)
+        );
     }
 
     #[test]
@@ -396,7 +393,12 @@ mod tests {
     fn test_tick_at_interval() {
         let mut system = SpawnSystem::new();
         system.set_check_interval(10.0);
-        let spawns = system.tick(10.0, Vec3::ZERO, BiomeType::Plains, &[Vec3::new(50.0, 64.0, 50.0)]);
+        let _spawns = system.tick(
+            10.0,
+            Vec3::ZERO,
+            BiomeType::Plains,
+            &[Vec3::new(50.0, 64.0, 50.0)],
+        );
         // Should attempt spawns (results depend on population)
         assert!(system.time_since_check < 1.0); // Reset after check
     }

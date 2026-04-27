@@ -1,6 +1,10 @@
 //! Voxel chunk storage and management.
 
 mod block;
+#[expect(
+    clippy::module_inception,
+    reason = "chunk.rs contains the main Chunk struct"
+)]
 mod chunk;
 mod chunk_state;
 

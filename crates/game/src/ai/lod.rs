@@ -4,7 +4,6 @@
 //! at 32-64 blocks, hibernation beyond 64 blocks.
 
 use glam::Vec3;
-use hecs::World;
 
 /// Full AI distance threshold (blocks).
 pub const FULL_AI_DISTANCE: f32 = 32.0;
@@ -52,8 +51,8 @@ impl AiLodLevel {
     #[must_use]
     pub fn update_interval_secs(&self) -> f32 {
         match self {
-            AiLodLevel::Full => 0.0, // Every frame
-            AiLodLevel::Simplified => 1.0, // Once per second
+            AiLodLevel::Full => 0.0,                 // Every frame
+            AiLodLevel::Simplified => 1.0,           // Once per second
             AiLodLevel::Hibernated => f32::INFINITY, // Never
         }
     }
@@ -172,7 +171,7 @@ impl AiLodManager {
         }
         self.states
             .get(&entity_id)
-            .map_or(true, |s| s.should_update(dt))
+            .is_none_or(|s| s.should_update(dt))
     }
 
     /// Mark an entity as updated.
@@ -267,8 +266,8 @@ mod tests {
 
     #[test]
     fn test_lod_update_intervals() {
-        assert_eq!(AiLodLevel::Full.update_interval_secs(), 0.0);
-        assert_eq!(AiLodLevel::Simplified.update_interval_secs(), 1.0);
+        assert!(AiLodLevel::Full.update_interval_secs().abs() < f32::EPSILON);
+        assert!((AiLodLevel::Simplified.update_interval_secs() - 1.0).abs() < f32::EPSILON);
         assert!(AiLodLevel::Hibernated.update_interval_secs().is_infinite());
     }
 

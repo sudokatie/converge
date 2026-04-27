@@ -80,6 +80,9 @@ impl FirstPersonController {
         glam::Quat::from_euler(glam::EulerRot::YXZ, self.yaw, self.pitch, 0.0)
     }
 
+    /// Maximum pitch angle (+/- 89 degrees) to prevent gimbal lock.
+    const MAX_PITCH: f32 = 89.0 * std::f32::consts::PI / 180.0;
+
     /// Update internal rotation state based on input.
     ///
     /// This updates the controller's pitch and yaw based on mouse input.
@@ -103,8 +106,7 @@ impl FirstPersonController {
         self.pitch += mouse_delta.y * sensitivity * y_mult;
 
         // Clamp pitch to +/- 89 degrees
-        const MAX_PITCH: f32 = 89.0 * std::f32::consts::PI / 180.0;
-        self.pitch = self.pitch.clamp(-MAX_PITCH, MAX_PITCH);
+        self.pitch = self.pitch.clamp(-Self::MAX_PITCH, Self::MAX_PITCH);
     }
 
     /// Update the camera based on input (using action map).
@@ -114,7 +116,13 @@ impl FirstPersonController {
     /// * `input` - Current input state
     /// * `actions` - Action map for key bindings
     /// * `dt` - Delta time in seconds
-    pub fn update_with_actions(&mut self, camera: &mut Camera, input: &InputState, actions: &ActionMap, dt: f32) {
+    pub fn update_with_actions(
+        &mut self,
+        camera: &mut Camera,
+        input: &InputState,
+        actions: &ActionMap,
+        dt: f32,
+    ) {
         // Mouse look
         let mouse_delta = input.mouse_delta();
         self.process_mouse(camera, mouse_delta);
@@ -178,15 +186,20 @@ impl FirstPersonController {
         self.pitch += delta.y * sensitivity * y_mult;
 
         // Clamp pitch to +/- 89 degrees
-        const MAX_PITCH: f32 = 89.0 * std::f32::consts::PI / 180.0;
-        self.pitch = self.pitch.clamp(-MAX_PITCH, MAX_PITCH);
+        self.pitch = self.pitch.clamp(-Self::MAX_PITCH, Self::MAX_PITCH);
 
         // Build rotation from Euler angles
         camera.rotation = self.rotation();
     }
 
     /// Process keyboard movement.
-    fn process_movement(&mut self, camera: &mut Camera, input: &InputState, actions: &ActionMap, dt: f32) {
+    fn process_movement(
+        &mut self,
+        camera: &mut Camera,
+        input: &InputState,
+        actions: &ActionMap,
+        dt: f32,
+    ) {
         let mut movement = glam::Vec3::ZERO;
 
         if actions.is_action_held(Action::MoveForward, input) {
@@ -241,7 +254,7 @@ mod tests {
         let initial_yaw = controller.yaw();
         controller.process_mouse(&mut camera, Vec2::new(100.0, 0.0));
 
-        assert_ne!(controller.yaw(), initial_yaw);
+        assert!((controller.yaw() - initial_yaw).abs() > f32::EPSILON);
     }
 
     #[test]
@@ -252,7 +265,7 @@ mod tests {
         let initial_pitch = controller.pitch();
         controller.process_mouse(&mut camera, Vec2::new(0.0, 100.0));
 
-        assert_ne!(controller.pitch(), initial_pitch);
+        assert!((controller.pitch() - initial_pitch).abs() > f32::EPSILON);
     }
 
     #[test]
@@ -310,8 +323,8 @@ mod tests {
         controller.update(0.016, &input);
 
         // Rotation should have changed
-        assert_ne!(controller.yaw(), initial_yaw);
-        assert_ne!(controller.pitch(), initial_pitch);
+        assert!((controller.yaw() - initial_yaw).abs() > f32::EPSILON);
+        assert!((controller.pitch() - initial_pitch).abs() > f32::EPSILON);
     }
 
     #[test]
@@ -332,4 +345,3 @@ mod tests {
         assert!(rot.is_normalized());
     }
 }
-

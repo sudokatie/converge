@@ -130,6 +130,10 @@ impl ChunkFields {
     }
 
     /// Create chunk fields with all channels pre-allocated with defaults.
+    ///
+    /// # Panics
+    ///
+    /// Panics if internal channel indexing is inconsistent (should never happen).
     #[must_use]
     pub fn with_defaults() -> Self {
         Self {
@@ -221,10 +225,18 @@ impl ChunkFields {
     /// The position is in local float coordinates [0, 16).
     /// Values outside the chunk are clamped to edges.
     #[must_use]
+    #[expect(
+        clippy::similar_names,
+        reason = "trilinear interpolation uses standard naming c000..c111 and c00..c11"
+    )]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "coordinates clamped to [0, 15.999] guarantee safe u32 conversion"
+    )]
     pub fn sample(&self, channel: FieldChannel, x: f32, y: f32, z: f32) -> f32 {
-        let data = match &self.channels[channel.as_index()] {
-            Some(d) => d,
-            None => return channel.default_value(),
+        let Some(data) = &self.channels[channel.as_index()] else {
+            return channel.default_value();
         };
 
         // Clamp to valid range
@@ -270,13 +282,13 @@ impl ChunkFields {
     /// Count allocated channels.
     #[must_use]
     pub fn allocated_count(&self) -> usize {
-        self.channels.iter().filter(|c| c.is_some()).count()
+        self.channels.iter().filter(|c| Option::is_some(c)).count()
     }
 
     /// Check if all channels are unallocated.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.channels.iter().all(|c| c.is_none())
+        self.channels.iter().all(Option::is_none)
     }
 }
 
@@ -287,6 +299,10 @@ impl Default for ChunkFields {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::*;
 

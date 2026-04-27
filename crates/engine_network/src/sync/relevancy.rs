@@ -31,10 +31,8 @@ impl UpdateLevel {
     pub fn from_distance(distance: f32) -> Self {
         if distance <= FULL_UPDATE_DISTANCE {
             UpdateLevel::Full
-        } else if distance <= POSITION_ONLY_DISTANCE {
-            UpdateLevel::PositionOnly
         } else if distance <= MAX_RELEVANCE_DISTANCE {
-            UpdateLevel::PositionOnly // Still relevant but minimal
+            UpdateLevel::PositionOnly
         } else {
             UpdateLevel::Irrelevant
         }
@@ -71,7 +69,7 @@ pub struct RelevancyResult {
 pub struct EntityRelevancyManager {
     /// Viewer position.
     viewer_pos: Vec3,
-    /// Tracked entity states (entity_id -> last known UpdateLevel).
+    /// Tracked entity states (`entity_id` -> last known `UpdateLevel`).
     entity_levels: std::collections::HashMap<u64, UpdateLevel>,
     /// Whether relevancy is enabled.
     enabled: bool,
@@ -106,7 +104,7 @@ impl EntityRelevancyManager {
 
     /// Check if an entity should receive updates.
     #[must_use]
-    pub fn should_update(&self, entity_id: u64, entity_pos: Vec3) -> bool {
+    pub fn should_update(&self, _entity_id: u64, entity_pos: Vec3) -> bool {
         if !self.enabled {
             return true;
         }
@@ -125,10 +123,7 @@ impl EntityRelevancyManager {
     }
 
     /// Check all entities and return those whose relevancy changed.
-    pub fn update_relevancy(
-        &mut self,
-        entities: &[(u64, Vec3)],
-    ) -> Vec<RelevancyResult> {
+    pub fn update_relevancy(&mut self, entities: &[(u64, Vec3)]) -> Vec<RelevancyResult> {
         if !self.enabled {
             return Vec::new();
         }
@@ -140,7 +135,7 @@ impl EntityRelevancyManager {
             let new_level = UpdateLevel::from_distance(distance);
             let old_level = self.entity_levels.get(id).copied();
 
-            let changed = old_level.map_or(true, |old| old != new_level);
+            let changed = old_level != Some(new_level);
 
             self.entity_levels.insert(*id, new_level);
 
@@ -248,8 +243,14 @@ mod tests {
         let mut mgr = EntityRelevancyManager::new();
         mgr.set_viewer_position(Vec3::ZERO);
 
-        assert_eq!(mgr.update_level(Vec3::new(10.0, 0.0, 0.0)), UpdateLevel::Full);
-        assert_eq!(mgr.update_level(Vec3::new(50.0, 0.0, 0.0)), UpdateLevel::PositionOnly);
+        assert_eq!(
+            mgr.update_level(Vec3::new(10.0, 0.0, 0.0)),
+            UpdateLevel::Full
+        );
+        assert_eq!(
+            mgr.update_level(Vec3::new(50.0, 0.0, 0.0)),
+            UpdateLevel::PositionOnly
+        );
     }
 
     #[test]
@@ -296,9 +297,9 @@ mod tests {
         mgr.set_viewer_position(Vec3::ZERO);
 
         mgr.update_relevancy(&[
-            (1u64, Vec3::new(10.0, 0.0, 0.0)),   // Full
-            (2u64, Vec3::new(50.0, 0.0, 0.0)),   // PositionOnly
-            (3u64, Vec3::new(200.0, 0.0, 0.0)),  // Irrelevant
+            (1u64, Vec3::new(10.0, 0.0, 0.0)),  // Full
+            (2u64, Vec3::new(50.0, 0.0, 0.0)),  // PositionOnly
+            (3u64, Vec3::new(200.0, 0.0, 0.0)), // Irrelevant
         ]);
 
         let (full, pos, irrelevant) = mgr.count_by_level();

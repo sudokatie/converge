@@ -29,6 +29,11 @@ pub enum TextureAtlasError {
 ///
 /// Uses a 2D texture array where each layer is one block texture.
 pub struct TextureAtlas {
+    /// The underlying GPU texture (kept for potential future mipmap generation).
+    #[expect(
+        dead_code,
+        reason = "texture handle retained for future mipmap generation"
+    )]
     texture: wgpu::Texture,
     view: wgpu::TextureView,
     sampler: wgpu::Sampler,
@@ -42,6 +47,15 @@ impl TextureAtlas {
     ///
     /// Each PNG file in the directory becomes a layer in the texture array.
     /// Files are loaded in alphabetical order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if reading the directory fails, if any image cannot be
+    /// loaded, if an image has the wrong dimensions, or if there are too many textures.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "texture loading requires sequential wgpu setup"
+    )]
     pub fn load(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -49,7 +63,7 @@ impl TextureAtlas {
     ) -> Result<Self, TextureAtlasError> {
         // Collect all PNG files
         let mut entries: Vec<_> = std::fs::read_dir(path)?
-            .filter_map(|e| e.ok())
+            .filter_map(Result::ok)
             .filter(|e| {
                 e.path()
                     .extension()
@@ -57,12 +71,16 @@ impl TextureAtlas {
             })
             .collect();
 
-        entries.sort_by_key(|e| e.path());
+        entries.sort_by_key(std::fs::DirEntry::path);
 
         if entries.len() > MAX_TEXTURES as usize {
             return Err(TextureAtlasError::TooManyTextures);
         }
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "entry count bounded by MAX_TEXTURES"
+        )]
         let layer_count = entries.len().max(1) as u32;
 
         // Create texture array
@@ -92,6 +110,11 @@ impl TextureAtlas {
 
             let rgba = img.to_rgba8();
 
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "layer index bounded by MAX_TEXTURES"
+            )]
+            let layer_index = i as u32;
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &texture,
@@ -99,7 +122,7 @@ impl TextureAtlas {
                     origin: wgpu::Origin3d {
                         x: 0,
                         y: 0,
-                        z: i as u32,
+                        z: layer_index,
                     },
                     aspect: wgpu::TextureAspect::All,
                 },
@@ -194,6 +217,10 @@ impl TextureAtlas {
     }
 
     /// Create a placeholder atlas with a single colored texture.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "texture setup requires sequential wgpu calls"
+    )]
     pub fn placeholder(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Placeholder Texture Atlas"),

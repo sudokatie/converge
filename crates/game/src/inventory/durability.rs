@@ -43,6 +43,10 @@ impl Durability {
 
     /// Get durability as a fraction (0.0 to 1.0).
     #[must_use]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "durability values are small enough for f32"
+    )]
     pub fn fraction(&self) -> f32 {
         if self.max == 0 {
             return 0.0;
@@ -127,12 +131,11 @@ impl ToolDurability {
     #[must_use]
     pub fn for_tier(tier: u8) -> u32 {
         match tier {
-            0 => 0,              // Hand (no durability)
+            0 => 0, // Hand (no durability)
             1 => Self::WOOD,
             2 => Self::STONE,
             3 => Self::IRON,
-            4 => Self::DIAMOND,
-            _ => Self::DIAMOND,
+            4.. => Self::DIAMOND,
         }
     }
 }
@@ -183,21 +186,21 @@ impl DurableItem {
     /// Check if item is broken.
     #[must_use]
     pub fn is_broken(&self) -> bool {
-        self.durability.as_ref().map_or(false, Durability::is_broken)
+        self.durability.as_ref().is_some_and(Durability::is_broken)
     }
 
     /// Use the item once (decrease durability by 1).
     ///
     /// Returns true if the item broke.
     pub fn use_once(&mut self) -> bool {
-        self.durability.as_mut().map_or(false, Durability::use_once)
+        self.durability.as_mut().is_some_and(Durability::use_once)
     }
 
     /// Damage the item by amount.
     ///
     /// Returns true if the item broke.
     pub fn damage(&mut self, amount: u32) -> bool {
-        self.durability.as_mut().map_or(false, |d| d.damage(amount))
+        self.durability.as_mut().is_some_and(|d| d.damage(amount))
     }
 
     /// Repair the item.
@@ -254,7 +257,7 @@ mod tests {
 
         assert!(!dur.use_once()); // 3 -> 2
         assert!(!dur.use_once()); // 2 -> 1
-        assert!(dur.use_once());  // 1 -> 0, breaks!
+        assert!(dur.use_once()); // 1 -> 0, breaks!
         assert!(dur.is_broken());
     }
 
@@ -264,7 +267,7 @@ mod tests {
 
         assert!(!dur.damage(5)); // 10 -> 5, not broken
         assert!(!dur.damage(4)); // 5 -> 1, not broken
-        assert!(dur.damage(5));  // 1 -> 0, broke! (overkill still breaks)
+        assert!(dur.damage(5)); // 1 -> 0, broke! (overkill still breaks)
     }
 
     #[test]
@@ -304,7 +307,7 @@ mod tests {
         let item = DurableItem::simple(1);
         assert!(!item.has_durability());
         assert!(!item.is_broken());
-        assert_eq!(item.durability_fraction(), 1.0);
+        assert!((item.durability_fraction() - 1.0).abs() < f32::EPSILON);
     }
 
     #[test]

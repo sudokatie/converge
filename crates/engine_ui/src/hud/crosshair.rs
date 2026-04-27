@@ -5,20 +5,15 @@
 use egui::{Color32, Pos2, Rect, Rounding, Shape};
 
 /// Crosshair style.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum CrosshairStyle {
     /// Simple plus sign (+).
     Cross,
     /// Single center dot.
     Dot,
     /// Gap in the center with arms (standard FPS style).
+    #[default]
     Gap,
-}
-
-impl Default for CrosshairStyle {
-    fn default() -> Self {
-        Self::Gap
-    }
 }
 
 /// Crosshair configuration.

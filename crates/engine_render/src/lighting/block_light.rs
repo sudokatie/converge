@@ -6,7 +6,6 @@
 use std::collections::VecDeque;
 
 use engine_core::coords::LocalPos;
-use glam::IVec3;
 
 /// Maximum light value (full brightness).
 pub const LIGHT_MAX: u8 = 15;
@@ -47,6 +46,10 @@ impl BlockLightMap {
 
     /// Convert 3D position to flat array index.
     #[inline]
+    #[expect(
+        clippy::cast_sign_loss,
+        reason = "coordinates are validated to be in 0..CHUNK_SIZE range"
+    )]
     fn index(x: i32, y: i32, z: i32) -> usize {
         debug_assert!((0..CHUNK_SIZE).contains(&x));
         debug_assert!((0..CHUNK_SIZE).contains(&y));
@@ -57,20 +60,30 @@ impl BlockLightMap {
     /// Check if position is within chunk bounds.
     #[inline]
     fn in_bounds(x: i32, y: i32, z: i32) -> bool {
-        (0..CHUNK_SIZE).contains(&x)
-            && (0..CHUNK_SIZE).contains(&y)
-            && (0..CHUNK_SIZE).contains(&z)
+        (0..CHUNK_SIZE).contains(&x) && (0..CHUNK_SIZE).contains(&y) && (0..CHUNK_SIZE).contains(&z)
     }
 
     /// Get block light at position.
+    ///
+    /// Converts `LocalPos` coordinates (u32) to i32 for internal indexing.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_wrap,
+        reason = "LocalPos coordinates are bounded by CHUNK_SIZE (16) which fits i32"
+    )]
     pub fn get_block_light(&self, pos: LocalPos) -> LightValue {
         let p = pos.0;
         self.block_light[Self::index(p.x as i32, p.y as i32, p.z as i32)]
     }
 
     /// Get sky light at position.
+    ///
+    /// Converts `LocalPos` coordinates (u32) to i32 for internal indexing.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_wrap,
+        reason = "LocalPos coordinates are bounded by CHUNK_SIZE (16) which fits i32"
+    )]
     pub fn get_sky_light(&self, pos: LocalPos) -> LightValue {
         let p = pos.0;
         self.sky_light[Self::index(p.x as i32, p.y as i32, p.z as i32)]
@@ -83,6 +96,12 @@ impl BlockLightMap {
     }
 
     /// Set block light at position.
+    ///
+    /// Converts `LocalPos` coordinates (u32) to i32 for internal indexing.
+    #[expect(
+        clippy::cast_possible_wrap,
+        reason = "LocalPos coordinates are bounded by CHUNK_SIZE (16) which fits i32"
+    )]
     pub fn set_block_light(&mut self, pos: LocalPos, value: LightValue) {
         let p = pos.0;
         self.block_light[Self::index(p.x as i32, p.y as i32, p.z as i32)] = value.min(LIGHT_MAX);
@@ -90,6 +109,12 @@ impl BlockLightMap {
     }
 
     /// Set sky light at position.
+    ///
+    /// Converts `LocalPos` coordinates (u32) to i32 for internal indexing.
+    #[expect(
+        clippy::cast_possible_wrap,
+        reason = "LocalPos coordinates are bounded by CHUNK_SIZE (16) which fits i32"
+    )]
     pub fn set_sky_light(&mut self, pos: LocalPos, value: LightValue) {
         let p = pos.0;
         self.sky_light[Self::index(p.x as i32, p.y as i32, p.z as i32)] = value.min(LIGHT_MAX);
@@ -114,10 +139,13 @@ impl BlockLightMap {
 
     /// Calculate block light propagation using BFS.
     ///
-    /// `light_sources` contains (local_position, light_level) for each light-emitting block.
+    /// `light_sources` contains (`local_position`, `light_level`) for each light-emitting block.
     /// `is_opaque` returns true if a block at the given position blocks light.
-    pub fn propagate_block_light<F>(&mut self, light_sources: &[(LocalPos, LightValue)], is_opaque: F)
-    where
+    pub fn propagate_block_light<F>(
+        &mut self,
+        light_sources: &[(LocalPos, LightValue)],
+        is_opaque: F,
+    ) where
         F: Fn(i32, i32, i32) -> bool,
     {
         // Clear existing block light
@@ -128,7 +156,7 @@ impl BlockLightMap {
         // Initialize queue with light sources
         for (pos, level) in light_sources {
             let p = pos.0;
-            let (x, y, z) = (p.x as i32, p.y as i32, p.z as i32);
+            let (x, y, z) = (p.x.cast_signed(), p.y.cast_signed(), p.z.cast_signed());
             self.block_light[Self::index(x, y, z)] = *level;
             queue.push_back((x, y, z, *level));
         }
@@ -263,7 +291,7 @@ impl BlockLightMap {
 
     /// Get light data with separate channels for GPU.
     ///
-    /// Returns (block_light, sky_light) pairs packed as u16.
+    /// Returns (`block_light`, `sky_light`) pairs packed as u16.
     #[must_use]
     pub fn as_gpu_data_dual_channel(&self) -> Vec<u16> {
         self.block_light
@@ -275,7 +303,7 @@ impl BlockLightMap {
 }
 
 /// Neighbor light data for cross-chunk propagation.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct NeighborLightData {
     /// Light values at the boundary faces.
     pub neg_x: [[LightValue; 16]; 16], // YZ face
@@ -286,52 +314,43 @@ pub struct NeighborLightData {
     pub pos_z: [[LightValue; 16]; 16],
 }
 
-impl Default for NeighborLightData {
-    fn default() -> Self {
-        Self {
-            neg_x: [[0; 16]; 16],
-            pos_x: [[0; 16]; 16],
-            neg_y: [[0; 16]; 16],
-            pos_y: [[0; 16]; 16],
-            neg_z: [[0; 16]; 16],
-            pos_z: [[0; 16]; 16],
-        }
-    }
-}
-
 impl NeighborLightData {
     /// Extract boundary light values from a light map.
     #[must_use]
+    #[expect(
+        dead_code,
+        reason = "prepared for cross-chunk light propagation feature"
+    )]
     pub fn extract_from(map: &BlockLightMap) -> Self {
         let mut data = Self::default();
 
-        for y in 0..16 {
-            for z in 0..16 {
-                let pos = LocalPos(glam::UVec3::new(0, y as u32, z as u32));
-                data.neg_x[y][z] = map.get_combined_light(pos);
+        for y in 0u32..16 {
+            for z in 0u32..16 {
+                let pos = LocalPos(glam::UVec3::new(0, y, z));
+                data.neg_x[y as usize][z as usize] = map.get_combined_light(pos);
 
-                let pos = LocalPos(glam::UVec3::new(15, y as u32, z as u32));
-                data.pos_x[y][z] = map.get_combined_light(pos);
+                let pos = LocalPos(glam::UVec3::new(15, y, z));
+                data.pos_x[y as usize][z as usize] = map.get_combined_light(pos);
             }
         }
 
-        for x in 0..16 {
-            for z in 0..16 {
-                let pos = LocalPos(glam::UVec3::new(x as u32, 0, z as u32));
-                data.neg_y[x][z] = map.get_combined_light(pos);
+        for x in 0u32..16 {
+            for z in 0u32..16 {
+                let pos = LocalPos(glam::UVec3::new(x, 0, z));
+                data.neg_y[x as usize][z as usize] = map.get_combined_light(pos);
 
-                let pos = LocalPos(glam::UVec3::new(x as u32, 15, z as u32));
-                data.pos_y[x][z] = map.get_combined_light(pos);
+                let pos = LocalPos(glam::UVec3::new(x, 15, z));
+                data.pos_y[x as usize][z as usize] = map.get_combined_light(pos);
             }
         }
 
-        for x in 0..16 {
-            for y in 0..16 {
-                let pos = LocalPos(glam::UVec3::new(x as u32, y as u32, 0));
-                data.neg_z[x][y] = map.get_combined_light(pos);
+        for x in 0u32..16 {
+            for y in 0u32..16 {
+                let pos = LocalPos(glam::UVec3::new(x, y, 0));
+                data.neg_z[x as usize][y as usize] = map.get_combined_light(pos);
 
-                let pos = LocalPos(glam::UVec3::new(x as u32, y as u32, 15));
-                data.pos_z[x][y] = map.get_combined_light(pos);
+                let pos = LocalPos(glam::UVec3::new(x, y, 15));
+                data.pos_z[x as usize][y as usize] = map.get_combined_light(pos);
             }
         }
 
@@ -421,7 +440,7 @@ mod tests {
         // Past the opaque block should be darker (light goes around)
         let past_block = LocalPos(UVec3::new(10, 8, 8));
         let light = map.get_block_light(past_block);
-        assert!(light < 13, "Light should be blocked, got {}", light);
+        assert!(light < 13, "Light should be blocked, got {light}");
     }
 
     #[test]

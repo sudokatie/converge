@@ -1,7 +1,7 @@
 //! Navigation mesh for efficient pathfinding in voxel worlds
 
-use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 /// 3D position with floating point precision
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -30,6 +30,7 @@ impl Vec3 {
         dx * dx + dy * dy + dz * dz
     }
 
+    #[must_use]
     pub fn lerp(&self, other: &Vec3, t: f32) -> Vec3 {
         Vec3 {
             x: self.x + (other.x - self.x) * t,
@@ -112,7 +113,7 @@ impl NavEdge {
     }
 }
 
-/// Configuration for NavMesh
+/// Configuration for `NavMesh`
 #[derive(Debug, Clone)]
 pub struct NavMeshConfig {
     /// Maximum path search iterations
@@ -165,7 +166,10 @@ impl Eq for PathNode {}
 
 impl Ord for PathNode {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.f_score.partial_cmp(&self.f_score).unwrap_or(Ordering::Equal)
+        other
+            .f_score
+            .partial_cmp(&self.f_score)
+            .unwrap_or(Ordering::Equal)
     }
 }
 
@@ -216,10 +220,8 @@ impl NavMesh {
         if let Some(node) = self.nodes.get_mut(&from) {
             node.edges.push(id);
         }
-        if bidirectional {
-            if let Some(node) = self.nodes.get_mut(&to) {
-                node.edges.push(id);
-            }
+        if bidirectional && let Some(node) = self.nodes.get_mut(&to) {
+            node.edges.push(id);
         }
 
         Some(id)
@@ -248,9 +250,10 @@ impl NavMesh {
     /// Remove a node and all its edges
     pub fn remove_node(&mut self, node_id: u32) -> Option<NavNode> {
         let node = self.nodes.remove(&node_id)?;
-        
+
         // Remove all edges connected to this node
-        let edge_ids: Vec<u32> = self.edges
+        let edge_ids: Vec<u32> = self
+            .edges
             .iter()
             .filter(|(_, e)| e.from == node_id || e.to == node_id)
             .map(|(id, _)| *id)
@@ -263,7 +266,9 @@ impl NavMesh {
         // Remove edge references from other nodes
         for other_node in self.nodes.values_mut() {
             other_node.edges.retain(|&e| {
-                self.edges.get(&e).map(|edge| edge.from != node_id && edge.to != node_id).unwrap_or(false)
+                self.edges
+                    .get(&e)
+                    .is_some_and(|edge| edge.from != node_id && edge.to != node_id)
             });
         }
 
@@ -304,7 +309,7 @@ impl NavMesh {
         }
 
         let node_path = self.find_node_path(start_node, goal_node)?;
-        
+
         // Convert node path to position path
         let mut path = vec![start];
         for node_id in &node_path[1..node_path.len() - 1] {
@@ -320,7 +325,7 @@ impl NavMesh {
     /// Find a path between two nodes using A*
     fn find_node_path(&self, start: u32, goal: u32) -> Option<Vec<u32>> {
         let goal_node = self.nodes.get(&goal)?;
-        
+
         let mut open_set = BinaryHeap::new();
         let mut closed_set = HashSet::new();
         let mut came_from: HashMap<u32, u32> = HashMap::new();
@@ -382,7 +387,8 @@ impl NavMesh {
                     came_from.insert(neighbor_id, current.node_id);
                     g_score.insert(neighbor_id, tentative_g);
 
-                    let h = neighbor_node.position.distance(&goal_node.position) * self.config.heuristic_weight;
+                    let h = neighbor_node.position.distance(&goal_node.position)
+                        * self.config.heuristic_weight;
                     open_set.push(PathNode {
                         node_id: neighbor_id,
                         f_score: tentative_g + h,
@@ -401,7 +407,8 @@ impl NavMesh {
         Some(from_node.position.distance(&to_node.position) * self.config.heuristic_weight)
     }
 
-    /// Reconstruct path from came_from map
+    /// Reconstruct path from `came_from` map
+    #[expect(clippy::unused_self, reason = "method for API consistency")]
     fn reconstruct_path(&self, came_from: &HashMap<u32, u32>, goal: u32) -> Vec<u32> {
         let mut path = vec![goal];
         let mut current = goal;
@@ -473,19 +480,16 @@ mod tests {
     #[test]
     fn test_simple_path() {
         let mut mesh = NavMesh::default();
-        
+
         let n0 = mesh.add_node(Vec3::new(0.0, 0.0, 0.0), 1.0);
         let n1 = mesh.add_node(Vec3::new(10.0, 0.0, 0.0), 1.0);
         let n2 = mesh.add_node(Vec3::new(20.0, 0.0, 0.0), 1.0);
-        
+
         mesh.add_edge(n0, n1, None);
         mesh.add_edge(n1, n2, None);
-        
-        let path = mesh.find_path(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(20.0, 0.0, 0.0),
-        );
-        
+
+        let path = mesh.find_path(Vec3::new(0.0, 0.0, 0.0), Vec3::new(20.0, 0.0, 0.0));
+
         assert!(path.is_some());
         let path = path.unwrap();
         assert!(path.len() >= 2);
@@ -494,34 +498,28 @@ mod tests {
     #[test]
     fn test_no_path() {
         let mut mesh = NavMesh::default();
-        
+
         let _n0 = mesh.add_node(Vec3::new(0.0, 0.0, 0.0), 1.0);
         let _n1 = mesh.add_node(Vec3::new(100.0, 0.0, 0.0), 1.0);
         // No edge connecting them
-        
-        let path = mesh.find_path(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(100.0, 0.0, 0.0),
-        );
-        
+
+        let path = mesh.find_path(Vec3::new(0.0, 0.0, 0.0), Vec3::new(100.0, 0.0, 0.0));
+
         assert!(path.is_none());
     }
 
     #[test]
     fn test_disabled_edge() {
         let mut mesh = NavMesh::default();
-        
+
         let n0 = mesh.add_node(Vec3::new(0.0, 0.0, 0.0), 1.0);
         let n1 = mesh.add_node(Vec3::new(10.0, 0.0, 0.0), 1.0);
-        
+
         let edge_id = mesh.add_edge(n0, n1, None).unwrap();
         mesh.set_edge_enabled(edge_id, false);
-        
-        let path = mesh.find_path(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(10.0, 0.0, 0.0),
-        );
-        
+
+        let path = mesh.find_path(Vec3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 0.0, 0.0));
+
         assert!(path.is_none());
     }
 }

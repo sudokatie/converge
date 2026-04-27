@@ -29,18 +29,35 @@ pub trait VoxelWorld {
 /// * `world` - Voxel world to query
 ///
 /// # Returns
-/// The first solid voxel hit, or None if no hit within max_distance.
+/// The first solid voxel hit, or None if no hit within `max_distance`.
+#[expect(clippy::too_many_lines, reason = "DDA algorithm is inherently verbose")]
 pub fn dda_raycast(
     origin: Vec3,
     direction: Vec3,
     max_distance: f32,
     world: &impl VoxelWorld,
 ) -> Option<VoxelHit> {
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "voxel coords are intentionally i32; values beyond i32 range are not supported"
+    )]
+    fn f32_to_i32(v: f32) -> i32 {
+        v.floor() as i32
+    }
+
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "voxel coords are small; precision loss beyond 2^24 is acceptable"
+    )]
+    fn i32_to_f32(v: i32) -> f32 {
+        v as f32
+    }
+
     // Current voxel position
     let mut pos = IVec3::new(
-        origin.x.floor() as i32,
-        origin.y.floor() as i32,
-        origin.z.floor() as i32,
+        f32_to_i32(origin.x),
+        f32_to_i32(origin.y),
+        f32_to_i32(origin.z),
     );
 
     // Direction signs
@@ -52,54 +69,54 @@ pub fn dda_raycast(
 
     // Distance to next voxel boundary on each axis (t_max)
     let mut t_max = Vec3::new(
-        if direction.x != 0.0 {
+        if direction.x == 0.0 {
+            f32::INFINITY
+        } else {
             let next_x = if step.x > 0 {
-                (pos.x + 1) as f32
+                i32_to_f32(pos.x + 1)
             } else {
-                pos.x as f32
+                i32_to_f32(pos.x)
             };
             (next_x - origin.x) / direction.x
-        } else {
-            f32::INFINITY
         },
-        if direction.y != 0.0 {
+        if direction.y == 0.0 {
+            f32::INFINITY
+        } else {
             let next_y = if step.y > 0 {
-                (pos.y + 1) as f32
+                i32_to_f32(pos.y + 1)
             } else {
-                pos.y as f32
+                i32_to_f32(pos.y)
             };
             (next_y - origin.y) / direction.y
-        } else {
-            f32::INFINITY
         },
-        if direction.z != 0.0 {
+        if direction.z == 0.0 {
+            f32::INFINITY
+        } else {
             let next_z = if step.z > 0 {
-                (pos.z + 1) as f32
+                i32_to_f32(pos.z + 1)
             } else {
-                pos.z as f32
+                i32_to_f32(pos.z)
             };
             (next_z - origin.z) / direction.z
-        } else {
-            f32::INFINITY
         },
     );
 
     // Distance to traverse one full voxel on each axis (t_delta)
     let t_delta = Vec3::new(
-        if direction.x != 0.0 {
+        if direction.x == 0.0 {
+            f32::INFINITY
+        } else {
             (1.0 / direction.x).abs()
-        } else {
-            f32::INFINITY
         },
-        if direction.y != 0.0 {
+        if direction.y == 0.0 {
+            f32::INFINITY
+        } else {
             (1.0 / direction.y).abs()
-        } else {
-            f32::INFINITY
         },
-        if direction.z != 0.0 {
-            (1.0 / direction.z).abs()
-        } else {
+        if direction.z == 0.0 {
             f32::INFINITY
+        } else {
+            (1.0 / direction.z).abs()
         },
     );
 
@@ -108,6 +125,10 @@ pub fn dda_raycast(
     let mut distance = 0.0;
 
     // Maximum iterations to prevent infinite loop
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "max_distance is a small gameplay value; truncation is intentional for loop bounds"
+    )]
     let max_steps = (max_distance * 2.0) as i32 + 10;
 
     for _ in 0..max_steps {
@@ -187,7 +208,11 @@ mod tests {
         assert_eq!(hit.block_pos.y(), -1, "Should hit block at y=-1");
         assert_eq!(hit.face_normal, IVec3::new(0, 1, 0), "Normal should be +Y");
         // From y=5 to the top of block y=-1 (which is y=0) = 5 units
-        assert!(hit.distance >= 4.9 && hit.distance <= 5.1, "Distance should be ~5, got {}", hit.distance);
+        assert!(
+            hit.distance >= 4.9 && hit.distance <= 5.1,
+            "Distance should be ~5, got {}",
+            hit.distance
+        );
     }
 
     #[test]

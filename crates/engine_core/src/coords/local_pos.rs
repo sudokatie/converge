@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::CHUNK_SIZE_U;
 
-/// Position within a chunk (0..CHUNK_SIZE for each axis).
+/// Position within a chunk (`0..CHUNK_SIZE` for each axis).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LocalPos(pub UVec3);
 
@@ -13,7 +13,7 @@ impl LocalPos {
     /// Create a new local position.
     ///
     /// # Panics
-    /// Panics in debug mode if any coordinate is >= CHUNK_SIZE.
+    /// Panics in debug mode if any coordinate is >= `CHUNK_SIZE`.
     #[must_use]
     pub fn new(x: u32, y: u32, z: u32) -> Self {
         debug_assert!(x < CHUNK_SIZE_U, "x must be < CHUNK_SIZE");
@@ -42,7 +42,7 @@ impl LocalPos {
 
     /// Convert to a linear index for array storage.
     ///
-    /// Index = x + y * CHUNK_SIZE + z * CHUNK_SIZE * CHUNK_SIZE
+    /// Index = x + y * `CHUNK_SIZE` + z * `CHUNK_SIZE` * `CHUNK_SIZE`
     #[must_use]
     pub fn to_index(&self) -> usize {
         (self.0.x + self.0.y * CHUNK_SIZE_U + self.0.z * CHUNK_SIZE_U * CHUNK_SIZE_U) as usize
@@ -51,9 +51,13 @@ impl LocalPos {
     /// Create from a linear index.
     ///
     /// # Panics
-    /// Panics if index >= CHUNK_SIZE^3.
+    /// Panics if index >= `CHUNK_SIZE`^3.
     #[must_use]
     pub fn from_index(index: usize) -> Self {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "index is bounded by CHUNK_SIZE^3 (4096) which fits in u32"
+        )]
         let index = index as u32;
         let chunk_sq = CHUNK_SIZE_U * CHUNK_SIZE_U;
         let z = index / chunk_sq;
@@ -63,7 +67,7 @@ impl LocalPos {
         Self::new(x, y, z)
     }
 
-    /// Total number of voxels in a chunk (CHUNK_SIZE^3).
+    /// Total number of voxels in a chunk (`CHUNK_SIZE`^3).
     pub const VOXELS_PER_CHUNK: usize = (CHUNK_SIZE_U * CHUNK_SIZE_U * CHUNK_SIZE_U) as usize;
 }
 

@@ -122,7 +122,7 @@ mod tests {
         // Check all entries are within spherical distance
         while let Some(pos) = queue.pop() {
             let dist_sq = pos.0.x * pos.0.x + pos.0.y * pos.0.y + pos.0.z * pos.0.z;
-            assert!(dist_sq <= 9, "chunk {:?} outside view distance", pos);
+            assert!(dist_sq <= 9, "chunk {pos:?} outside view distance");
         }
     }
 }

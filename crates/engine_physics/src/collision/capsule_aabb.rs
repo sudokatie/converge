@@ -92,10 +92,13 @@ pub fn capsule_aabb_intersection(capsule: &Capsule, aabb: &Aabb) -> Option<Conta
     // Sample several points along the capsule axis
     let samples = 5;
     let mut min_distance = f32::MAX;
-    let mut closest_capsule_point = capsule.base;
     let mut closest_aabb_point = aabb.min;
 
     for i in 0..=samples {
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "samples is small (5); no precision loss"
+        )]
         let t = i as f32 / samples as f32;
         let capsule_point = capsule.base.lerp(capsule.tip, t);
         let aabb_point = closest_point_on_aabb(aabb, capsule_point);
@@ -103,14 +106,14 @@ pub fn capsule_aabb_intersection(capsule: &Capsule, aabb: &Aabb) -> Option<Conta
 
         if distance < min_distance {
             min_distance = distance;
-            closest_capsule_point = capsule_point;
             closest_aabb_point = aabb_point;
         }
     }
 
     // Refine: find exact closest point on segment to the current closest AABB point
-    closest_capsule_point = closest_point_on_segment(capsule.base, capsule.tip, closest_aabb_point);
-    closest_aabb_point = closest_point_on_aabb(aabb, closest_capsule_point);
+    let closest_capsule_point =
+        closest_point_on_segment(capsule.base, capsule.tip, closest_aabb_point);
+    let closest_aabb_point = closest_point_on_aabb(aabb, closest_capsule_point);
 
     let diff = closest_capsule_point - closest_aabb_point;
     let distance = diff.length();
@@ -184,7 +187,10 @@ mod tests {
         assert!(contact.is_some(), "Should detect wall collision");
 
         let contact = contact.unwrap();
-        assert!(contact.normal.x < -0.9, "Normal should point away from wall (-X)");
+        assert!(
+            contact.normal.x < -0.9,
+            "Normal should point away from wall (-X)"
+        );
     }
 
     #[test]

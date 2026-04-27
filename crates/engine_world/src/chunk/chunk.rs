@@ -99,6 +99,10 @@ impl Chunk {
 
     /// Create a chunk filled with a specific block.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME (4096) fits in u32"
+    )]
     pub fn filled(block: BlockId) -> Self {
         let non_air = if block == AIR { 0 } else { CHUNK_VOLUME as u32 };
         Self {
@@ -160,12 +164,16 @@ impl Chunk {
 
     /// Get mutable access to the block data.
     ///
-    /// Note: This bypasses non_air_count tracking. Call `recalculate_count()` after.
+    /// Note: This bypasses `non_air_count` tracking. Call `recalculate_count()` after.
     pub fn blocks_mut(&mut self) -> &mut [BlockId; CHUNK_VOLUME] {
         &mut self.blocks
     }
 
     /// Recalculate the non-air block count.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME (4096) fits in u32"
+    )]
     pub fn recalculate_count(&mut self) {
         self.non_air_count = self.blocks.iter().filter(|&&b| b != AIR).count() as u32;
     }
@@ -189,6 +197,10 @@ mod tests {
     }
 
     #[test]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "CHUNK_VOLUME is a known constant that fits in u32"
+    )]
     fn test_filled_chunk() {
         let chunk = Chunk::filled(super::super::STONE);
         assert!(!chunk.is_empty());

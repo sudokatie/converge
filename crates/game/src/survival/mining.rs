@@ -3,8 +3,6 @@
 //! Implements spec 6.4.3: mining time based on block hardness and tool type,
 //! tool effectiveness multipliers, drop items on destroy, durability loss.
 
-use engine_world::chunk::BlockId;
-
 use crate::inventory::{ItemCategory, ItemDef, ToolType};
 
 /// Base mining speed without any tool (hand mining).
@@ -27,14 +25,11 @@ pub struct MiningResult {
 
 /// Calculate mining time for a block given the tool used.
 ///
-/// Mining time = base_time * hardness / tool_mining_speed
+/// Mining time = `base_time` * hardness / `tool_mining_speed`.
 /// If no tool or wrong tool type, mining speed is 1.0 (very slow).
-/// If tool is effective, mining speed is the tool's mining_speed value.
+/// If tool is effective, mining speed is the tool's `mining_speed` value.
 #[must_use]
-pub fn calculate_mining_time(
-    block_hardness: f32,
-    tool: Option<&ItemDef>,
-) -> MiningResult {
+pub fn calculate_mining_time(block_hardness: f32, tool: Option<&ItemDef>) -> MiningResult {
     let (speed, is_effective) = effective_mining_speed(block_hardness, tool);
 
     let time_secs = if block_hardness <= 0.0 {
@@ -58,10 +53,7 @@ pub fn calculate_mining_time(
 /// - Shovel: effective on dirt, sand, gravel (soft blocks, hardness < 1.0)
 /// - Hoe/Sword: not effective for mining (combat tools)
 /// - No tool: base speed, never effective
-fn effective_mining_speed(
-    block_hardness: f32,
-    tool: Option<&ItemDef>,
-) -> (f32, bool) {
+fn effective_mining_speed(block_hardness: f32, tool: Option<&ItemDef>) -> (f32, bool) {
     let Some(item) = tool else {
         return (BASE_MINING_SPEED, false);
     };
@@ -218,7 +210,10 @@ mod tests {
     fn test_pickaxe_effective_on_stone() {
         let pickaxe = make_tool(ToolType::Pickaxe, 4.0);
         let result = calculate_mining_time(3.0, Some(&pickaxe));
-        assert!(result.is_effective, "Pickaxe should be effective on hard blocks");
+        assert!(
+            result.is_effective,
+            "Pickaxe should be effective on hard blocks"
+        );
         assert!(result.should_damage_tool);
         // Time = 1.5 * 3.0 / 4.0 = 1.125
         assert!((result.time_secs - 1.125).abs() < 0.001);
@@ -228,14 +223,20 @@ mod tests {
     fn test_pickaxe_not_effective_on_dirt() {
         let pickaxe = make_tool(ToolType::Pickaxe, 4.0);
         let result = calculate_mining_time(0.5, Some(&pickaxe)); // Soft block
-        assert!(!result.is_effective, "Pickaxe should not be effective on soft blocks");
+        assert!(
+            !result.is_effective,
+            "Pickaxe should not be effective on soft blocks"
+        );
     }
 
     #[test]
     fn test_shovel_effective_on_dirt() {
         let shovel = make_tool(ToolType::Shovel, 2.0);
         let result = calculate_mining_time(0.5, Some(&shovel));
-        assert!(result.is_effective, "Shovel should be effective on soft blocks");
+        assert!(
+            result.is_effective,
+            "Shovel should be effective on soft blocks"
+        );
         assert!(result.should_damage_tool);
     }
 
@@ -243,21 +244,30 @@ mod tests {
     fn test_axe_effective_on_wood() {
         let axe = make_tool(ToolType::Axe, 3.0);
         let result = calculate_mining_time(1.0, Some(&axe));
-        assert!(result.is_effective, "Axe should be effective on medium blocks");
+        assert!(
+            result.is_effective,
+            "Axe should be effective on medium blocks"
+        );
     }
 
     #[test]
     fn test_sword_not_mining_tool() {
         let sword = make_tool(ToolType::Sword, 1.5);
         let result = calculate_mining_time(3.0, Some(&sword));
-        assert!(!result.is_effective, "Sword should not be effective for mining");
+        assert!(
+            !result.is_effective,
+            "Sword should not be effective for mining"
+        );
         assert!(!result.should_damage_tool);
     }
 
     #[test]
     fn test_zero_hardness_instant() {
         let result = calculate_mining_time(0.0, None);
-        assert_eq!(result.time_secs, 0.0, "Zero hardness should be instant");
+        assert!(
+            result.time_secs.abs() < f32::EPSILON,
+            "Zero hardness should be instant"
+        );
     }
 
     #[test]
@@ -282,7 +292,7 @@ mod tests {
 
         progress.start(block, 2.0);
         assert!(progress.is_mining());
-        assert_eq!(progress.fraction(), 0.0);
+        assert!(progress.fraction().abs() < f32::EPSILON);
 
         // Advance half way
         assert!(!progress.advance(1.0));
@@ -303,7 +313,7 @@ mod tests {
 
         progress.cancel();
         assert!(!progress.is_mining());
-        assert_eq!(progress.fraction(), 0.0);
+        assert!(progress.fraction().abs() < f32::EPSILON);
     }
 
     #[test]

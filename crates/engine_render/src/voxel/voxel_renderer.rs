@@ -105,6 +105,10 @@ impl VoxelRenderer {
     /// Render chunks visible from the camera.
     ///
     /// Returns statistics about the render.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "width/height fit f32 for aspect ratio"
+    )]
     pub fn render_chunks<'a>(
         &self,
         device: &RenderDevice,
@@ -189,9 +193,9 @@ impl VoxelRenderer {
                             usage: wgpu::BufferUsages::UNIFORM,
                         });
 
-                let chunk_bind_group =
-                    self.pipeline
-                        .create_chunk_bind_group(device.device(), &chunk_buffer);
+                let chunk_bind_group = self
+                    .pipeline
+                    .create_chunk_bind_group(device.device(), &chunk_buffer);
 
                 render_pass.set_bind_group(1, &chunk_bind_group, &[]);
                 mesh.draw(&mut render_pass);
@@ -213,6 +217,10 @@ impl VoxelRenderer {
 }
 
 /// Convert chunk position to world coordinates.
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "chunk coordinates fit f32 for rendering"
+)]
 fn chunk_world_pos(pos: ChunkPos) -> Vec3 {
     Vec3::new(
         pos.0.x as f32 * 16.0,

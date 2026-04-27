@@ -39,6 +39,10 @@ impl<'de> Deserialize<'de> for VectorChannelData {
             ));
         }
 
+        #[expect(
+            clippy::large_stack_arrays,
+            reason = "temporary array immediately moved to heap via Box"
+        )]
         let mut values = Box::new([Vec3::ZERO; CHUNK_VOLUME]);
         for (i, arr) in flat.into_iter().enumerate() {
             values[i] = Vec3::new(arr[0], arr[1], arr[2]);
@@ -64,6 +68,10 @@ impl std::fmt::Debug for VectorChannelData {
 impl VectorChannelData {
     /// Create new channel data filled with a default value.
     #[must_use]
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "temporary array immediately moved to heap via Box"
+    )]
     pub fn new(default: Vec3) -> Self {
         Self {
             values: Box::new([default; CHUNK_VOLUME]),
@@ -114,7 +122,7 @@ impl VectorChannelData {
         for v in self.values.iter_mut() {
             let len = v.length();
             if len > max_magnitude {
-                *v = *v * (max_magnitude / len);
+                *v *= max_magnitude / len;
             }
         }
     }
@@ -150,6 +158,10 @@ impl ChunkVectorFields {
     }
 
     /// Create chunk vector fields with all channels pre-allocated with defaults.
+    ///
+    /// # Panics
+    ///
+    /// Panics if internal channel indexing is inconsistent (should never happen).
     #[must_use]
     pub fn with_defaults() -> Self {
         Self {
@@ -217,10 +229,10 @@ impl ChunkVectorFields {
 
     /// Clamp a channel's values to its maximum magnitude.
     pub fn clamp_channel(&mut self, channel: VectorFieldChannel) {
-        if let Some(max_mag) = channel.max_magnitude() {
-            if let Some(data) = &mut self.channels[channel.as_index()] {
-                data.clamp_magnitude(max_mag);
-            }
+        if let Some(max_mag) = channel.max_magnitude()
+            && let Some(data) = &mut self.channels[channel.as_index()]
+        {
+            data.clamp_magnitude(max_mag);
         }
     }
 
@@ -241,10 +253,18 @@ impl ChunkVectorFields {
     /// The position is in local float coordinates [0, 16).
     /// Values outside the chunk are clamped to edges.
     #[must_use]
+    #[expect(
+        clippy::similar_names,
+        reason = "trilinear interpolation uses standard naming c000..c111 and c00..c11"
+    )]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "coordinates clamped to [0, 15.999] guarantee safe u32 conversion"
+    )]
     pub fn sample(&self, channel: VectorFieldChannel, x: f32, y: f32, z: f32) -> Vec3 {
-        let data = match &self.channels[channel.as_index()] {
-            Some(d) => d,
-            None => return channel.default_value(),
+        let Some(data) = &self.channels[channel.as_index()] else {
+            return channel.default_value();
         };
 
         let x = x.clamp(0.0, 15.999);
@@ -286,13 +306,13 @@ impl ChunkVectorFields {
     /// Count allocated channels.
     #[must_use]
     pub fn allocated_count(&self) -> usize {
-        self.channels.iter().filter(|c| c.is_some()).count()
+        self.channels.iter().filter(|c| Option::is_some(c)).count()
     }
 
     /// Check if all channels are unallocated.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.channels.iter().all(|c| c.is_none())
+        self.channels.iter().all(Option::is_none)
     }
 }
 

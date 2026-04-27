@@ -44,8 +44,7 @@ impl Blackboard {
     pub fn contains_type<T: Any + Send + Sync>(&self, key: &str) -> bool {
         self.data
             .get(key)
-            .map(|v| v.as_ref().type_id() == TypeId::of::<T>())
-            .unwrap_or(false)
+            .is_some_and(|v| v.as_ref().type_id() == TypeId::of::<T>())
     }
 
     /// Clear all data
@@ -68,19 +67,23 @@ impl Blackboard {
         self.data.keys()
     }
 
-    /// Get or insert a value
-    pub fn get_or_insert<T: Any + Send + Sync + Clone>(
-        &mut self,
-        key: &str,
-        default: T,
-    ) -> &T {
+    /// Get or insert a value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value cannot be retrieved after insertion (should not occur).
+    pub fn get_or_insert<T: Any + Send + Sync + Clone>(&mut self, key: &str, default: T) -> &T {
         if !self.contains_type::<T>(key) {
             self.set(key, default);
         }
         self.get(key).unwrap()
     }
 
-    /// Get or insert with a function
+    /// Get or insert with a function.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value cannot be retrieved after insertion (should not occur).
     pub fn get_or_insert_with<T: Any + Send + Sync, F: FnOnce() -> T>(
         &mut self,
         key: &str,
@@ -93,11 +96,7 @@ impl Blackboard {
     }
 
     /// Modify a value in place
-    pub fn modify<T: Any + Send + Sync, F: FnOnce(&mut T)>(
-        &mut self,
-        key: &str,
-        f: F,
-    ) -> bool {
+    pub fn modify<T: Any + Send + Sync, F: FnOnce(&mut T)>(&mut self, key: &str, f: F) -> bool {
         if let Some(value) = self.get_mut::<T>(key) {
             f(value);
             true
@@ -107,9 +106,8 @@ impl Blackboard {
     }
 }
 
-/// Helper macros and common types for blackboard
-
-/// Position in 3D space
+/// Helper macros and common types for blackboard.
+/// Position in 3D space.
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Vec3 {
     pub x: f32,
@@ -167,7 +165,7 @@ mod tests {
     fn test_set_and_get() {
         let mut bb = Blackboard::new();
         bb.set("health", 100i32);
-        
+
         assert_eq!(bb.get::<i32>("health"), Some(&100));
         assert_eq!(bb.get::<f32>("health"), None); // Wrong type
     }
@@ -176,7 +174,7 @@ mod tests {
     fn test_contains() {
         let mut bb = Blackboard::new();
         bb.set("key", "value".to_string());
-        
+
         assert!(bb.contains("key"));
         assert!(!bb.contains("other"));
     }
@@ -185,7 +183,7 @@ mod tests {
     fn test_modify() {
         let mut bb = Blackboard::new();
         bb.set("counter", 0i32);
-        
+
         bb.modify::<i32, _>("counter", |v| *v += 1);
         assert_eq!(bb.get::<i32>("counter"), Some(&1));
     }
@@ -193,10 +191,10 @@ mod tests {
     #[test]
     fn test_get_or_insert() {
         let mut bb = Blackboard::new();
-        
+
         let val = bb.get_or_insert("key", 42i32);
         assert_eq!(*val, 42);
-        
+
         bb.set("key", 100i32);
         let val = bb.get_or_insert("key", 42i32);
         assert_eq!(*val, 100);

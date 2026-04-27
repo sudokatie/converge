@@ -2,7 +2,7 @@
 //!
 //! Provides text input and message history display.
 
-use egui::{Color32, RichText, ScrollArea, Vec2};
+use egui::{Color32, RichText, Vec2};
 use std::collections::VecDeque;
 
 /// Maximum messages to keep in history.
@@ -189,7 +189,7 @@ impl ChatScreen {
                 self.messages
                     .iter()
                     .rev()
-                    .filter(|m| current_time - m.timestamp < self.fade_time as f64)
+                    .filter(|m| current_time - m.timestamp < f64::from(self.fade_time))
                     .take(5)
                     .collect()
             };
@@ -326,7 +326,7 @@ mod tests {
 
         // Add more than MAX_MESSAGES
         for i in 0..150 {
-            screen.add_player_message("Test", format!("Message {}", i), i as f64);
+            screen.add_player_message("Test", format!("Message {i}"), f64::from(i));
         }
 
         assert!(screen.message_count() <= MAX_MESSAGES);

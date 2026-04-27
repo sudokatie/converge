@@ -48,14 +48,11 @@ impl CreatureKind {
     #[must_use]
     pub fn max_health(self) -> f32 {
         match self {
-            CreatureKind::Pig => 10.0,
-            CreatureKind::Cow => 10.0,
+            CreatureKind::Pig | CreatureKind::Cow => 10.0,
             CreatureKind::Sheep => 8.0,
             CreatureKind::Chicken => 4.0,
-            CreatureKind::Zombie => 20.0,
-            CreatureKind::Skeleton => 20.0,
+            CreatureKind::Zombie | CreatureKind::Skeleton | CreatureKind::Creeper => 20.0,
             CreatureKind::Spider => 16.0,
-            CreatureKind::Creeper => 20.0,
         }
     }
 
@@ -75,11 +72,7 @@ impl CreatureKind {
             CreatureKind::Chicken => ColliderShape::Box {
                 half_extents: Vec3::new(0.2, 0.35, 0.2),
             },
-            CreatureKind::Zombie => ColliderShape::Capsule {
-                height: 1.8,
-                radius: 0.3,
-            },
-            CreatureKind::Skeleton => ColliderShape::Capsule {
+            CreatureKind::Zombie | CreatureKind::Skeleton => ColliderShape::Capsule {
                 height: 1.8,
                 radius: 0.3,
             },
@@ -97,14 +90,10 @@ impl CreatureKind {
     #[must_use]
     pub fn move_speed(self) -> f32 {
         match self {
-            CreatureKind::Pig => 2.5,
+            CreatureKind::Pig | CreatureKind::Skeleton | CreatureKind::Creeper => 2.5,
             CreatureKind::Cow => 2.0,
-            CreatureKind::Sheep => 2.3,
-            CreatureKind::Chicken => 3.0,
-            CreatureKind::Zombie => 2.3,
-            CreatureKind::Skeleton => 2.5,
-            CreatureKind::Spider => 3.0,
-            CreatureKind::Creeper => 2.5,
+            CreatureKind::Sheep | CreatureKind::Zombie => 2.3,
+            CreatureKind::Chicken | CreatureKind::Spider => 3.0,
         }
     }
 
@@ -112,14 +101,13 @@ impl CreatureKind {
     #[must_use]
     pub fn attack_damage(self) -> f32 {
         match self {
-            CreatureKind::Pig => 0.0,
-            CreatureKind::Cow => 0.0,
-            CreatureKind::Sheep => 0.0,
-            CreatureKind::Chicken => 0.0,
+            CreatureKind::Pig
+            | CreatureKind::Cow
+            | CreatureKind::Sheep
+            | CreatureKind::Chicken
+            | CreatureKind::Creeper => 0.0, // Passive or explodes instead
             CreatureKind::Zombie => 3.0,
-            CreatureKind::Skeleton => 2.0, // Ranged
-            CreatureKind::Spider => 2.0,
-            CreatureKind::Creeper => 0.0, // Explodes instead
+            CreatureKind::Skeleton | CreatureKind::Spider => 2.0,
         }
     }
 
@@ -266,7 +254,7 @@ mod tests {
 
         // Check health
         let health = world.get::<&Health>(entity).unwrap();
-        assert_eq!(health.max(), 10.0);
+        assert!((health.max() - 10.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -277,10 +265,10 @@ mod tests {
 
         let creature = world.get::<&Creature>(zombie).unwrap();
         assert!(creature.kind.is_hostile());
-        assert_eq!(creature.damage, 3.0);
+        assert!((creature.damage - 3.0).abs() < f32::EPSILON);
 
         let health = world.get::<&Health>(zombie).unwrap();
-        assert_eq!(health.max(), 20.0);
+        assert!((health.max() - 20.0).abs() < f32::EPSILON);
     }
 
     #[test]

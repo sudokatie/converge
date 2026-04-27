@@ -243,15 +243,31 @@ pub fn propagate_support(
             let neighbors = get_neighbor_offsets(config);
 
             for &(dx, dy, dz) in &neighbors {
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let nx = pos.x() as i32 + dx;
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let ny = pos.y() as i32 + dy;
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let nz = pos.z() as i32 + dz;
 
-                if nx < 0 || nx >= 16 || ny < 0 || ny >= 16 || nz < 0 || nz >= 16 {
+                if !(0..16).contains(&nx) || !(0..16).contains(&ny) || !(0..16).contains(&nz) {
                     report_boundary(&mut result, pos, (dx, dy, dz), structural, dist);
                     continue;
                 }
 
+                #[expect(
+                    clippy::cast_sign_loss,
+                    reason = "bounds check above guarantees nx, ny, nz are in 0..16"
+                )]
                 let neighbor_pos = LocalPos::new(nx as u32, ny as u32, nz as u32);
                 let neighbor_idx = neighbor_pos.to_index();
 
@@ -279,14 +295,12 @@ pub fn propagate_support(
 
     for (pos, cell) in &cells {
         let idx = pos.to_index();
-        if !visited[idx] && cell.support_kind().provides_support() {
-            if cell.is_supported() {
-                result.deltas.push(StructuralDelta::unsupported(*pos));
-                result.unsupported_count += 1;
-                result
-                    .events
-                    .push(StructuralEvent::support_lost(*pos, cell.support_kind()));
-            }
+        if !visited[idx] && cell.support_kind().provides_support() && cell.is_supported() {
+            result.deltas.push(StructuralDelta::unsupported(*pos));
+            result.unsupported_count += 1;
+            result
+                .events
+                .push(StructuralEvent::support_lost(*pos, cell.support_kind()));
         }
     }
 
@@ -382,14 +396,30 @@ pub fn check_decompression<P: PressureMap>(
         let pressure = pressure_map.pressure(*pos);
 
         for &(dx, dy, dz) in &FACE_NEIGHBORS {
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let nx = pos.x() as i32 + dx;
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let ny = pos.y() as i32 + dy;
+            #[expect(
+                clippy::cast_possible_wrap,
+                reason = "pos coordinates are 0..16, so cast to i32 is safe"
+            )]
             let nz = pos.z() as i32 + dz;
 
-            if nx < 0 || nx >= 16 || ny < 0 || ny >= 16 || nz < 0 || nz >= 16 {
+            if !(0..16).contains(&nx) || !(0..16).contains(&ny) || !(0..16).contains(&nz) {
                 continue;
             }
 
+            #[expect(
+                clippy::cast_sign_loss,
+                reason = "bounds check above guarantees nx, ny, nz are in 0..16"
+            )]
             let neighbor_pos = LocalPos::new(nx as u32, ny as u32, nz as u32);
             let neighbor_pressure = pressure_map.pressure(neighbor_pos);
             let pressure_diff = (pressure - neighbor_pressure).abs();
@@ -450,16 +480,36 @@ pub fn detect_cavein(structural: &ChunkStructural, config: &StructuralConfig) ->
 
             group.push(pos);
 
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "group size capped by max_cascade_size (u32), cannot exceed u32::MAX"
+            )]
             if group.len() as u32 >= config.max_cascade_size {
                 break;
             }
 
             for &(dx, dy, dz) in &FACE_NEIGHBORS {
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let nx = pos.x() as i32 + dx;
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let ny = pos.y() as i32 + dy;
+                #[expect(
+                    clippy::cast_possible_wrap,
+                    reason = "pos coordinates are 0..16, so cast to i32 is safe"
+                )]
                 let nz = pos.z() as i32 + dz;
 
-                if nx >= 0 && nx < 16 && ny >= 0 && ny < 16 && nz >= 0 && nz < 16 {
+                if (0..16).contains(&nx) && (0..16).contains(&ny) && (0..16).contains(&nz) {
+                    #[expect(
+                        clippy::cast_sign_loss,
+                        reason = "bounds check above guarantees nx, ny, nz are in 0..16"
+                    )]
                     let neighbor_pos = LocalPos::new(nx as u32, ny as u32, nz as u32);
                     if !visited[neighbor_pos.to_index()] {
                         stack.push(neighbor_pos);
@@ -474,6 +524,10 @@ pub fn detect_cavein(structural: &ChunkStructural, config: &StructuralConfig) ->
     }
 
     for group in cavein_groups {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "group size capped by max_cascade_size (u32), cannot exceed u32::MAX"
+        )]
         let count = group.len() as u32;
         let origin = group[0];
 
@@ -571,6 +625,10 @@ fn report_boundary(
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "tests check exact constructor return values"
+)]
 mod tests {
     use super::super::SupportKind;
     use super::*;

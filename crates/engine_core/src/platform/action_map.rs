@@ -124,10 +124,7 @@ impl ActionMap {
     /// Bind an input to an action.
     pub fn bind(&mut self, action: Action, binding: impl Into<KeyBinding>) {
         let binding = binding.into();
-        self.bindings
-            .entry(action)
-            .or_default()
-            .push(binding);
+        self.bindings.entry(action).or_default().push(binding);
     }
 
     /// Remove a binding from an action.
@@ -152,28 +149,34 @@ impl ActionMap {
     /// Check if an action was pressed this frame.
     #[must_use]
     pub fn is_action_pressed(&self, action: Action, input: &InputState) -> bool {
-        self.get_bindings(action).iter().any(|binding| match binding {
-            KeyBinding::Key(key) => input.is_key_pressed(*key),
-            KeyBinding::Mouse(btn) => input.is_mouse_button_pressed(*btn),
-        })
+        self.get_bindings(action)
+            .iter()
+            .any(|binding| match binding {
+                KeyBinding::Key(key) => input.is_key_pressed(*key),
+                KeyBinding::Mouse(btn) => input.is_mouse_button_pressed(*btn),
+            })
     }
 
     /// Check if an action is currently held.
     #[must_use]
     pub fn is_action_held(&self, action: Action, input: &InputState) -> bool {
-        self.get_bindings(action).iter().any(|binding| match binding {
-            KeyBinding::Key(key) => input.is_key_held(*key),
-            KeyBinding::Mouse(btn) => input.is_mouse_button_held(*btn),
-        })
+        self.get_bindings(action)
+            .iter()
+            .any(|binding| match binding {
+                KeyBinding::Key(key) => input.is_key_held(*key),
+                KeyBinding::Mouse(btn) => input.is_mouse_button_held(*btn),
+            })
     }
 
     /// Check if an action was released this frame.
     #[must_use]
     pub fn is_action_released(&self, action: Action, input: &InputState) -> bool {
-        self.get_bindings(action).iter().any(|binding| match binding {
-            KeyBinding::Key(key) => input.is_key_released(*key),
-            KeyBinding::Mouse(btn) => input.is_mouse_button_released(*btn),
-        })
+        self.get_bindings(action)
+            .iter()
+            .any(|binding| match binding {
+                KeyBinding::Key(key) => input.is_key_released(*key),
+                KeyBinding::Mouse(btn) => input.is_mouse_button_released(*btn),
+            })
     }
 
     /// Save the action map to a file (RON format).

@@ -141,7 +141,7 @@ mod tests {
     fn new_state_defaults() {
         let state = RegionState::new();
         assert_eq!(state.fidelity(), Fidelity::Dormant);
-        assert_eq!(state.accumulated(), 0.0);
+        assert!(state.accumulated().abs() < f32::EPSILON);
         assert_eq!(state.distance(), i32::MAX);
         assert!(!state.environment_active());
         assert_eq!(state.priority_boost(), 0);
@@ -173,7 +173,7 @@ mod tests {
         state.accumulate(0.5);
         let consumed = state.consume();
         assert!((consumed - 0.5).abs() < 0.0001);
-        assert_eq!(state.accumulated(), 0.0);
+        assert!(state.accumulated().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -197,7 +197,7 @@ mod tests {
 
         let consumed = state.consume_interval(0.1);
         assert!((consumed - 0.05).abs() < 0.0001);
-        assert_eq!(state.accumulated(), 0.0);
+        assert!(state.accumulated().abs() < f32::EPSILON);
     }
 
     #[test]

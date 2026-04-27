@@ -40,7 +40,7 @@ impl Default for InputState {
 pub enum ClientMessage {
     /// Player input state (sent every tick).
     Input(InputState),
-    
+
     /// Request to place a block.
     BlockPlace {
         /// World position to place at.
@@ -48,19 +48,19 @@ pub enum ClientMessage {
         /// Block type to place.
         block: u16,
     },
-    
+
     /// Request to break a block.
     BlockBreak {
         /// World position to break.
         pos: WorldPos,
     },
-    
+
     /// Send a chat message.
     ChatSend {
         /// Message content.
         message: String,
     },
-    
+
     /// Request chunk data.
     ChunkRequest {
         /// Chunk position to request.

@@ -58,6 +58,7 @@ pub trait ItemTextures {
 }
 
 /// Default implementation that returns no textures.
+#[allow(dead_code)]
 pub struct NoTextures;
 
 impl ItemTextures for NoTextures {
@@ -82,8 +83,12 @@ pub fn draw_hotbar(
     let screen_rect = ctx.screen_rect();
 
     // Calculate hotbar position (centered at bottom)
-    let total_width =
-        HOTBAR_SLOTS as f32 * (SLOT_SIZE + SLOT_MARGIN * 2.0) + SLOT_PADDING * 2.0 - SLOT_MARGIN * 2.0;
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "HOTBAR_SLOTS is a small constant (9)"
+    )]
+    let total_width = HOTBAR_SLOTS as f32 * (SLOT_SIZE + SLOT_MARGIN * 2.0) + SLOT_PADDING * 2.0
+        - SLOT_MARGIN * 2.0;
     let hotbar_x = (screen_rect.width() - total_width) / 2.0;
     let hotbar_y = screen_rect.height() - SLOT_SIZE - SLOT_PADDING * 2.0 - 20.0;
 
@@ -102,7 +107,12 @@ pub fn draw_hotbar(
 }
 
 /// Draw a single hotbar slot.
-fn draw_slot(ui: &mut egui::Ui, slot: &HotbarSlot, is_selected: bool, textures: &impl ItemTextures) {
+fn draw_slot(
+    ui: &mut egui::Ui,
+    slot: &HotbarSlot,
+    is_selected: bool,
+    textures: &impl ItemTextures,
+) {
     let (rect, _response) = ui.allocate_exact_size(Vec2::splat(SLOT_SIZE), Sense::hover());
 
     let painter = ui.painter();
@@ -163,9 +173,13 @@ fn draw_slot(ui: &mut egui::Ui, slot: &HotbarSlot, is_selected: bool, textures: 
 }
 
 /// Generate a placeholder color from item ID.
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "values are bounded by % 200 + 55 which yields 55..=254, fits u8"
+)]
 fn item_id_to_color(item_id: u16) -> Color32 {
     // Simple hash to generate varied colors (use u32 to avoid overflow)
-    let id = item_id as u32;
+    let id = u32::from(item_id);
     let r = ((id.wrapping_mul(123)) % 200 + 55) as u8;
     let g = ((id.wrapping_mul(456)) % 200 + 55) as u8;
     let b = ((id.wrapping_mul(789)) % 200 + 55) as u8;

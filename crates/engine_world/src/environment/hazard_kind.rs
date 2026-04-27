@@ -99,6 +99,12 @@ impl HazardKind {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    clippy::uninlined_format_args,
+    clippy::manual_range_contains,
+    reason = "tests check exact values; format args and range checks clearer in tests"
+)]
 mod tests {
     use super::*;
 

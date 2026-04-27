@@ -18,10 +18,15 @@ impl GridPos {
 
     /// Manhattan distance to another position
     pub fn manhattan_distance(&self, other: &GridPos) -> u32 {
-        ((self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs()) as u32
+        ((self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs())
+            .cast_unsigned()
     }
 
     /// Euclidean distance squared (for comparison without sqrt)
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "distance components fit within f32 precision"
+    )]
     pub fn distance_squared(&self, other: &GridPos) -> f32 {
         let dx = (self.x - other.x) as f32;
         let dy = (self.y - other.y) as f32;
@@ -141,7 +146,10 @@ impl Eq for OpenNode {}
 impl Ord for OpenNode {
     fn cmp(&self, other: &Self) -> Ordering {
         // Reverse ordering for min-heap
-        other.f_score.partial_cmp(&self.f_score).unwrap_or(Ordering::Equal)
+        other
+            .f_score
+            .partial_cmp(&self.f_score)
+            .unwrap_or(Ordering::Equal)
     }
 }
 
@@ -155,7 +163,7 @@ impl PartialOrd for OpenNode {
 pub trait Walkable {
     /// Check if position is walkable
     fn is_walkable(&self, pos: &GridPos) -> bool;
-    
+
     /// Get movement cost (1.0 = normal, higher = slower)
     fn movement_cost(&self, _from: &GridPos, _to: &GridPos) -> f32 {
         1.0
@@ -174,12 +182,7 @@ impl AStar {
     }
 
     /// Find a path from start to goal
-    pub fn find_path<W: Walkable>(
-        &self,
-        start: GridPos,
-        goal: GridPos,
-        world: &W,
-    ) -> PathResult {
+    pub fn find_path<W: Walkable>(&self, start: GridPos, goal: GridPos, world: &W) -> PathResult {
         // Validate endpoints
         if !world.is_walkable(&start) {
             return PathResult::InvalidEndpoint;
@@ -223,7 +226,10 @@ impl AStar {
 
             let current_g = g_score.get(&current.pos).copied().unwrap_or(f32::MAX);
 
-            for neighbor in current.pos.neighbors(self.config.allow_diagonal, self.config.allow_vertical) {
+            for neighbor in current
+                .pos
+                .neighbors(self.config.allow_diagonal, self.config.allow_vertical)
+            {
                 if closed_set.contains(&neighbor) {
                     continue;
                 }
@@ -246,6 +252,10 @@ impl AStar {
                 let tentative_g = current_g + movement_cost;
 
                 // Check path length
+                #[expect(
+                    clippy::cast_precision_loss,
+                    reason = "max_path_length fits within f32 precision"
+                )]
                 if tentative_g > self.config.max_path_length as f32 {
                     continue;
                 }
@@ -254,7 +264,7 @@ impl AStar {
                 if tentative_g < neighbor_g {
                     came_from.insert(neighbor, current.pos);
                     g_score.insert(neighbor, tentative_g);
-                    
+
                     let f_score = tentative_g + self.heuristic(&neighbor, &goal);
                     open_set.push(OpenNode {
                         pos: neighbor,
@@ -268,20 +278,29 @@ impl AStar {
     }
 
     /// Calculate heuristic (estimated cost to goal)
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "manhattan distance fits within f32 precision"
+    )]
     fn heuristic(&self, from: &GridPos, to: &GridPos) -> f32 {
         let manhattan = from.manhattan_distance(to) as f32;
         manhattan * self.config.heuristic_weight
     }
 
-    /// Reconstruct path from came_from map
-    fn reconstruct_path(&self, came_from: &HashMap<GridPos, GridPos>, mut current: GridPos) -> Vec<GridPos> {
+    /// Reconstruct path from `came_from` map
+    #[expect(clippy::unused_self, reason = "method for API consistency")]
+    fn reconstruct_path(
+        &self,
+        came_from: &HashMap<GridPos, GridPos>,
+        mut current: GridPos,
+    ) -> Vec<GridPos> {
         let mut path = vec![current];
-        
+
         while let Some(&prev) = came_from.get(&current) {
             path.push(prev);
             current = prev;
         }
-        
+
         path.reverse();
         path
     }
@@ -324,13 +343,9 @@ mod tests {
     fn test_path_straight_line() {
         let astar = AStar::new(AStarConfig::default());
         let world = SimpleWorld::new();
-        
-        let result = astar.find_path(
-            GridPos::new(0, 0, 0),
-            GridPos::new(5, 0, 0),
-            &world,
-        );
-        
+
+        let result = astar.find_path(GridPos::new(0, 0, 0), GridPos::new(5, 0, 0), &world);
+
         assert!(result.is_found());
         let path = result.path().unwrap();
         assert_eq!(path.first(), Some(&GridPos::new(0, 0, 0)));
@@ -341,18 +356,14 @@ mod tests {
     fn test_path_around_obstacle() {
         let astar = AStar::new(AStarConfig::default());
         let mut world = SimpleWorld::new();
-        
+
         // Create a wall
         for z in -2..=2 {
             world.block(GridPos::new(2, 0, z));
         }
-        
-        let result = astar.find_path(
-            GridPos::new(0, 0, 0),
-            GridPos::new(4, 0, 0),
-            &world,
-        );
-        
+
+        let result = astar.find_path(GridPos::new(0, 0, 0), GridPos::new(4, 0, 0), &world);
+
         assert!(result.is_found());
     }
 
@@ -366,33 +377,28 @@ mod tests {
         };
         let astar = AStar::new(config);
         let mut world = SimpleWorld::new();
-        
+
         // Completely surround the start position
         world.block(GridPos::new(1, 0, 0));
         world.block(GridPos::new(-1, 0, 0));
         world.block(GridPos::new(0, 0, 1));
         world.block(GridPos::new(0, 0, -1));
-        
-        let result = astar.find_path(
-            GridPos::new(0, 0, 0),
-            GridPos::new(5, 0, 0),
-            &world,
+
+        let result = astar.find_path(GridPos::new(0, 0, 0), GridPos::new(5, 0, 0), &world);
+
+        assert!(
+            matches!(result, PathResult::NotFound),
+            "Expected NotFound, got {result:?}"
         );
-        
-        assert!(matches!(result, PathResult::NotFound), "Expected NotFound, got {:?}", result);
     }
 
     #[test]
     fn test_already_at_goal() {
         let astar = AStar::new(AStarConfig::default());
         let world = SimpleWorld::new();
-        
-        let result = astar.find_path(
-            GridPos::new(0, 0, 0),
-            GridPos::new(0, 0, 0),
-            &world,
-        );
-        
+
+        let result = astar.find_path(GridPos::new(0, 0, 0), GridPos::new(0, 0, 0), &world);
+
         assert!(result.is_found());
         let path = result.path().unwrap();
         assert_eq!(path.len(), 1);

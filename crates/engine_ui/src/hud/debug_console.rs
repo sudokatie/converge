@@ -63,7 +63,10 @@ impl Default for DebugConsole {
             history_index: None,
             scroll_to_bottom: false,
         };
-        console.add_line("Debug console ready. Type 'help' for commands.", LineKind::Output);
+        console.add_line(
+            "Debug console ready. Type 'help' for commands.",
+            LineKind::Output,
+        );
         console
     }
 }
@@ -185,7 +188,9 @@ impl DebugConsole {
                                         LineKind::Error => egui::Color32::RED,
                                         LineKind::Debug => egui::Color32::GRAY,
                                     };
-                                    ui.label(egui::RichText::new(&line.text).size(12.0).color(color));
+                                    ui.label(
+                                        egui::RichText::new(&line.text).size(12.0).color(color),
+                                    );
                                 }
                             });
 
@@ -203,15 +208,16 @@ impl DebugConsole {
                                     .font(egui::TextStyle::Monospace),
                             );
 
-                            if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                                if !self.input.is_empty() {
-                                    let cmd = self.input.trim().to_string();
-                                    self.add_line(&format!("> {}", cmd), LineKind::Input);
-                                    self.command_history.push(cmd.clone());
-                                    self.history_index = None;
-                                    action = Some(ConsoleAction::Command(cmd));
-                                    self.input.clear();
-                                }
+                            if response.lost_focus()
+                                && ui.input(|i| i.key_pressed(egui::Key::Enter))
+                                && !self.input.is_empty()
+                            {
+                                let cmd = self.input.trim().to_string();
+                                self.add_line(&format!("> {cmd}"), LineKind::Input);
+                                self.command_history.push(cmd.clone());
+                                self.history_index = None;
+                                action = Some(ConsoleAction::Command(cmd));
+                                self.input.clear();
                             }
 
                             // Auto-focus the input
@@ -343,7 +349,7 @@ mod tests {
     fn test_history_max_size() {
         let mut console = DebugConsole::new();
         for i in 0..MAX_HISTORY + 50 {
-            console.output(&format!("line {}", i));
+            console.output(&format!("line {i}"));
         }
         assert!(console.history.len() <= MAX_HISTORY);
     }
@@ -386,7 +392,12 @@ mod tests {
         let mut console = DebugConsole::new();
         let handled = process_builtin_command(&mut console, "help");
         assert!(handled);
-        assert!(console.history.iter().any(|l| l.text.contains("Available commands")));
+        assert!(
+            console
+                .history
+                .iter()
+                .any(|l| l.text.contains("Available commands"))
+        );
     }
 
     #[test]

@@ -39,10 +39,7 @@ pub struct HerdResult {
 /// Given the creature's position, type, and nearby same-type positions,
 /// determines whether the creature should follow the nearest one.
 #[must_use]
-pub fn calculate_herd_behavior(
-    creature_pos: Vec3,
-    same_type_positions: &[Vec3],
-) -> HerdResult {
+pub fn calculate_herd_behavior(creature_pos: Vec3, same_type_positions: &[Vec3]) -> HerdResult {
     // Find nearest same-type creature
     let nearest = same_type_positions
         .iter()
@@ -82,6 +79,7 @@ pub fn calculate_herd_behavior(
 ///
 /// The leader is the creature closest to the center of the group.
 #[must_use]
+#[expect(clippy::cast_precision_loss, reason = "herd sizes are small")]
 pub fn find_herd_leader(positions: &[Vec3]) -> Option<Vec3> {
     if positions.is_empty() {
         return None;
@@ -106,6 +104,7 @@ pub fn find_herd_leader(positions: &[Vec3]) -> Option<Vec3> {
 /// Returns a direction vector pointing toward the group center,
 /// with magnitude based on distance from center.
 #[must_use]
+#[expect(clippy::cast_precision_loss, reason = "herd sizes are small")]
 pub fn cohesion_force(creature_pos: Vec3, group_positions: &[Vec3]) -> Vec3 {
     if group_positions.is_empty() {
         return Vec3::ZERO;
@@ -149,7 +148,7 @@ mod tests {
         let result = calculate_herd_behavior(Vec3::new(0.0, 0.0, 0.0), &[]);
         assert_eq!(result.state, HerdState::Independent);
         assert!(result.target_position.is_none());
-        assert_eq!(result.speed_multiplier, 1.0);
+        assert!((result.speed_multiplier - 1.0).abs() < f32::EPSILON);
     }
 
     #[test]

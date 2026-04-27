@@ -97,11 +97,7 @@ impl RangedAttacker {
     ///
     /// Includes basic prediction based on target velocity.
     #[must_use]
-    pub fn aim_direction(
-        attacker_pos: Vec3,
-        target_pos: Vec3,
-        target_velocity: Vec3,
-    ) -> Vec3 {
+    pub fn aim_direction(attacker_pos: Vec3, target_pos: Vec3, target_velocity: Vec3) -> Vec3 {
         let to_target = target_pos - attacker_pos;
         let distance = to_target.length();
 
@@ -119,7 +115,12 @@ impl RangedAttacker {
     /// Attempt to fire a projectile.
     ///
     /// Returns the projectile spawn info if firing succeeds.
-    pub fn fire(&mut self, attacker_pos: Vec3, target_pos: Vec3, target_velocity: Vec3) -> Option<Projectile> {
+    pub fn fire(
+        &mut self,
+        attacker_pos: Vec3,
+        target_pos: Vec3,
+        target_velocity: Vec3,
+    ) -> Option<Projectile> {
         if !self.is_ready() || !self.is_in_range(attacker_pos, target_pos) {
             return None;
         }
@@ -193,7 +194,11 @@ impl Projectile {
     /// Create a skeleton attacker.
     #[must_use]
     pub fn skeleton_attacker() -> RangedAttacker {
-        RangedAttacker::with_params(RANGED_ATTACK_RANGE, RANGED_ATTACK_COOLDOWN, PROJECTILE_DAMAGE)
+        RangedAttacker::with_params(
+            RANGED_ATTACK_RANGE,
+            RANGED_ATTACK_COOLDOWN,
+            PROJECTILE_DAMAGE,
+        )
     }
 }
 
@@ -263,11 +268,7 @@ mod tests {
 
     #[test]
     fn test_aim_direction() {
-        let dir = RangedAttacker::aim_direction(
-            Vec3::ZERO,
-            Vec3::new(10.0, 0.0, 0.0),
-            Vec3::ZERO,
-        );
+        let dir = RangedAttacker::aim_direction(Vec3::ZERO, Vec3::new(10.0, 0.0, 0.0), Vec3::ZERO);
         assert!((dir - Vec3::X).length() < 0.01);
     }
 
@@ -327,6 +328,6 @@ mod tests {
     fn test_skeleton_attacker() {
         let attacker = Projectile::skeleton_attacker();
         assert!(attacker.is_ready());
-        assert_eq!(attacker.damage, PROJECTILE_DAMAGE);
+        assert!((attacker.damage - PROJECTILE_DAMAGE).abs() < f32::EPSILON);
     }
 }

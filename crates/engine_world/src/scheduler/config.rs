@@ -177,18 +177,18 @@ mod tests {
     #[test]
     fn tick_intervals_get_set() {
         let mut intervals = TickIntervals::default();
-        assert_eq!(intervals.get(Fidelity::Immediate), 0.0);
-        assert_eq!(intervals.get(Fidelity::Near), 0.1);
+        assert!(intervals.get(Fidelity::Immediate).abs() < f32::EPSILON);
+        assert!((intervals.get(Fidelity::Near) - 0.1).abs() < f32::EPSILON);
 
         intervals.set(Fidelity::Near, 0.25);
-        assert_eq!(intervals.get(Fidelity::Near), 0.25);
+        assert!((intervals.get(Fidelity::Near) - 0.25).abs() < f32::EPSILON);
     }
 
     #[test]
     fn tick_intervals_clamps_negative() {
         let mut intervals = TickIntervals::default();
         intervals.set(Fidelity::Near, -1.0);
-        assert_eq!(intervals.get(Fidelity::Near), 0.0);
+        assert!(intervals.get(Fidelity::Near).abs() < f32::EPSILON);
     }
 
     #[test]

@@ -45,17 +45,11 @@ impl SurfaceType {
     #[must_use]
     pub fn from_block_id(block_id: u16) -> Self {
         match block_id {
-            0 => SurfaceType::Grass,      // Air (shouldn't happen)
-            1 => SurfaceType::Stone,      // Stone
-            2 | 3 => SurfaceType::Grass,  // Dirt, Grass
-            4 => SurfaceType::Sand,       // Sand
-            5 => SurfaceType::Water,      // Water
-            6 | 8 => SurfaceType::Wood,   // Oak/Birch Log
-            7 | 9 => SurfaceType::Grass,  // Leaves
-            11 => SurfaceType::Wood,      // Planks
-            12 => SurfaceType::Stone,     // Cobblestone
-            13..=16 => SurfaceType::Stone, // Ores
-            _ => SurfaceType::Stone,      // Default
+            0 | 2 | 3 | 7 | 9 => SurfaceType::Grass, // Air, Dirt, Grass, Leaves
+            4 => SurfaceType::Sand,                  // Sand
+            5 => SurfaceType::Water,                 // Water
+            6 | 8 | 11 => SurfaceType::Wood,         // Oak/Birch Log, Planks
+            _ => SurfaceType::Stone,                 // Stone, Cobblestone, Ores, Default
         }
     }
 }
@@ -213,7 +207,8 @@ impl<'a> SoundEffects<'a> {
 
     /// Play a UI sound event.
     pub fn ui(&mut self, event: UiSoundEvent) {
-        self.audio.play_with_category(event.sound_id(), VolumeCategory::Ui);
+        self.audio
+            .play_with_category(event.sound_id(), VolumeCategory::Ui);
     }
 
     /// Play an ambient sound event.
@@ -228,11 +223,12 @@ impl<'a> SoundEffects<'a> {
 
     /// Play item pickup sound.
     pub fn pickup(&mut self) {
-        self.audio.play_with_category(SoundId::PICKUP, VolumeCategory::Ui);
+        self.audio
+            .play_with_category(SoundId::PICKUP, VolumeCategory::Ui);
     }
 }
 
-/// Extension trait for AudioManager to easily play effects.
+/// Extension trait for `AudioManager` to easily play effects.
 pub trait AudioEffectsExt {
     /// Get a sound effects helper.
     fn effects(&mut self) -> SoundEffects<'_>;

@@ -72,7 +72,10 @@ impl PauseMenu {
     fn draw_main_buttons(&mut self, ui: &mut egui::Ui, button_size: Vec2) -> Option<PauseAction> {
         // Resume button
         if ui
-            .add_sized(button_size, egui::Button::new(RichText::new("Resume").size(18.0)))
+            .add_sized(
+                button_size,
+                egui::Button::new(RichText::new("Resume").size(18.0)),
+            )
             .clicked()
         {
             return Some(PauseAction::Resume);
@@ -82,7 +85,10 @@ impl PauseMenu {
 
         // Settings button
         if ui
-            .add_sized(button_size, egui::Button::new(RichText::new("Settings").size(18.0)))
+            .add_sized(
+                button_size,
+                egui::Button::new(RichText::new("Settings").size(18.0)),
+            )
             .clicked()
         {
             return Some(PauseAction::Settings);

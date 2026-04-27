@@ -13,16 +13,16 @@ pub const DEFAULT_PORT: u16 = 27015;
 /// Channel IDs for different message types.
 pub mod channels {
     use renet::ChannelConfig;
-    
+
     /// Unreliable channel for frequent updates (inputs, snapshots).
     pub const UNRELIABLE: u8 = 0;
-    
+
     /// Reliable channel for important messages (chat, block changes).
     pub const RELIABLE: u8 = 1;
-    
+
     /// Chunk data channel (reliable, ordered).
     pub const CHUNK: u8 = 2;
-    
+
     /// Get channel configurations for renet.
     pub fn channel_configs() -> Vec<ChannelConfig> {
         vec![

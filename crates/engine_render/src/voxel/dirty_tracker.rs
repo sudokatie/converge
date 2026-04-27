@@ -101,22 +101,46 @@ impl ChunkDirtyTracker {
         // Check if block is on a chunk boundary - if so, mark neighbor
         let local = block_pos.to_local_pos();
         if local.0.x == 0 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x - 1, chunk_pos.0.y, chunk_pos.0.z)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x - 1,
+                chunk_pos.0.y,
+                chunk_pos.0.z,
+            )));
         }
         if local.0.x == 15 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x + 1, chunk_pos.0.y, chunk_pos.0.z)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x + 1,
+                chunk_pos.0.y,
+                chunk_pos.0.z,
+            )));
         }
         if local.0.y == 0 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x, chunk_pos.0.y - 1, chunk_pos.0.z)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x,
+                chunk_pos.0.y - 1,
+                chunk_pos.0.z,
+            )));
         }
         if local.0.y == 15 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x, chunk_pos.0.y + 1, chunk_pos.0.z)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x,
+                chunk_pos.0.y + 1,
+                chunk_pos.0.z,
+            )));
         }
         if local.0.z == 0 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x, chunk_pos.0.y, chunk_pos.0.z - 1)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x,
+                chunk_pos.0.y,
+                chunk_pos.0.z - 1,
+            )));
         }
         if local.0.z == 15 {
-            self.mark_dirty(ChunkPos(glam::IVec3::new(chunk_pos.0.x, chunk_pos.0.y, chunk_pos.0.z + 1)));
+            self.mark_dirty(ChunkPos(glam::IVec3::new(
+                chunk_pos.0.x,
+                chunk_pos.0.y,
+                chunk_pos.0.z + 1,
+            )));
         }
     }
 }

@@ -172,9 +172,8 @@ impl MovementPredictor {
         self.last_ack_sequence = Some(server_state.last_sequence);
 
         // Remove acknowledged inputs (keep only those newer than last_sequence)
-        self.input_buffer.retain(|record| {
-            is_sequence_newer(record.input.sequence, server_state.last_sequence)
-        });
+        self.input_buffer
+            .retain(|record| is_sequence_newer(record.input.sequence, server_state.last_sequence));
 
         // Check if we need to reconcile
         if self.input_buffer.is_empty() {
@@ -240,6 +239,10 @@ impl MovementPredictor {
 }
 
 /// Check if sequence `a` is newer than sequence `b`, handling wrapping.
+#[expect(
+    clippy::cast_possible_wrap,
+    reason = "intentional wrap for sequence number comparison"
+)]
 fn is_sequence_newer(a: u32, b: u32) -> bool {
     // Handle sequence number wrapping using signed comparison
     let diff = a.wrapping_sub(b) as i32;
@@ -313,7 +316,10 @@ mod tests {
         };
 
         let replay = predictor.reconcile(&server_state);
-        assert!(replay.is_none(), "Should not need replay for accurate prediction");
+        assert!(
+            replay.is_none(),
+            "Should not need replay for accurate prediction"
+        );
         assert_eq!(predictor.pending_input_count(), 0);
     }
 
@@ -353,7 +359,11 @@ mod tests {
         assert!(replay.is_some(), "Should need replay after misprediction");
 
         let inputs_to_replay = replay.unwrap();
-        assert_eq!(inputs_to_replay.len(), 1, "Should replay unacked input (seq 1)");
+        assert_eq!(
+            inputs_to_replay.len(),
+            1,
+            "Should replay unacked input (seq 1)"
+        );
         assert_eq!(inputs_to_replay[0].input.sequence, 1);
 
         // State should be reset to server authoritative

@@ -139,8 +139,7 @@ impl ItemRegistry {
     ///
     /// Returns an error if parsing fails.
     pub fn from_ron(content: &str) -> Result<Self> {
-        let defs: Vec<ItemDef> = ron::from_str(content)
-            .context("Failed to parse items RON")?;
+        let defs: Vec<ItemDef> = ron::from_str(content).context("Failed to parse items RON")?;
 
         let mut registry = Self::new();
 
@@ -186,7 +185,7 @@ impl ItemRegistry {
     pub fn is_tool(&self, id: ItemId) -> bool {
         self.items
             .get(&id)
-            .map_or(false, |def| def.tool_type.is_some())
+            .is_some_and(|def| def.tool_type.is_some())
     }
 
     /// Get the tool type for an item.

@@ -7,8 +7,8 @@ use std::collections::VecDeque;
 
 use glam::{Quat, Vec3};
 
-use crate::protocol::server_message::EntitySnapshot;
 use crate::WorldSnapshot;
+use crate::protocol::server_message::EntitySnapshot;
 
 /// Default interpolation delay in milliseconds.
 /// At 20 Hz tick rate, this is 2 ticks worth of buffer.
@@ -58,11 +58,19 @@ pub struct InterpolationBuffer {
     /// Current monotonic time.
     current_time: f64,
     /// Server tick rate (for time calculations).
+    #[allow(
+        dead_code,
+        reason = "reserved for future tick-rate-aware interpolation"
+    )]
     tick_rate: u32,
 }
 
 impl InterpolationBuffer {
     /// Create a new interpolation buffer.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "delay in ms is small; precision loss beyond 2^52 ms is acceptable"
+    )]
     pub fn new(tick_rate: u32) -> Self {
         Self {
             snapshots: VecDeque::with_capacity(4),
@@ -71,66 +79,75 @@ impl InterpolationBuffer {
             tick_rate,
         }
     }
-    
+
     /// Set interpolation delay in milliseconds.
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "delay in ms is small; precision loss beyond 2^52 ms is acceptable"
+    )]
     pub fn set_delay_ms(&mut self, delay_ms: u64) {
         self.delay = delay_ms as f64 / 1000.0;
     }
-    
+
     /// Push a new snapshot into the buffer.
     pub fn push(&mut self, snapshot: WorldSnapshot) {
         let timestamped = TimestampedSnapshot {
             time: self.current_time,
             snapshot,
         };
-        
+
         self.snapshots.push_back(timestamped);
-        
+
         // Keep at most 4 snapshots
         while self.snapshots.len() > 4 {
             self.snapshots.pop_front();
         }
     }
-    
+
     /// Advance time and get interpolated state.
     pub fn update(&mut self, dt: f64) -> Option<InterpolatedState> {
         self.current_time += dt;
-        
+
         // Render time is current time minus delay
         let render_time = self.current_time - self.delay;
-        
+
         // Need at least 2 snapshots to interpolate
         if self.snapshots.len() < 2 {
             // Use latest snapshot if available
-            return self.snapshots.back().map(|ts| {
-                InterpolatedState {
-                    render_time,
-                    player_position: ts.snapshot.player_position,
-                    player_velocity: ts.snapshot.player_velocity,
-                    entities: ts.snapshot.entities.iter()
-                        .map(|e| InterpolatedEntity {
-                            id: e.id,
-                            position: e.position,
-                            rotation: e.rotation,
-                            velocity: e.velocity,
-                        })
-                        .collect(),
-                }
+            return self.snapshots.back().map(|ts| InterpolatedState {
+                render_time,
+                player_position: ts.snapshot.player_position,
+                player_velocity: ts.snapshot.player_velocity,
+                entities: ts
+                    .snapshot
+                    .entities
+                    .iter()
+                    .map(|e| InterpolatedEntity {
+                        id: e.id,
+                        position: e.position,
+                        rotation: e.rotation,
+                        velocity: e.velocity,
+                    })
+                    .collect(),
             });
         }
-        
+
         // Find the two snapshots to interpolate between
         let (from, to, alpha) = self.find_interpolation_pair(render_time)?;
-        
+
         // Interpolate player
-        let player_position = from.snapshot.player_position
+        let player_position = from
+            .snapshot
+            .player_position
             .lerp(to.snapshot.player_position, alpha);
-        let player_velocity = from.snapshot.player_velocity
+        let player_velocity = from
+            .snapshot
+            .player_velocity
             .lerp(to.snapshot.player_velocity, alpha);
-        
+
         // Interpolate entities
         let entities = interpolate_entities(&from.snapshot.entities, &to.snapshot.entities, alpha);
-        
+
         Some(InterpolatedState {
             render_time,
             player_position,
@@ -138,16 +155,23 @@ impl InterpolationBuffer {
             entities,
         })
     }
-    
+
     /// Find the two snapshots to interpolate between.
-    fn find_interpolation_pair(&self, render_time: f64) -> Option<(&TimestampedSnapshot, &TimestampedSnapshot, f32)> {
+    fn find_interpolation_pair(
+        &self,
+        render_time: f64,
+    ) -> Option<(&TimestampedSnapshot, &TimestampedSnapshot, f32)> {
         // Find first snapshot after render_time
         for i in 1..self.snapshots.len() {
             let from = &self.snapshots[i - 1];
             let to = &self.snapshots[i];
-            
+
             if from.time <= render_time && to.time >= render_time {
                 let duration = to.time - from.time;
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "alpha is clamped to 0.0-1.0; f32 is sufficient for interpolation"
+                )]
                 let alpha = if duration > 0.0 {
                     ((render_time - from.time) / duration) as f32
                 } else {
@@ -156,23 +180,23 @@ impl InterpolationBuffer {
                 return Some((from, to, alpha.clamp(0.0, 1.0)));
             }
         }
-        
+
         // If render time is before all snapshots, use oldest
         if render_time < self.snapshots.front()?.time {
             let oldest = self.snapshots.front()?;
             return Some((oldest, oldest, 0.0));
         }
-        
+
         // If render time is after all snapshots, extrapolate from latest
         let latest = self.snapshots.back()?;
         Some((latest, latest, 0.0))
     }
-    
+
     /// Get the latest server tick number.
     pub fn latest_tick(&self) -> Option<u64> {
         self.snapshots.back().map(|ts| ts.snapshot.tick)
     }
-    
+
     /// Clear all buffered snapshots.
     pub fn clear(&mut self) {
         self.snapshots.clear();
@@ -188,12 +212,10 @@ fn interpolate_entities(
 ) -> Vec<InterpolatedEntity> {
     // Build map from entity ID to 'to' snapshot
     use std::collections::HashMap;
-    let to_map: HashMap<u64, &EntitySnapshot> = to.iter()
-        .map(|e| (e.id, e))
-        .collect();
-    
+    let to_map: HashMap<u64, &EntitySnapshot> = to.iter().map(|e| (e.id, e)).collect();
+
     let mut result = Vec::with_capacity(to.len());
-    
+
     // Interpolate entities that exist in both snapshots
     for from_entity in from {
         if let Some(to_entity) = to_map.get(&from_entity.id) {
@@ -205,7 +227,7 @@ fn interpolate_entities(
             });
         }
     }
-    
+
     // Add entities that only exist in 'to' (newly spawned)
     for to_entity in to {
         if !from.iter().any(|e| e.id == to_entity.id) {
@@ -217,7 +239,7 @@ fn interpolate_entities(
             });
         }
     }
-    
+
     result
 }
 
@@ -225,7 +247,7 @@ fn interpolate_entities(
 mod tests {
     use super::*;
     use crate::protocol::EntityKind;
-    
+
     fn make_snapshot(tick: u64, player_pos: Vec3) -> WorldSnapshot {
         WorldSnapshot {
             tick,
@@ -235,97 +257,91 @@ mod tests {
             entities: vec![],
         }
     }
-    
+
     #[test]
     fn buffer_creation() {
         let buffer = InterpolationBuffer::new(20);
         assert!(buffer.snapshots.is_empty());
         assert_eq!(buffer.tick_rate, 20);
     }
-    
+
     #[test]
     fn push_snapshots() {
         let mut buffer = InterpolationBuffer::new(20);
-        
+
         buffer.push(make_snapshot(1, Vec3::ZERO));
         assert_eq!(buffer.snapshots.len(), 1);
-        
+
         buffer.push(make_snapshot(2, Vec3::X));
         assert_eq!(buffer.snapshots.len(), 2);
     }
-    
+
     #[test]
     fn buffer_size_limited() {
         let mut buffer = InterpolationBuffer::new(20);
-        
+
         for i in 0..10 {
             buffer.push(make_snapshot(i, Vec3::ZERO));
         }
-        
+
         assert_eq!(buffer.snapshots.len(), 4);
     }
-    
+
     #[test]
     fn interpolation_with_two_snapshots() {
         let mut buffer = InterpolationBuffer::new(20);
         buffer.set_delay_ms(0); // No delay for testing
-        
+
         buffer.push(make_snapshot(1, Vec3::ZERO));
         buffer.current_time = 0.1;
         buffer.push(make_snapshot(2, Vec3::new(10.0, 0.0, 0.0)));
-        
+
         // At render_time = 0.05 (halfway), should interpolate
         buffer.current_time = 0.05;
         let state = buffer.update(0.0).unwrap();
-        
+
         // Position should be between 0 and 10
         assert!(state.player_position.x >= 0.0);
         assert!(state.player_position.x <= 10.0);
     }
-    
+
     #[test]
     fn entity_interpolation() {
-        let from = vec![
-            EntitySnapshot {
-                id: 1,
-                kind: EntityKind::Player,
-                position: Vec3::ZERO,
-                rotation: Quat::IDENTITY,
-                velocity: Vec3::ZERO,
-                health: Some(20.0),
-            },
-        ];
-        
-        let to = vec![
-            EntitySnapshot {
-                id: 1,
-                kind: EntityKind::Player,
-                position: Vec3::new(10.0, 0.0, 0.0),
-                rotation: Quat::IDENTITY,
-                velocity: Vec3::ZERO,
-                health: Some(20.0),
-            },
-        ];
-        
+        let from = vec![EntitySnapshot {
+            id: 1,
+            kind: EntityKind::Player,
+            position: Vec3::ZERO,
+            rotation: Quat::IDENTITY,
+            velocity: Vec3::ZERO,
+            health: Some(20.0),
+        }];
+
+        let to = vec![EntitySnapshot {
+            id: 1,
+            kind: EntityKind::Player,
+            position: Vec3::new(10.0, 0.0, 0.0),
+            rotation: Quat::IDENTITY,
+            velocity: Vec3::ZERO,
+            health: Some(20.0),
+        }];
+
         let result = interpolate_entities(&from, &to, 0.5);
         assert_eq!(result.len(), 1);
         assert!((result[0].position.x - 5.0).abs() < 0.001);
     }
-    
+
     #[test]
     fn new_entity_appears() {
         let from = vec![];
-        let to = vec![
-            EntitySnapshot {
-                id: 1,
-                kind: EntityKind::Pig,
-                position: Vec3::new(5.0, 0.0, 0.0),
-                rotation: Quat::IDENTITY,
-                velocity: Vec3::ZERO,
-                health: Some(10.0),
-            },
-        ];
-        
+        let to = vec![EntitySnapshot {
+            id: 1,
+            kind: EntityKind::Pig,
+            position: Vec3::new(5.0, 0.0, 0.0),
+            rotation: Quat::IDENTITY,
+            velocity: Vec3::ZERO,
+            health: Some(10.0),
+        }];
+
         let result = interpolate_entities(&from, &to, 0.5);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].id, 1);

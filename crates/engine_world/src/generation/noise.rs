@@ -16,7 +16,7 @@ const MAX_HEIGHT: f64 = 128.0;
 /// Height scale factor.
 const HEIGHT_SCALE: f64 = (MAX_HEIGHT - MIN_HEIGHT) / 2.0;
 /// Base height (middle of range).
-const BASE_HEIGHT: f64 = (MIN_HEIGHT + MAX_HEIGHT) / 2.0;
+const BASE_HEIGHT: f64 = f64::midpoint(MIN_HEIGHT, MAX_HEIGHT);
 
 /// Terrain noise generator.
 pub struct TerrainNoise {
@@ -29,9 +29,16 @@ pub struct TerrainNoise {
 impl TerrainNoise {
     /// Create a new terrain noise generator with the given seed.
     #[must_use]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "seed truncation is intentional - only need 32 bits for noise"
+    )]
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "precision loss acceptable for noise offset calculation"
+    )]
     pub fn new(seed: u64) -> Self {
         let perlin = Perlin::new(seed as u32);
-        // Use seed to create a unique offset with prime multiplier for better distribution
         let offset = ((seed as f64) * 7919.0) % 100_000.0;
         Self {
             seed,
@@ -40,9 +47,15 @@ impl TerrainNoise {
         }
     }
 
+    /// Get the seed used to create this noise generator.
+    #[must_use]
+    pub const fn seed(&self) -> u64 {
+        self.seed
+    }
+
     /// Get the terrain height at a world position.
     ///
-    /// Returns height in range [MIN_HEIGHT, MAX_HEIGHT].
+    /// Returns height in range [`MIN_HEIGHT`..=`MAX_HEIGHT`].
     #[must_use]
     pub fn height_at(&self, x: f64, z: f64) -> f64 {
         let noise_value = self.fbm_2d(x * 0.01, z * 0.01);
@@ -143,9 +156,9 @@ mod tests {
 
         for x in -100..100 {
             for z in -100..100 {
-                let h = noise.height_at(x as f64, z as f64);
+                let h = noise.height_at(f64::from(x), f64::from(z));
                 assert!(
-                    h >= MIN_HEIGHT && h <= MAX_HEIGHT,
+                    (MIN_HEIGHT..=MAX_HEIGHT).contains(&h),
                     "Height {h} out of range at ({x}, {z})"
                 );
             }
@@ -167,25 +180,15 @@ mod tests {
     fn test_3d_sample_in_range() {
         let noise = TerrainNoise::new(42);
 
-        for _ in 0..100 {
-            let x = rand_coord();
-            let y = rand_coord();
-            let z = rand_coord();
-            let v = noise.sample_3d(x, y, z);
+        for i in 0..100 {
+            let coord = f64::from(i) * 10.0 - 500.0;
+            let v = noise.sample_3d(coord, coord * 0.7, coord * 1.3);
             assert!(
-                v >= -1.0 && v <= 1.0,
-                "3D noise {v} out of range at ({x}, {y}, {z})"
+                (-1.0..=1.0).contains(&v),
+                "3D noise {v} out of range at ({coord}, {}, {})",
+                coord * 0.7,
+                coord * 1.3
             );
         }
-    }
-
-    fn rand_coord() -> f64 {
-        // Simple pseudo-random for testing
-        use std::time::SystemTime;
-        let t = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos() as f64;
-        (t % 1000.0) - 500.0
     }
 }

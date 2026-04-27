@@ -3,14 +3,14 @@
 //! Implements spec 6.1.3: serialization with serde for persistence/network.
 //! Saves entity components to JSON, restores them on load.
 
-use std::collections::HashMap;
 use std::path::Path;
 
-use glam::{Quat, Vec3};
 use hecs::World;
 use serde::{Deserialize, Serialize};
 
-use crate::ecs::{Collider, ColliderShape, Controller, ControllerKind, NetworkId, Transform, Velocity};
+use crate::ecs::{
+    Collider, ColliderShape, Controller, ControllerKind, NetworkId, Transform, Velocity,
+};
 use crate::entities::CreatureKind;
 use crate::survival::Health;
 
@@ -43,7 +43,11 @@ pub struct SerializedEntity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ColliderShapeSerde {
     /// Axis-aligned bounding box with half-extents.
-    Box { half_x: f32, half_y: f32, half_z: f32 },
+    Box {
+        half_x: f32,
+        half_y: f32,
+        half_z: f32,
+    },
     /// Sphere with radius.
     Sphere { radius: f32 },
     /// Capsule with height and radius.
@@ -59,7 +63,10 @@ impl From<&ColliderShape> for ColliderShapeSerde {
                 half_z: half_extents.z,
             },
             ColliderShape::Sphere { radius } => ColliderShapeSerde::Sphere { radius: *radius },
-            ColliderShape::Capsule { height, radius } => ColliderShapeSerde::Capsule { height: *height, radius: *radius },
+            ColliderShape::Capsule { height, radius } => ColliderShapeSerde::Capsule {
+                height: *height,
+                radius: *radius,
+            },
         }
     }
 }
@@ -102,8 +109,11 @@ impl EntitySaveData {
     pub fn from_world(world: &World) -> Self {
         let mut data = Self::new();
 
-        for (id, (transform, velocity)) in world.query::<(&Transform, &Velocity)>().iter() {
-            let health_data = world.get::<&Health>(id).ok().map(|h| (h.current(), h.max()));
+        for (id, (transform, velocity)) in &mut world.query::<(&Transform, &Velocity)>() {
+            let health_data = world
+                .get::<&Health>(id)
+                .ok()
+                .map(|h| (h.current(), h.max()));
             let creature: Option<CreatureKind> = world.get::<&CreatureKind>(id).ok().map(|c| *c);
             let controller = world.get::<&Controller>(id).ok();
             let net_id = world.get::<&NetworkId>(id).ok();
@@ -121,8 +131,17 @@ impl EntitySaveData {
 
             data.entities.push(SerializedEntity {
                 entity_type,
-                position: [transform.position.x, transform.position.y, transform.position.z],
-                rotation: [transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w],
+                position: [
+                    transform.position.x,
+                    transform.position.y,
+                    transform.position.z,
+                ],
+                rotation: [
+                    transform.rotation.x,
+                    transform.rotation.y,
+                    transform.rotation.z,
+                    transform.rotation.w,
+                ],
                 velocity: [velocity.linear.x, velocity.linear.y, velocity.linear.z],
                 health_current,
                 health_max,
@@ -144,8 +163,7 @@ impl EntitySaveData {
     pub fn save_to_file(&self, path: &Path) -> Result<(), EntitySaveError> {
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| EntitySaveError::SerializationFailed(e.to_string()))?;
-        std::fs::write(path, json)
-            .map_err(|e| EntitySaveError::IoError(e.to_string()))
+        std::fs::write(path, json).map_err(|e| EntitySaveError::IoError(e.to_string()))
     }
 
     /// Load from a JSON file.
@@ -154,8 +172,8 @@ impl EntitySaveData {
     ///
     /// Returns error if file read or deserialization fails.
     pub fn load_from_file(path: &Path) -> Result<Self, EntitySaveError> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| EntitySaveError::IoError(e.to_string()))?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| EntitySaveError::IoError(e.to_string()))?;
         let data: Self = serde_json::from_str(&content)
             .map_err(|e| EntitySaveError::DeserializationFailed(e.to_string()))?;
 
@@ -204,6 +222,7 @@ pub enum EntitySaveError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use glam::{Quat, Vec3};
     use hecs::World as HecsWorld;
 
     fn make_test_world() -> HecsWorld {
@@ -217,7 +236,9 @@ mod tests {
             },
             Velocity::default(),
             Health::new(20.0),
-            Controller { kind: ControllerKind::Player },
+            Controller {
+                kind: ControllerKind::Player,
+            },
             NetworkId { id: 42 },
         ));
 
@@ -252,12 +273,20 @@ mod tests {
         let world = make_test_world();
         let data = EntitySaveData::from_world(&world);
 
-        let player = data.entities.iter()
+        let player = data
+            .entities
+            .iter()
             .find(|e| e.entity_type == SerializedEntityType::Player)
             .unwrap();
 
-        assert_eq!(player.position, [100.0, 64.0, 200.0]);
-        assert_eq!(player.health_current, 20.0);
+        assert!(
+            player
+                .position
+                .iter()
+                .zip([100.0, 64.0, 200.0])
+                .all(|(a, b)| (a - b).abs() < f32::EPSILON)
+        );
+        assert!((player.health_current - 20.0).abs() < f32::EPSILON);
         assert_eq!(player.network_id, Some(42));
         assert_eq!(player.controller_kind, Some(ControllerKind::Player));
     }
@@ -267,13 +296,27 @@ mod tests {
         let world = make_test_world();
         let data = EntitySaveData::from_world(&world);
 
-        let creature = data.entities.iter()
+        let creature = data
+            .entities
+            .iter()
             .find(|e| e.entity_type == SerializedEntityType::Creature)
             .unwrap();
 
-        assert_eq!(creature.position, [50.0, 64.0, 50.0]);
+        assert!(
+            creature
+                .position
+                .iter()
+                .zip([50.0, 64.0, 50.0])
+                .all(|(a, b)| (a - b).abs() < f32::EPSILON)
+        );
         assert_eq!(creature.creature_kind, Some(CreatureKind::Pig));
-        assert_eq!(creature.velocity, [1.0, 0.0, 0.0]);
+        assert!(
+            creature
+                .velocity
+                .iter()
+                .zip([1.0, 0.0, 0.0])
+                .all(|(a, b)| (a - b).abs() < f32::EPSILON)
+        );
     }
 
     #[test]
@@ -304,7 +347,10 @@ mod tests {
         std::fs::write(&path, bad_data).unwrap();
 
         let result = EntitySaveData::load_from_file(&path);
-        assert!(matches!(result, Err(EntitySaveError::VersionMismatch { .. })));
+        assert!(matches!(
+            result,
+            Err(EntitySaveError::VersionMismatch { .. })
+        ));
 
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -318,10 +364,16 @@ mod tests {
 
     #[test]
     fn test_collider_shape_serde() {
-        let box_shape = ColliderShape::Box { half_extents: glam::Vec3::new(0.3, 0.9, 0.3) };
+        let box_shape = ColliderShape::Box {
+            half_extents: glam::Vec3::new(0.3, 0.9, 0.3),
+        };
         let serde_shape = ColliderShapeSerde::from(&box_shape);
         match serde_shape {
-            ColliderShapeSerde::Box { half_x, half_y, half_z } => {
+            ColliderShapeSerde::Box {
+                half_x,
+                half_y,
+                half_z: _,
+            } => {
                 assert!((half_x - 0.3).abs() < 0.001);
                 assert!((half_y - 0.9).abs() < 0.001);
             }
