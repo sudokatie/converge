@@ -869,6 +869,7 @@ dependencies = [
 name = "engine_physics"
 version = "0.1.0"
 dependencies = [
+ "approx",
  "engine_core",
  "glam",
  "serde",

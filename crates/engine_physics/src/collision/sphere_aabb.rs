@@ -1,5 +1,6 @@
 //! Sphere-AABB collision detection for projectiles.
 
+use super::ccd;
 use engine_core::math::{Aabb, Sphere};
 use glam::Vec3;
 
@@ -20,6 +21,10 @@ pub struct SphereAabbContact {
 /// pointing from the AABB toward the sphere (the direction to push
 /// the sphere to resolve the collision).
 #[must_use]
+#[expect(
+    clippy::similar_names,
+    reason = "axis-aligned distances use x/y/z prefixes"
+)]
 pub fn sphere_aabb_intersection(sphere: &Sphere, aabb: &Aabb) -> Option<SphereAabbContact> {
     // Find the closest point on the AABB to the sphere center
     let closest = Vec3::new(
@@ -49,12 +54,9 @@ pub fn sphere_aabb_intersection(sphere: &Sphere, aabb: &Aabb) -> Option<SphereAa
         let local = sphere.center - center;
 
         // Distance to each face
-        let dx_pos = half.x - local.x;
-        let dx_neg = half.x + local.x;
-        let dy_pos = half.y - local.y;
-        let dy_neg = half.y + local.y;
-        let dz_pos = half.z - local.z;
-        let dz_neg = half.z + local.z;
+        let (dx_pos, dx_neg) = (half.x - local.x, half.x + local.x);
+        let (dy_pos, dy_neg) = (half.y - local.y, half.y + local.y);
+        let (dz_pos, dz_neg) = (half.z - local.z, half.z + local.z);
 
         // Find minimum penetration axis
         let min_dist = dx_pos
@@ -93,36 +95,8 @@ pub fn sphere_aabb_intersection(sphere: &Sphere, aabb: &Aabb) -> Option<SphereAa
 /// Uses swept sphere test for continuous collision detection.
 /// Returns the time of first contact (0.0 to 1.0) if collision occurs.
 #[must_use]
-pub fn sphere_aabb_sweep(
-    sphere: &Sphere,
-    velocity: Vec3,
-    aabb: &Aabb,
-) -> Option<f32> {
-    // Expand AABB by sphere radius and do ray-AABB test
-    let expanded = aabb.expand(sphere.radius);
-
-    // Ray-AABB intersection using slab method
-    let inv_dir = Vec3::new(
-        if velocity.x.abs() > 0.0001 { 1.0 / velocity.x } else { f32::INFINITY * velocity.x.signum() },
-        if velocity.y.abs() > 0.0001 { 1.0 / velocity.y } else { f32::INFINITY * velocity.y.signum() },
-        if velocity.z.abs() > 0.0001 { 1.0 / velocity.z } else { f32::INFINITY * velocity.z.signum() },
-    );
-
-    let t1 = (expanded.min.x - sphere.center.x) * inv_dir.x;
-    let t2 = (expanded.max.x - sphere.center.x) * inv_dir.x;
-    let t3 = (expanded.min.y - sphere.center.y) * inv_dir.y;
-    let t4 = (expanded.max.y - sphere.center.y) * inv_dir.y;
-    let t5 = (expanded.min.z - sphere.center.z) * inv_dir.z;
-    let t6 = (expanded.max.z - sphere.center.z) * inv_dir.z;
-
-    let tmin = t1.min(t2).max(t3.min(t4)).max(t5.min(t6)).max(0.0);
-    let tmax = t1.max(t2).min(t3.max(t4)).min(t5.max(t6));
-
-    if tmax >= tmin && tmin <= 1.0 {
-        Some(tmin)
-    } else {
-        None
-    }
+pub fn sphere_aabb_sweep(sphere: &Sphere, velocity: Vec3, aabb: &Aabb) -> Option<f32> {
+    ccd::swept_sphere_aabb(sphere, velocity, aabb).map(|hit| hit.time)
 }
 
 #[cfg(test)]
@@ -200,5 +174,47 @@ mod tests {
         let t = sphere_aabb_sweep(&sphere, velocity, &aabb);
         assert!(t.is_some());
         assert!((t.unwrap() - 0.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_sweep_zero_velocity() {
+        let sphere = Sphere::new(Vec3::new(-1.0, 0.5, 0.5), 0.2);
+        let velocity = Vec3::ZERO;
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+
+        let t = sphere_aabb_sweep(&sphere, velocity, &aabb);
+        assert!(t.is_none(), "Zero velocity, not overlapping = no hit");
+    }
+
+    #[test]
+    fn test_sweep_zero_velocity_overlapping() {
+        let sphere = Sphere::new(Vec3::new(0.5, 0.5, 0.5), 0.2);
+        let velocity = Vec3::ZERO;
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+
+        let t = sphere_aabb_sweep(&sphere, velocity, &aabb);
+        assert!(t.is_some(), "Zero velocity but overlapping = hit at t=0");
+        assert!((t.unwrap() - 0.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_sweep_zero_axis_outside_slab() {
+        let sphere = Sphere::new(Vec3::new(-1.0, 5.0, 0.5), 0.2);
+        let velocity = Vec3::new(2.0, 0.0, 0.0);
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+
+        let t = sphere_aabb_sweep(&sphere, velocity, &aabb);
+        assert!(t.is_none(), "Outside Y slab with zero Y velocity = miss");
+    }
+
+    #[test]
+    fn test_sweep_zero_axis_inside_slab() {
+        let sphere = Sphere::new(Vec3::new(-1.0, 0.5, 0.5), 0.2);
+        let velocity = Vec3::new(2.0, 0.0, 0.0);
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+
+        let t = sphere_aabb_sweep(&sphere, velocity, &aabb);
+        assert!(t.is_some(), "Inside Y/Z slabs with zero Y/Z velocity = hit");
+        assert!(t.unwrap() > 0.0 && t.unwrap() < 1.0);
     }
 }
