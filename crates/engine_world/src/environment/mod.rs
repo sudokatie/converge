@@ -68,6 +68,13 @@ mod structural_event;
 mod structural_propagation;
 mod support_kind;
 
+mod chunk_conduits;
+mod conduit_cell;
+mod conduit_config;
+mod conduit_kind;
+mod conduit_network;
+mod conduit_node;
+
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
     AtmosphereConfig, AtmosphereEffects, LayerNeighborCounts, TransitionRules, cell_from_material,
@@ -121,3 +128,17 @@ pub use structural_propagation::{
     check_decompression, detect_cavein, distribute_load, propagate_support, structural_step,
 };
 pub use support_kind::SupportKind;
+
+pub use chunk_conduits::{ChunkConduits, ConduitLayer};
+pub use conduit_cell::{
+    ConduitCell, MAX_PRESSURE as CONDUIT_MAX_PRESSURE, MAX_STORED,
+    MAX_TEMPERATURE as CONDUIT_MAX_TEMPERATURE, MIN_PRESSURE as CONDUIT_MIN_PRESSURE, MIN_STORED,
+    MIN_TEMPERATURE as CONDUIT_MIN_TEMPERATURE,
+};
+pub use conduit_config::{ConduitNetworkConfig, FlowConfig, HeatTransferConfig, PressureConfig};
+pub use conduit_kind::ConduitKind;
+pub use conduit_network::{
+    ConduitBoundary, ConduitDelta, ConduitNetworkResult, ConduitResistanceMap, ConnectedNetwork,
+    apply_conduit_deltas, find_boundary_cells, find_networks, network_step,
+};
+pub use conduit_node::{ConduitNode, NodeRole};
