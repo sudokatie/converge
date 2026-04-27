@@ -8,6 +8,7 @@ pub mod generation;
 pub mod manager;
 pub mod persistence;
 pub mod scheduler;
+pub mod world_state;
 
 // Re-export environment API at crate root for convenience
 pub use environment::{
@@ -35,4 +36,10 @@ pub use environment::{
 pub use scheduler::{
     EnvironmentHint, Fidelity, FidelityThresholds, RegionState, SchedulerConfig, SimulationJob,
     SimulationScheduler, TickIntervals,
+};
+
+// Re-export world_state API at crate root for convenience
+pub use world_state::{
+    ActiveEffect, ActiveEffects, EntityHint, HazardHint, LightingHint, Season, StructuralHint,
+    TemperatureHint, TimelineConfig, WorldEvent, WorldEventKind, WorldStateHints, WorldTimeline,
 };
