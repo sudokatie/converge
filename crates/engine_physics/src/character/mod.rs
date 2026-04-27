@@ -66,7 +66,7 @@ pub use config::{
     ClimbingConfig, MovementConfig, SwimmingConfig, TetheredConfig, WalkingConfig, ZeroGConfig,
 };
 pub use contact::{ContactState, EnvironmentType};
-pub use controller::CharacterController;
+pub use controller::{CharacterController, FrameMotion};
 pub use input::CharacterInput;
 pub use mode::MovementMode;
 pub use output::{MovementEvent, MovementOutput};

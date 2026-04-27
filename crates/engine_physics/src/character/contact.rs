@@ -107,6 +107,10 @@ pub struct ContactState {
     pub wall_normal: Vec3,
     /// The current environment type.
     pub environment: EnvironmentType,
+    /// Velocity of the surface being stood on (for moving platforms).
+    pub surface_velocity: Vec3,
+    /// Optional frame ID if standing on a reference frame.
+    pub frame_id: Option<u64>,
 }
 
 impl ContactState {
@@ -140,6 +144,38 @@ impl ContactState {
         Self {
             flags,
             ground_normal: normal.normalize_or_zero(),
+            ..Default::default()
+        }
+    }
+
+    /// Create a grounded contact state on a moving platform.
+    #[must_use]
+    pub fn grounded_on_frame(frame_id: u64, surface_velocity: Vec3) -> Self {
+        let mut flags = ContactFlags::default();
+        flags.set_ground(true);
+        Self {
+            flags,
+            ground_normal: Vec3::Y,
+            surface_velocity,
+            frame_id: Some(frame_id),
+            ..Default::default()
+        }
+    }
+
+    /// Create a grounded contact state on a moving platform with custom normal.
+    #[must_use]
+    pub fn grounded_on_frame_with_normal(
+        frame_id: u64,
+        surface_velocity: Vec3,
+        normal: Vec3,
+    ) -> Self {
+        let mut flags = ContactFlags::default();
+        flags.set_ground(true);
+        Self {
+            flags,
+            ground_normal: normal.normalize_or_zero(),
+            surface_velocity,
+            frame_id: Some(frame_id),
             ..Default::default()
         }
     }
@@ -245,6 +281,24 @@ impl ContactState {
             Vec3::Y
         }
     }
+
+    /// Whether the character is on a moving surface.
+    #[must_use]
+    pub fn on_moving_surface(&self) -> bool {
+        self.surface_velocity.length_squared() > 1e-6
+    }
+
+    /// Whether the character is on a reference frame.
+    #[must_use]
+    pub fn on_frame(&self) -> bool {
+        self.frame_id.is_some()
+    }
+
+    /// Get the frame ID if standing on a reference frame.
+    #[must_use]
+    pub fn frame(&self) -> Option<u64> {
+        self.frame_id
+    }
 }
 
 #[cfg(test)]
@@ -301,5 +355,35 @@ mod tests {
         let contact = ContactState::grounded_with_normal(Vec3::new(0.0, 1.0, 0.1).normalize());
         let up = contact.up_direction();
         assert!(up.y > 0.9);
+    }
+
+    #[test]
+    fn grounded_on_frame() {
+        let contact = ContactState::grounded_on_frame(42, Vec3::new(5.0, 0.0, 0.0));
+        assert!(contact.on_ground());
+        assert!(contact.on_frame());
+        assert!(contact.on_moving_surface());
+        assert_eq!(contact.frame(), Some(42));
+        assert_eq!(contact.surface_velocity, Vec3::new(5.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn grounded_on_frame_with_normal() {
+        let contact = ContactState::grounded_on_frame_with_normal(
+            1,
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.1).normalize(),
+        );
+        assert!(contact.on_ground());
+        assert!(contact.on_frame());
+        assert!(contact.up_direction().y > 0.9);
+    }
+
+    #[test]
+    fn stationary_surface() {
+        let contact = ContactState::grounded();
+        assert!(!contact.on_moving_surface());
+        assert!(!contact.on_frame());
+        assert_eq!(contact.frame(), None);
     }
 }

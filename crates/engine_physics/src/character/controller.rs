@@ -8,6 +8,41 @@ use super::{
     TetherState,
 };
 
+/// Motion data from a reference frame for frame-aware character updates.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct FrameMotion {
+    /// Velocity of the frame at the character's position.
+    pub velocity: Vec3,
+    /// Acceleration of the frame (adds to gravity as pseudo-force).
+    pub acceleration: Vec3,
+}
+
+impl FrameMotion {
+    /// Create frame motion with just velocity.
+    #[must_use]
+    pub fn from_velocity(velocity: Vec3) -> Self {
+        Self {
+            velocity,
+            acceleration: Vec3::ZERO,
+        }
+    }
+
+    /// Create frame motion with velocity and acceleration.
+    #[must_use]
+    pub fn new(velocity: Vec3, acceleration: Vec3) -> Self {
+        Self {
+            velocity,
+            acceleration,
+        }
+    }
+
+    /// Check if this represents a stationary frame.
+    #[must_use]
+    pub fn is_stationary(&self) -> bool {
+        self.velocity.length_squared() < 1e-10 && self.acceleration.length_squared() < 1e-10
+    }
+}
+
 /// Linear interpolation helper.
 fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t.clamp(0.0, 1.0)
@@ -122,6 +157,52 @@ impl CharacterController {
         output
     }
 
+    /// Update the character controller with reference frame motion.
+    ///
+    /// Use this when the character is standing on a moving platform or inside
+    /// a moving vehicle. The frame motion affects:
+    /// - Walking: character inherits frame velocity when grounded
+    /// - Jumping: launch velocity includes frame velocity
+    /// - Landing: relative velocity determines impact force
+    ///
+    /// Frame acceleration is added to gravity as a pseudo-force.
+    #[must_use]
+    pub fn update_in_frame(
+        &mut self,
+        position: Vec3,
+        input: &CharacterInput,
+        contact: &ContactState,
+        gravity: Vec3,
+        frame_motion: &FrameMotion,
+        dt: f32,
+    ) -> MovementOutput {
+        self.mode_change_cooldown = (self.mode_change_cooldown - dt).max(0.0);
+
+        let effective_gravity = gravity - frame_motion.acceleration;
+
+        let mut output = match self.mode {
+            MovementMode::Walking => self.update_walking_in_frame(
+                position,
+                input,
+                contact,
+                effective_gravity,
+                frame_motion,
+                dt,
+            ),
+            MovementMode::Swimming => {
+                self.update_swimming(position, input, contact, effective_gravity, dt)
+            }
+            MovementMode::Climbing => self.update_climbing(position, input, contact, dt),
+            MovementMode::ZeroG => self.update_zero_g(position, input, contact, dt),
+            MovementMode::Tethered => {
+                self.update_tethered(position, input, contact, effective_gravity, dt)
+            }
+        };
+
+        self.check_mode_transitions(input, contact, &mut output);
+        output
+    }
+
     /// Update walking mode physics.
     fn update_walking(
         &mut self,
@@ -171,6 +252,76 @@ impl CharacterController {
         if self.on_ground && self.velocity.y < 0.0 {
             self.velocity.y = 0.0;
         }
+
+        let new_position = position + self.velocity * dt;
+
+        let mut output = MovementOutput::new(new_position, self.velocity, self.mode);
+        output.on_ground = self.on_ground;
+        output.events = events;
+        output
+    }
+
+    /// Update walking mode physics with reference frame motion.
+    ///
+    /// When grounded, the character's velocity is computed relative to the frame,
+    /// then converted back to world space. This provides stable motion on moving
+    /// platforms without jitter.
+    fn update_walking_in_frame(
+        &mut self,
+        position: Vec3,
+        input: &CharacterInput,
+        contact: &ContactState,
+        gravity: Vec3,
+        frame_motion: &FrameMotion,
+        dt: f32,
+    ) -> MovementOutput {
+        let cfg = &self.config.walking;
+        let mut events = Vec::new();
+
+        let was_on_ground = self.on_ground;
+        self.on_ground = contact.on_ground();
+
+        if !was_on_ground && self.on_ground {
+            let relative_impact = (self.velocity - frame_motion.velocity).y;
+            events.push(MovementEvent::Landed {
+                impact_velocity: -relative_impact,
+            });
+        }
+
+        let relative_velocity = self.velocity - frame_motion.velocity;
+
+        let mut local_vel = relative_velocity;
+
+        local_vel += gravity * cfg.gravity_scale * dt;
+
+        let speed = if input.sprint() {
+            cfg.move_speed * cfg.sprint_multiplier
+        } else {
+            cfg.move_speed
+        };
+
+        let target_velocity = Vec3::new(input.movement.x * speed, 0.0, input.movement.z * speed);
+
+        let control = if self.on_ground {
+            cfg.ground_friction
+        } else {
+            cfg.air_friction * cfg.air_control
+        };
+
+        local_vel.x = lerp(local_vel.x, target_velocity.x, control * dt);
+        local_vel.z = lerp(local_vel.z, target_velocity.z, control * dt);
+
+        if input.jump() && self.on_ground {
+            local_vel.y = cfg.jump_impulse;
+            self.on_ground = false;
+            events.push(MovementEvent::Jumped);
+        }
+
+        if self.on_ground && local_vel.y < 0.0 {
+            local_vel.y = 0.0;
+        }
+
+        self.velocity = local_vel + frame_motion.velocity;
 
         let new_position = position + self.velocity * dt;
 
@@ -780,5 +931,108 @@ mod tests {
         let output = controller.update(Vec3::ZERO, &input, &contact, GRAVITY, DT);
 
         assert!(output.landed());
+    }
+
+    #[test]
+    fn frame_motion_stationary() {
+        let motion = FrameMotion::default();
+        assert!(motion.is_stationary());
+
+        let moving = FrameMotion::from_velocity(Vec3::X);
+        assert!(!moving.is_stationary());
+    }
+
+    #[test]
+    fn walking_on_moving_platform() {
+        let mut controller = CharacterController::new();
+        controller.on_ground = true;
+        controller.velocity = Vec3::new(10.0, 0.0, 0.0);
+
+        let input = CharacterInput::new();
+        let contact = ContactState::grounded();
+        let frame_motion = FrameMotion::from_velocity(Vec3::new(10.0, 0.0, 0.0));
+
+        let output =
+            controller.update_in_frame(Vec3::ZERO, &input, &contact, GRAVITY, &frame_motion, DT);
+
+        assert!(output.velocity.x > 9.0);
+    }
+
+    #[test]
+    fn jump_from_moving_platform() {
+        let mut controller = CharacterController::new();
+        controller.on_ground = true;
+        controller.velocity = Vec3::new(10.0, 0.0, 0.0);
+
+        let input = CharacterInput::new().with_jump(true);
+        let contact = ContactState::grounded();
+        let frame_motion = FrameMotion::from_velocity(Vec3::new(10.0, 0.0, 0.0));
+
+        let output =
+            controller.update_in_frame(Vec3::ZERO, &input, &contact, GRAVITY, &frame_motion, DT);
+
+        assert!(output.jumped());
+        assert!(output.velocity.x > 9.0);
+        assert!(output.velocity.y > 0.0);
+    }
+
+    #[test]
+    fn land_on_moving_platform() {
+        let mut controller = CharacterController::new();
+        controller.velocity = Vec3::new(10.0, -10.0, 0.0);
+        controller.on_ground = false;
+
+        let input = CharacterInput::new();
+        let contact = ContactState::grounded();
+        let frame_motion = FrameMotion::from_velocity(Vec3::new(10.0, 0.0, 0.0));
+
+        let output =
+            controller.update_in_frame(Vec3::ZERO, &input, &contact, GRAVITY, &frame_motion, DT);
+
+        assert!(output.landed());
+    }
+
+    #[test]
+    fn frame_acceleration_affects_gravity() {
+        let mut controller = CharacterController::new();
+
+        let input = CharacterInput::new();
+        let contact = ContactState::new();
+        let frame_motion = FrameMotion::new(Vec3::ZERO, Vec3::new(0.0, 5.0, 0.0));
+
+        let output =
+            controller.update_in_frame(Vec3::ZERO, &input, &contact, GRAVITY, &frame_motion, DT);
+
+        let output_no_frame = {
+            let mut c2 = CharacterController::new();
+            c2.update(Vec3::ZERO, &input, &contact, GRAVITY, DT)
+        };
+
+        assert!(output.velocity.y < output_no_frame.velocity.y);
+    }
+
+    #[test]
+    fn walking_input_relative_to_frame() {
+        let mut controller = CharacterController::new();
+        controller.on_ground = true;
+        controller.velocity = Vec3::new(10.0, 0.0, 0.0);
+
+        let input = CharacterInput::horizontal(0.0, 1.0);
+        let contact = ContactState::grounded();
+        let frame_motion = FrameMotion::from_velocity(Vec3::new(10.0, 0.0, 0.0));
+
+        for _ in 0..30 {
+            let _ = controller.update_in_frame(
+                Vec3::ZERO,
+                &input,
+                &contact,
+                GRAVITY,
+                &frame_motion,
+                DT,
+            );
+        }
+
+        assert!(controller.velocity.z > 0.0);
+        assert!((controller.velocity.x - 10.0).abs() < 1.0);
     }
 }
