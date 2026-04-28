@@ -1,11 +1,13 @@
 //! AI system for the Lattice game engine.
 //!
 //! Provides creature behavior, pathfinding, decision making, needs simulation,
-//! sensory perception, and faction/reputation/territory systems.
+//! sensory perception, faction/reputation/territory systems, and goal-based
+//! utility AI for survival prioritization.
 
 pub mod behavior;
 pub mod creatures;
 pub mod faction;
+pub mod goal;
 pub mod needs;
 pub mod pathfinding;
 pub mod sensor;
@@ -18,6 +20,12 @@ pub use faction::{
     OwnershipStatus, Region, RegionId, ReputationConfig, ReputationDelta, ReputationEvent,
     ReputationHistory, ReputationSet, ReputationTier, Stance, StanceTable, Standing, TerritoryMap,
     TerritorySnapshot,
+};
+pub use goal::{
+    Consideration, ConsiderationId, ConsiderationScore, ContextFact, CooldownConfig, CurveKind,
+    GoalContext, GoalContextBuilder, GoalDef, GoalId, GoalScore, GoalSelection, GoalSelector,
+    GoalSnapshot, GoalSummary, GoalTag, HysteresisConfig, InertiaConfig, InputBinding,
+    ScoringBreakdown, SelectionReason, UtilityCurve,
 };
 pub use needs::{
     ColonySnapshot, ColonySummary, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId, NeedProfile,
