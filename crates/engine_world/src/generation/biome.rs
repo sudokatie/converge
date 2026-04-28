@@ -3,9 +3,10 @@
 //! Biomes are determined by temperature and humidity at each location.
 
 use noise::{NoiseFn, Perlin};
+use serde::{Deserialize, Serialize};
 
 /// Biome types available in the world.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Biome {
     /// Flat grasslands with occasional trees.
     Plains,
@@ -82,6 +83,7 @@ impl Biome {
 }
 
 /// Biome selector using temperature and humidity noise.
+#[derive(Debug)]
 pub struct BiomeSelector {
     temperature_noise: Perlin,
     humidity_noise: Perlin,
