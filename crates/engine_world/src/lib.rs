@@ -7,6 +7,7 @@ pub mod environment;
 pub mod generation;
 pub mod manager;
 pub mod persistence;
+pub mod region_journal;
 pub mod replay;
 pub mod scheduler;
 pub mod world_state;
@@ -50,4 +51,10 @@ pub use world_state::{
 pub use replay::{
     ChecksumBuilder, Mismatch, MismatchKind, ReplayEntry, ReplayEntryKind, ReplayMetadata,
     ReplayRecorder, ReplayVerifier, StepChecksum,
+};
+
+// Re-export region_journal API at crate root for convenience
+pub use region_journal::{
+    CategoryStats, EventCategory, EventKind, EventPayload, EventRecord, JournalQuery,
+    RecoverySummary, RegionJournal, RegionSummary, Severity,
 };
