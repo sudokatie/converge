@@ -3,13 +3,15 @@
 //! Provides creature behavior, pathfinding, decision making, needs simulation,
 //! sensory perception, faction/reputation/territory systems, goal-based
 //! utility AI for survival prioritization, population director for spawn
-//! pressure, pacing, migration, and regional threat scaling, and offline
-//! simulation for unloaded chunks.
+//! pressure, pacing, migration, and regional threat scaling, offline
+//! simulation for unloaded chunks, and group AI primitives for packs,
+//! swarms, schools, patrols, and evacuation.
 
 pub mod behavior;
 pub mod creatures;
 pub mod faction;
 pub mod goal;
+pub mod group;
 pub mod needs;
 pub mod offline;
 pub mod pathfinding;
@@ -30,6 +32,12 @@ pub use goal::{
     GoalContext, GoalContextBuilder, GoalDef, GoalId, GoalScore, GoalSelection, GoalSelector,
     GoalSnapshot, GoalSummary, GoalTag, HysteresisConfig, InertiaConfig, InputBinding,
     ScoringBreakdown, SelectionReason, UtilityCurve,
+};
+pub use group::{
+    EvacuationConfig, EvacuationContext, EvacuationState, EvacuationTrigger, FlockingResult,
+    FormationConfig, Group, GroupDecision, GroupEvent, GroupEventKind, GroupId, GroupMember,
+    GroupPreset, GroupRegistry, GroupRole, GroupSnapshot, GroupSummary, MemberId, PatrolRoute,
+    PatrolRouteId, PatrolState, SafeZone, SerializableVec3, Waypoint, calculate_flocking,
 };
 pub use needs::{
     ColonySnapshot, ColonySummary, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId, NeedProfile,
