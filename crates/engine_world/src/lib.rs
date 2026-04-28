@@ -7,6 +7,7 @@ pub mod environment;
 pub mod generation;
 pub mod manager;
 pub mod persistence;
+pub mod replay;
 pub mod scheduler;
 pub mod world_state;
 
@@ -43,4 +44,10 @@ pub use scheduler::{
 pub use world_state::{
     ActiveEffect, ActiveEffects, EntityHint, HazardHint, LightingHint, Season, StructuralHint,
     TemperatureHint, TimelineConfig, WorldEvent, WorldEventKind, WorldStateHints, WorldTimeline,
+};
+
+// Re-export replay API at crate root for convenience
+pub use replay::{
+    ChecksumBuilder, Mismatch, MismatchKind, ReplayEntry, ReplayEntryKind, ReplayMetadata,
+    ReplayRecorder, ReplayVerifier, StepChecksum,
 };
