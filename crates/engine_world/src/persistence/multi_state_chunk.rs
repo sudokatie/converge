@@ -250,6 +250,111 @@ impl MultiStateChunk {
     }
 }
 
+// Delta integration methods
+impl MultiStateChunk {
+    /// Create a delta from one state to another.
+    ///
+    /// Returns a delta that, when applied to `base_state`, produces `target_state`.
+    /// Returns `None` if either state doesn't exist.
+    #[must_use]
+    pub fn compute_delta(
+        &self,
+        base_state: StateId,
+        target_state: StateId,
+    ) -> Option<super::ChunkDelta> {
+        let base = self.states.get(&base_state)?;
+        let target = self.states.get(&target_state)?;
+        Some(super::ChunkDelta::diff(base, target))
+    }
+
+    /// Insert a state by applying a delta to an existing base state.
+    ///
+    /// Returns `false` if the base state doesn't exist.
+    pub fn insert_from_delta(
+        &mut self,
+        base_state: StateId,
+        target_state: StateId,
+        delta: &super::ChunkDelta,
+    ) -> bool {
+        if let Some(base) = self.states.get(&base_state) {
+            let chunk = delta.materialize(base);
+            self.states.insert(target_state, chunk);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Compute all deltas relative to the primary state.
+    ///
+    /// Returns a map of state IDs to their deltas from primary.
+    /// Skips the primary state itself.
+    #[must_use]
+    pub fn compute_deltas_from_primary(
+        &self,
+    ) -> std::collections::BTreeMap<StateId, super::ChunkDelta> {
+        let mut deltas = std::collections::BTreeMap::new();
+
+        if let Some(primary) = self.states.get(&StateId::PRIMARY) {
+            for (&state_id, chunk) in &self.states {
+                if !state_id.is_primary() {
+                    deltas.insert(state_id, super::ChunkDelta::diff(primary, chunk));
+                }
+            }
+        }
+
+        deltas
+    }
+
+    /// Reconstruct states from primary and a set of deltas.
+    ///
+    /// Clears existing non-primary states and rebuilds them from deltas.
+    /// Returns `false` if primary state doesn't exist.
+    pub fn apply_deltas_from_primary(
+        &mut self,
+        deltas: &std::collections::BTreeMap<StateId, super::ChunkDelta>,
+    ) -> bool {
+        if let Some(primary) = self.states.get(&StateId::PRIMARY).cloned() {
+            self.states.retain(|id, _| id.is_primary());
+
+            for (&state_id, delta) in deltas {
+                if !state_id.is_primary() {
+                    self.states.insert(state_id, delta.materialize(&primary));
+                }
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Get the delta size for a state relative to primary.
+    ///
+    /// Returns `None` if either state doesn't exist.
+    /// Useful for estimating storage savings from delta encoding.
+    #[must_use]
+    pub fn delta_size_from_primary(&self, state: StateId) -> Option<usize> {
+        let delta = self.compute_delta(StateId::PRIMARY, state)?;
+        Some(delta.len())
+    }
+
+    /// Estimate the total delta storage size for all states.
+    ///
+    /// Returns the sum of delta sizes for all non-primary states
+    /// relative to primary, or `None` if primary doesn't exist.
+    #[must_use]
+    pub fn total_delta_size(&self) -> Option<usize> {
+        let primary = self.states.get(&StateId::PRIMARY)?;
+        let total = self
+            .states
+            .iter()
+            .filter(|&(&id, _)| !id.is_primary())
+            .map(|(_, chunk)| super::ChunkDelta::diff(primary, chunk).len())
+            .sum();
+        Some(total)
+    }
+}
+
 impl Default for MultiStateChunk {
     fn default() -> Self {
         Self::new(Chunk::new())
@@ -499,5 +604,170 @@ mod tests {
 
         assert!(msc.is_empty());
         assert_eq!(msc.state_count(), 0);
+    }
+
+    // Delta integration tests
+
+    #[test]
+    fn test_compute_delta() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+        let mut variant = Chunk::new();
+        variant.set(LocalPos::new(0, 0, 0), BlockId(50));
+        variant.set(LocalPos::new(5, 5, 5), BlockId(60));
+        msc.insert(StateId::new(1), variant);
+
+        let delta = msc
+            .compute_delta(StateId::PRIMARY, StateId::new(1))
+            .unwrap();
+
+        assert_eq!(delta.len(), 2);
+        assert_eq!(delta.get(LocalPos::new(0, 0, 0)), Some(BlockId(50)));
+        assert_eq!(delta.get(LocalPos::new(5, 5, 5)), Some(BlockId(60)));
+    }
+
+    #[test]
+    fn test_compute_delta_missing_state() {
+        let msc = MultiStateChunk::new(test_chunk(STONE));
+
+        assert!(
+            msc.compute_delta(StateId::PRIMARY, StateId::new(999))
+                .is_none()
+        );
+        assert!(
+            msc.compute_delta(StateId::new(999), StateId::PRIMARY)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn test_insert_from_delta() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+
+        let mut delta = super::super::ChunkDelta::new();
+        delta.set(LocalPos::new(0, 0, 0), BlockId(100));
+        delta.set(LocalPos::new(7, 7, 7), BlockId(200));
+
+        let success = msc.insert_from_delta(StateId::PRIMARY, StateId::new(5), &delta);
+        assert!(success);
+
+        let state5 = msc.get(StateId::new(5)).unwrap();
+        assert_eq!(state5.get(LocalPos::new(0, 0, 0)), BlockId(100));
+        assert_eq!(state5.get(LocalPos::new(7, 7, 7)), BlockId(200));
+    }
+
+    #[test]
+    fn test_insert_from_delta_missing_base() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+
+        let delta = super::super::ChunkDelta::new();
+        let success = msc.insert_from_delta(StateId::new(999), StateId::new(5), &delta);
+        assert!(!success);
+    }
+
+    #[test]
+    fn test_compute_deltas_from_primary() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+
+        let mut state1 = test_chunk(STONE);
+        state1.set(LocalPos::new(1, 0, 0), BlockId(10));
+        msc.insert(StateId::new(1), state1);
+
+        let mut state2 = test_chunk(STONE);
+        state2.set(LocalPos::new(2, 0, 0), BlockId(20));
+        state2.set(LocalPos::new(3, 0, 0), BlockId(30));
+        msc.insert(StateId::new(2), state2);
+
+        let deltas = msc.compute_deltas_from_primary();
+
+        assert_eq!(deltas.len(), 2);
+        assert_eq!(deltas.get(&StateId::new(1)).unwrap().len(), 1);
+        assert_eq!(deltas.get(&StateId::new(2)).unwrap().len(), 2);
+        assert!(!deltas.contains_key(&StateId::PRIMARY));
+    }
+
+    #[test]
+    fn test_apply_deltas_from_primary() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+
+        let mut state1 = test_chunk(STONE);
+        state1.set(LocalPos::new(1, 0, 0), BlockId(10));
+        msc.insert(StateId::new(1), state1.clone());
+
+        let deltas = msc.compute_deltas_from_primary();
+
+        msc.clear();
+        msc.insert(StateId::PRIMARY, test_chunk(STONE));
+
+        let success = msc.apply_deltas_from_primary(&deltas);
+        assert!(success);
+
+        assert_eq!(msc.state_count(), 2);
+        let reconstructed = msc.get(StateId::new(1)).unwrap();
+        assert_eq!(reconstructed.get(LocalPos::new(1, 0, 0)), BlockId(10));
+    }
+
+    #[test]
+    fn test_apply_deltas_no_primary() {
+        let mut msc = MultiStateChunk::empty();
+        let deltas = std::collections::BTreeMap::new();
+
+        let success = msc.apply_deltas_from_primary(&deltas);
+        assert!(!success);
+    }
+
+    #[test]
+    fn test_delta_size_from_primary() {
+        let mut msc = MultiStateChunk::new(Chunk::new());
+
+        let mut variant = Chunk::new();
+        variant.set(LocalPos::new(0, 0, 0), STONE);
+        variant.set(LocalPos::new(1, 0, 0), STONE);
+        variant.set(LocalPos::new(2, 0, 0), STONE);
+        msc.insert(StateId::new(1), variant);
+
+        let size = msc.delta_size_from_primary(StateId::new(1)).unwrap();
+        assert_eq!(size, 3);
+
+        assert!(msc.delta_size_from_primary(StateId::PRIMARY).is_some());
+        assert_eq!(msc.delta_size_from_primary(StateId::PRIMARY).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_total_delta_size() {
+        let mut msc = MultiStateChunk::new(Chunk::new());
+
+        let mut state1 = Chunk::new();
+        state1.set(LocalPos::new(0, 0, 0), STONE);
+        msc.insert(StateId::new(1), state1);
+
+        let mut state2 = Chunk::new();
+        state2.set(LocalPos::new(0, 0, 0), STONE);
+        state2.set(LocalPos::new(1, 0, 0), STONE);
+        msc.insert(StateId::new(2), state2);
+
+        let total = msc.total_delta_size().unwrap();
+        assert_eq!(total, 3);
+    }
+
+    #[test]
+    fn test_delta_roundtrip() {
+        let mut msc = MultiStateChunk::new(test_chunk(STONE));
+
+        let mut variant = test_chunk(STONE);
+        variant.set(LocalPos::new(5, 5, 5), BlockId(42));
+        variant.set(LocalPos::new(10, 10, 10), BlockId(43));
+        msc.insert(StateId::new(1), variant.clone());
+
+        let delta = msc
+            .compute_delta(StateId::PRIMARY, StateId::new(1))
+            .unwrap();
+
+        let mut msc2 = MultiStateChunk::new(test_chunk(STONE));
+        msc2.insert_from_delta(StateId::PRIMARY, StateId::new(1), &delta);
+
+        let reconstructed = msc2.get(StateId::new(1)).unwrap();
+        for (pos, block) in variant.iter() {
+            assert_eq!(reconstructed.get(pos), block);
+        }
     }
 }
