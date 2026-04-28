@@ -1,8 +1,9 @@
 //! AI system for the Lattice game engine.
 //!
 //! Provides creature behavior, pathfinding, decision making, needs simulation,
-//! sensory perception, faction/reputation/territory systems, and goal-based
-//! utility AI for survival prioritization.
+//! sensory perception, faction/reputation/territory systems, goal-based
+//! utility AI for survival prioritization, and population director for spawn
+//! pressure, pacing, migration, and regional threat scaling.
 
 pub mod behavior;
 pub mod creatures;
@@ -10,6 +11,7 @@ pub mod faction;
 pub mod goal;
 pub mod needs;
 pub mod pathfinding;
+pub mod population;
 pub mod sensor;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
@@ -33,6 +35,14 @@ pub use needs::{
     Threshold, ThresholdKind,
 };
 pub use pathfinding::{AStar, AStarConfig, NavMesh, NavMeshConfig, PathResult};
+pub use population::{
+    DespawnBudget, DespawnReason, GroupCap, GroupCapId, MigrationConfig, MigrationPhase,
+    MigrationRoute, MigrationRouteId, MigrationStatus, MigrationWave, MigrationWaveId,
+    PacingIntensity, PacingProfile, PopulationConfig, PopulationDirector, PopulationEvent,
+    PopulationEventKind, PopulationSnapshot, PopulationSummary, RegionDensity, RegionalPopulation,
+    SpawnBudget, SpawnEvent, SpawnPressure, SpawnPriority, SpeciesCap, SpeciesCapId,
+    SpeciesRegistry, ThreatConfig, ThreatLevel, ThreatModifier, ThreatSource, TickResult, ZoneBias,
+};
 pub use sensor::{
     AttenuationCurve, DetectionStrength, MemoryConfig, Observation, ObservationId,
     ObservationMemory, ObservationPriority, ObservationSet, OcclusionModel, SensorConfig,
