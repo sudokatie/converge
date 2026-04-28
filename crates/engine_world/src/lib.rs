@@ -6,6 +6,7 @@ pub mod chunk;
 pub mod environment;
 pub mod generation;
 pub mod manager;
+pub mod megastructure;
 pub mod persistence;
 pub mod region_journal;
 pub mod replay;
@@ -58,4 +59,11 @@ pub use replay::{
 pub use region_journal::{
     CategoryStats, EventCategory, EventKind, EventPayload, EventRecord, JournalQuery,
     RecoverySummary, RegionJournal, RegionSummary, Severity,
+};
+
+// Re-export megastructure API at crate root for convenience
+pub use megastructure::{
+    AnchorMetadata, ChunkBounds, ChunkMask, ChunkSlice, IdGenerator, ManifestEntry, Megastructure,
+    MegastructureId, MegastructureRegistry, SliceMap, SliceState, StreamingManifest,
+    StreamingQuery, StreamingTier, StructureAnchor, StructureKind, StructureZone,
 };
