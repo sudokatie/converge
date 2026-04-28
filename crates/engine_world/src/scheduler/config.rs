@@ -8,7 +8,7 @@ use super::Fidelity;
 ///
 /// The interval is the minimum time (in seconds) between simulation
 /// updates for regions at that fidelity level.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TickIntervals {
     /// Interval for Immediate fidelity regions (default: 0.0, every tick).
     pub immediate: f32,
@@ -59,7 +59,7 @@ impl Default for TickIntervals {
 ///
 /// Uses Chebyshev (chessboard) distance in chunk coordinates.
 /// A region is assigned the highest fidelity whose threshold it satisfies.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct FidelityThresholds {
     /// Maximum distance for Immediate fidelity (inclusive).
     pub immediate_radius: i32,
@@ -108,7 +108,7 @@ impl Default for FidelityThresholds {
 }
 
 /// Complete scheduler configuration.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SchedulerConfig {
     /// Tick intervals per fidelity level.
     pub intervals: TickIntervals,

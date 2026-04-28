@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::HazardKind;
 
 /// Configuration for how a hazard spreads to neighbors.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SpreadConfig {
     /// Base spread rate (cells per second at intensity 1.0).
     pub rate: f32,
@@ -105,7 +105,7 @@ impl Default for SpreadConfig {
 }
 
 /// Configuration for hazard intensity decay.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DecayConfig {
     /// Base decay rate (intensity per second).
     pub rate: f32,
@@ -223,7 +223,7 @@ impl Default for Resistance {
 }
 
 /// Complete propagation configuration for a hazard kind.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PropagationConfig {
     /// The hazard kind this config applies to.
     pub kind: HazardKind,

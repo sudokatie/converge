@@ -76,6 +76,7 @@ mod conduit_network;
 mod conduit_node;
 
 mod gravity;
+mod rule_profile;
 
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
@@ -147,4 +148,7 @@ pub use conduit_node::{ConduitNode, NodeRole};
 
 pub use gravity::{
     GravityModel, GravityProfile, MAX_GRAVITY_MAGNITUDE, MIN_GRAVITY_MAGNITUDE, STANDARD_GRAVITY,
+};
+pub use rule_profile::{
+    ProfileError, ProfileId, ProfileRegistry, RuleBundle, RuleOverrides, WorldRuleProfile,
 };
