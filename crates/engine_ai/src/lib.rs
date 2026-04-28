@@ -2,14 +2,16 @@
 //!
 //! Provides creature behavior, pathfinding, decision making, needs simulation,
 //! sensory perception, faction/reputation/territory systems, goal-based
-//! utility AI for survival prioritization, and population director for spawn
-//! pressure, pacing, migration, and regional threat scaling.
+//! utility AI for survival prioritization, population director for spawn
+//! pressure, pacing, migration, and regional threat scaling, and offline
+//! simulation for unloaded chunks.
 
 pub mod behavior;
 pub mod creatures;
 pub mod faction;
 pub mod goal;
 pub mod needs;
+pub mod offline;
 pub mod pathfinding;
 pub mod population;
 pub mod sensor;
@@ -33,6 +35,11 @@ pub use needs::{
     ColonySnapshot, ColonySummary, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId, NeedProfile,
     NeedSet, NeedState, ProfileId, StatusEffect, StatusEffectId, StatusModifier, StatusSet,
     Threshold, ThresholdKind,
+};
+pub use offline::{
+    AttentionLevel, LoadHandoff, OfflineConfig, OfflineEvent, OfflineEventKind, OfflineRegionId,
+    OfflineRegionState, OfflineSimulator, OfflineSummary, RegionBudget, RegionSnapshot,
+    StalenessInfo, StepResult, UnloadHandoff, UnloadReason,
 };
 pub use pathfinding::{AStar, AStarConfig, NavMesh, NavMeshConfig, PathResult};
 pub use population::{
