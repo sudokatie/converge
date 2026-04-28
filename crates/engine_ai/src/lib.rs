@@ -4,14 +4,16 @@
 //! sensory perception, faction/reputation/territory systems, goal-based
 //! utility AI for survival prioritization, population director for spawn
 //! pressure, pacing, migration, and regional threat scaling, offline
-//! simulation for unloaded chunks, and group AI primitives for packs,
-//! swarms, schools, patrols, and evacuation.
+//! simulation for unloaded chunks, group AI primitives for packs,
+//! swarms, schools, patrols, and evacuation, and multi-domain navigation
+//! for voxel walking, swimming, climbing, flying, zero-G, and dynamic worlds.
 
 pub mod behavior;
 pub mod creatures;
 pub mod faction;
 pub mod goal;
 pub mod group;
+pub mod navigation;
 pub mod needs;
 pub mod offline;
 pub mod pathfinding;
@@ -38,6 +40,14 @@ pub use group::{
     FormationConfig, Group, GroupDecision, GroupEvent, GroupEventKind, GroupId, GroupMember,
     GroupPreset, GroupRegistry, GroupRole, GroupSnapshot, GroupSummary, MemberId, PatrolRoute,
     PatrolRouteId, PatrolState, SafeZone, SerializableVec3, Waypoint, calculate_flocking,
+};
+pub use navigation::{
+    AgentCapabilities, AgentCapabilityId, CostModifier, DomainCost, DomainTransition, DynamicFrame,
+    EdgeAnnotation, EdgeRequirements, FrameCrossing, FrameId, FrameVelocity, MovementDomain,
+    MultiDomainWorld, NavPosition, NavRegionId, NavRegionSummary, Navigator, NodeAnnotation,
+    RegionConnection, ReplanReason, RouteFailure, RouteLimitExceeded, RouteLimitType, RoutePlan,
+    RouteRequest, RouteRequestId, RouteResult, RouteWaypoint, SteeringDirection, SteeringHint,
+    SurfaceType, capability_presets,
 };
 pub use needs::{
     ColonySnapshot, ColonySummary, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId, NeedProfile,

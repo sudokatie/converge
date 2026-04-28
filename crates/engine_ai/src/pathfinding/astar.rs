@@ -1,10 +1,11 @@
 //! A* pathfinding algorithm for voxel grids
 
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 /// 3D position in the voxel grid
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct GridPos {
     pub x: i32,
     pub y: i32,
