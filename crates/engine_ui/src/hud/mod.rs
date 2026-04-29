@@ -13,7 +13,10 @@ pub use crosshair::{CrosshairConfig, CrosshairStyle, draw_crosshair};
 pub use debug_console::{
     ConsoleAction, ConsoleLine, DebugConsole, LineKind, process_builtin_command,
 };
-pub use debug_overlay::{DebugLevel, DebugOverlay, DebugStats};
+pub use debug_overlay::{
+    BudgetDashboard, BudgetDashboardRow, BudgetDashboardSummary, DashboardSeverity, DebugLevel,
+    DebugOverlay, DebugStats,
+};
 pub use health_bar::{HealthBarState, draw_health_bar};
 pub use hotbar::{HotbarSlot, ItemTextures, draw_hotbar};
 pub use hunger_bar::{HungerBarState, draw_hunger_bar};
