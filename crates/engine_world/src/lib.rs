@@ -4,6 +4,7 @@
 
 pub mod automation;
 pub mod chunk;
+pub mod diagnostics;
 pub mod environment;
 pub mod generation;
 pub mod manager;
@@ -85,4 +86,12 @@ pub use automation::{
     AutomationSnapshot, ChangeKind, ChangePayload, DeviceChangePayload, DeviceConfig, DeviceDelta,
     DeviceId, DeviceKind, LinkChangePayload, LinkId, MAX_PORTS, PendingSignal, PortId, PortState,
     Revision, RevisionTracker, SignalValue, SpatialFilter, StateChange, TickResult,
+};
+
+// Re-export diagnostics API at crate root for convenience
+pub use diagnostics::{
+    CategoryCounts, ChannelPalette, ChannelStats, DiagnosticCategory, DiagnosticChannel,
+    DiagnosticColor, DiagnosticFilter, DiagnosticFingerprint, DiagnosticLegend, DiagnosticSummary,
+    FilterMode, LegendEntry, MarkerKind, OverlayMarker, OverlaySpec, SampleCell, SampleGrid,
+    ScalarValue, VectorValue,
 };

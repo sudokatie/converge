@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Kinds of fluids supported by the transport system.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum FluidKind {
     /// Standard liquid water.
@@ -32,6 +32,17 @@ impl FluidKind {
     #[must_use]
     pub const fn as_index(self) -> usize {
         self as usize
+    }
+
+    /// Get the display name.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            FluidKind::Water => "Water",
+            FluidKind::Gas => "Gas",
+            FluidKind::Slurry => "Slurry",
+            FluidKind::Lava => "Lava",
+        }
     }
 
     /// Create from array index.

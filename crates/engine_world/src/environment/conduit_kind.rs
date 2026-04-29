@@ -3,7 +3,9 @@
 use serde::{Deserialize, Serialize};
 
 /// Types of conduits for transporting resources through infrastructure.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[repr(u8)]
 pub enum ConduitKind {
     /// Electrical power transmission.
