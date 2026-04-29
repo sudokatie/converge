@@ -50,9 +50,11 @@ pub use navigation::{
     SurfaceType, capability_presets,
 };
 pub use needs::{
-    ColonySnapshot, ColonySummary, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId, NeedProfile,
-    NeedSet, NeedState, ProfileId, StatusEffect, StatusEffectId, StatusModifier, StatusSet,
-    Threshold, ThresholdKind,
+    ApplyResult, ColonySnapshot, ColonySummary, DecayMode, EffectCategory, EnvironmentSnapshot,
+    EnvironmentalTrigger, ImmunitySet, ManagedStatusSet, ModifierDef, Need, NeedConfig, NeedEvent,
+    NeedHistogram, NeedId, NeedProfile, NeedSet, NeedState, ProfileId, StackingBehavior,
+    StatusEffect, StatusEffectDef, StatusEffectId, StatusEffectRegistry, StatusModifier, StatusSet,
+    Threshold, ThresholdKind, evaluate_trigger, find_triggered_effects, presets,
 };
 pub use offline::{
     AttentionLevel, LoadHandoff, OfflineConfig, OfflineEvent, OfflineEventKind, OfflineRegionId,
