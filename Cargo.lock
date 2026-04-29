@@ -915,6 +915,7 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "bincode",
+ "bitflags 2.11.0",
  "crc32fast",
  "crossbeam-channel",
  "engine_core",

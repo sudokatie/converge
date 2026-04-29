@@ -536,7 +536,7 @@ mod tests {
         assert_relative_eq!(jx, -0.5, epsilon = 0.001);
         assert_relative_eq!(jy, -0.5, epsilon = 0.001);
 
-        let (jx2, jy2) = frame_jitter(1);
-        assert!((jx2 - jx).abs() > 0.1 || (jy2 - jy).abs() > 0.1);
+        let (horiz, vert) = frame_jitter(1);
+        assert!((horiz - jx).abs() > 0.1 || (vert - jy).abs() > 0.1);
     }
 }

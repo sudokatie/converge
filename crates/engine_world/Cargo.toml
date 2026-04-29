@@ -8,6 +8,7 @@ description = "Voxel world system for the Lattice game engine"
 
 [dependencies]
 engine_core = { path = "../engine_core" }
+bitflags = "2"
 glam.workspace = true
 noise.workspace = true
 serde.workspace = true

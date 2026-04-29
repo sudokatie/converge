@@ -12,6 +12,7 @@ pub mod megastructure;
 pub mod persistence;
 pub mod region_journal;
 pub mod replay;
+pub mod sandbox;
 pub mod scheduler;
 pub mod world_state;
 
@@ -94,4 +95,10 @@ pub use diagnostics::{
     DiagnosticColor, DiagnosticFilter, DiagnosticFingerprint, DiagnosticLegend, DiagnosticSummary,
     FilterMode, LegendEntry, MarkerKind, OverlayMarker, OverlaySpec, SampleCell, SampleGrid,
     ScalarValue, VectorValue,
+};
+
+// Re-export sandbox API at crate root for convenience
+pub use sandbox::{
+    ChunkSummary, CommandResult, SandboxConfig, SandboxSnapshot, SandboxState, ScenarioSandbox,
+    SpawnCommand, SpawnKind, StepResult,
 };
