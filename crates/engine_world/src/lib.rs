@@ -68,3 +68,9 @@ pub use megastructure::{
     MegastructureId, MegastructureRegistry, SliceMap, SliceState, StreamingManifest,
     StreamingQuery, StreamingTier, StructureAnchor, StructureKind, StructureZone,
 };
+
+// Re-export mutation journal API at crate root for convenience
+pub use persistence::{
+    JournalSnapshot, JournalStats, MutationJournal, MutationQuery, MutationReason, MutationRecord,
+    MutationSource, Sequence,
+};

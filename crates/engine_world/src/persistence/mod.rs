@@ -19,10 +19,22 @@
 //! - [`ChunkDelta`]: Compact overlay storing only changed blocks
 //! - [`DeltaIndex`]: Compact position index for delta storage
 //! - [`DeltaStats`]: Statistics about delta contents
+//!
+//! # Mutation Journaling
+//!
+//! For late-join sync and rollback reconciliation:
+//!
+//! - [`MutationJournal`]: Append-only journal tracking block changes
+//! - [`MutationRecord`]: Individual block mutation with old/new state
+//! - [`MutationSource`]: Origin system for mutations
+//! - [`MutationReason`]: Semantic reason for mutations
+//! - [`MutationQuery`]: Query builder for filtering records
+//! - [`JournalSnapshot`]: Late-join state snapshot with pending mutations
 
 mod chunk_delta;
 mod multi_state_chunk;
 mod multi_state_region;
+mod mutation_journal;
 mod region;
 mod state_id;
 mod world_meta;
@@ -31,6 +43,10 @@ pub use chunk_delta::{ChunkDelta, DeltaIndex, DeltaStats};
 pub use multi_state_chunk::{MultiStateChunk, StateFallback};
 pub use multi_state_region::{
     MultiStateRegion, MultiStateRegionError, RegionStats, multi_state_region_filename,
+};
+pub use mutation_journal::{
+    JournalSnapshot, JournalStats, MutationJournal, MutationQuery, MutationReason, MutationRecord,
+    MutationSource, Sequence,
 };
 pub use region::{
     REGION_SIZE, Region, RegionError, chunk_to_local, chunk_to_region, region_filename,
