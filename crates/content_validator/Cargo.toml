@@ -1,0 +1,23 @@
+[package]
+name = "content_validator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Content validation CLI for Lattice game data files"
+
+[[bin]]
+name = "content-validator"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+ron.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
