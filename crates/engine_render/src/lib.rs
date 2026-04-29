@@ -4,6 +4,7 @@
 
 pub mod backend;
 pub mod camera;
+pub mod curvature;
 pub mod distortion;
 pub mod fog;
 pub mod ghost_block;
@@ -14,6 +15,17 @@ pub mod visibility;
 pub mod volumetric;
 pub mod voxel;
 
+pub use curvature::{
+    CurvatureBatch, CurvatureBody, CurvatureBodyKind, CurvatureBodyUniform, CurvatureClipConfig,
+    CurvatureClipUniform, CurvatureFadeConfig, CurvatureFogConfig, CurvatureFogUniform,
+    CurvatureInstanceUniform, CurvatureRenderConfig, CurvatureSampler, HorizonConfig,
+    HorizonConfigUniform, HorizonModel, HorizonModelUniform, HorizonQuality, angular_separation,
+    atmospheric_fade, compute_fingerprint as compute_curvature_fingerprint, compute_tangent_frame,
+    curvature_distance_correction, filter_active, find_dominant_body, flat_to_curved_direction,
+    flat_to_curved_position, great_circle_distance, horizon_clip_distance, horizon_fog_density,
+    horizon_visibility, line_of_sight, position_hash as curvature_position_hash, sort_by_distance,
+    sort_by_radius, surface_forward, surface_normal,
+};
 pub use distortion::{
     BlendMode, DistortionBatch, DistortionEffect, DistortionInstanceUniform, DistortionKind,
     DistortionPreset, DistortionQuality, DistortionRegion, DistortionRegionUniform,
