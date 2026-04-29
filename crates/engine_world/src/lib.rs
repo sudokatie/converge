@@ -3,6 +3,7 @@
 //! Provides chunk management, terrain generation, and world persistence.
 
 pub mod automation;
+pub mod behavior_graph;
 pub mod chunk;
 pub mod diagnostics;
 pub mod environment;
@@ -101,4 +102,11 @@ pub use diagnostics::{
 pub use sandbox::{
     ChunkSummary, CommandResult, SandboxConfig, SandboxSnapshot, SandboxState, ScenarioSandbox,
     SpawnCommand, SpawnKind, StepResult,
+};
+
+// Re-export behavior_graph API at crate root for convenience
+pub use behavior_graph::{
+    BehaviorAction, BehaviorCondition, BehaviorEffect, BehaviorGraph, BehaviorNode,
+    BehaviorTrigger, BlockFilter, CompareOp, EffectKind, EvalResult, EvaluatorConfig,
+    EvaluatorStats, GraphEvaluator, GraphFingerprint, NodeId, TriggerContext, TriggerEvent,
 };
