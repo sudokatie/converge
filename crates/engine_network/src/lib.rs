@@ -64,8 +64,11 @@ pub mod transport;
 pub use prediction::{InputRecord, MovementPredictor, PredictedState};
 pub use protocol::{ClientMessage, EntityKind, ServerMessage, WorldSnapshot};
 pub use sync::{
-    ChunkPriority, ChunkRequest, ClientChunkSync, ClientHazardSync, HazardSyncMessage,
-    InterpolatedState, InterpolationBuffer, ServerChunkSync, ServerClientHazardState,
-    ServerHazardSync,
+    ChunkPriority, ChunkRequest, ClientChunkSync, ClientHazardSync, ClientSessionState,
+    DEFAULT_HEARTBEAT_TIMEOUT_MS, DEFAULT_LEASE_DURATION_MS, ElectionPriority, HazardSyncMessage,
+    InterpolatedState, InterpolationBuffer, LeaveReason, MigrationReason, MigrationRecord,
+    MigrationToken, PeerId, PeerMembership, PeerStatus, RejoinRejection, ServerChunkSync,
+    ServerClientHazardState, ServerHazardSync, SessionError, SessionGeneration, SessionManager,
+    SessionMessage, SessionSnapshot, TokenValidation,
 };
 pub use transport::{ClientId, DEFAULT_PORT, GameClient, GameServer};
