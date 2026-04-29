@@ -9,6 +9,7 @@ pub mod distortion;
 pub mod fog;
 pub mod ghost_block;
 pub mod lighting;
+pub mod post_process;
 mod renderer;
 pub mod sky;
 pub mod visibility;
@@ -33,6 +34,17 @@ pub use distortion::{
     ScreenDistortionUniform, compute_fingerprint, convert, create_from_preset, create_layered,
     exponential_falloff, linear_falloff, position_hash, radial_wave, sine_wave, smooth_falloff,
     sort_by_priority, spiral_wave,
+};
+pub use post_process::{
+    BlendWeights, Environment, PostBatch, PostBlendMode, PostCameraState, PostEffect,
+    PostEffectKind, PostEffectUniform, PostGlobalUniform, PostInstanceUniform, PostLayer,
+    PostLayerStack, PostRegion, PostRegionShape, PostRegionUniform, PostSampler, RegionWeight,
+    compute_fingerprint as compute_post_fingerprint,
+    compute_layer_fingerprint as compute_post_layer_fingerprint,
+    compute_stack_fingerprint as compute_post_stack_fingerprint, convert as convert_post,
+    filter_active as filter_post_active, frame_jitter, group_by_environment, group_by_kind,
+    halton_jitter, position_hash as post_position_hash, priorities as post_priorities,
+    sort_by_execution_order, sort_by_priority as sort_post_by_priority,
 };
 pub use renderer::{TriangleRenderer, Vertex};
 pub use visibility::{
