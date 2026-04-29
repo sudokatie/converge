@@ -39,6 +39,7 @@
 
 mod config;
 mod fidelity;
+mod interest;
 mod job;
 #[expect(
     clippy::module_inception,
@@ -49,6 +50,9 @@ mod state;
 
 pub use config::{FidelityThresholds, SchedulerConfig, TickIntervals};
 pub use fidelity::Fidelity;
+pub use interest::{
+    InterestCategory, InterestConfig, InterestEntry, InterestSummary, RegionInterest,
+};
 pub use job::{EnvironmentHint, SimulationJob};
-pub use scheduler::SimulationScheduler;
+pub use scheduler::{InterestCounts, SimulationScheduler};
 pub use state::RegionState;

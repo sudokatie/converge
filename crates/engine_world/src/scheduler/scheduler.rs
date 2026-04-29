@@ -5,7 +5,11 @@ use std::collections::HashMap;
 use engine_core::coords::ChunkPos;
 
 use super::{
-    config::SchedulerConfig, fidelity::Fidelity, job::EnvironmentHint, job::SimulationJob,
+    config::SchedulerConfig,
+    fidelity::Fidelity,
+    interest::{InterestCategory, InterestSummary, RegionInterest},
+    job::EnvironmentHint,
+    job::SimulationJob,
     state::RegionState,
 };
 
@@ -13,7 +17,8 @@ use super::{
 ///
 /// The scheduler tracks regions, assigns fidelity levels based on
 /// observer distance, accumulates time, and produces prioritized
-/// batches of simulation jobs.
+/// batches of simulation jobs. Interest-based relevance can augment
+/// distance-based fidelity for regions with active hazards or fields.
 #[derive(Debug)]
 pub struct SimulationScheduler {
     /// Configuration for intervals, thresholds, and budget.
@@ -22,6 +27,8 @@ pub struct SimulationScheduler {
     regions: HashMap<ChunkPos, RegionState>,
     /// Observer positions (typically player chunk positions).
     observers: Vec<ChunkPos>,
+    /// Current tick counter for staleness tracking.
+    current_tick: u64,
 }
 
 impl SimulationScheduler {
@@ -32,7 +39,14 @@ impl SimulationScheduler {
             config,
             regions: HashMap::new(),
             observers: Vec::new(),
+            current_tick: 0,
         }
+    }
+
+    /// Get the current tick counter.
+    #[must_use]
+    pub fn current_tick(&self) -> u64 {
+        self.current_tick
     }
 
     /// Get the current configuration.
@@ -143,33 +157,52 @@ impl SimulationScheduler {
 
     /// Advance time and return simulation jobs ready to execute.
     ///
-    /// Accumulates `dt` seconds for all regions, then returns up to
-    /// `max_jobs_per_tick` jobs sorted by priority.
+    /// Accumulates `dt` seconds for all regions, applies interest decay,
+    /// then returns up to `max_jobs_per_tick` jobs sorted by priority.
+    /// Interest-based relevance affects priority ordering and environment hints.
     #[must_use]
     pub fn tick(&mut self, dt: f32) -> Vec<SimulationJob> {
+        self.current_tick += 1;
+
         // Accumulate time for all regions
         for state in self.regions.values_mut() {
             state.accumulate(dt);
         }
 
+        // Apply decay if configured
+        if self.config.interest.decay_factor < 1.0 {
+            for state in self.regions.values_mut() {
+                if let Some(interest) = state.interest_option_mut() {
+                    interest.decay_all(self.config.interest.decay_factor);
+                }
+            }
+        }
+
+        // Prune stale interest entries
+        let max_staleness = self.config.interest.max_staleness_ticks;
+        let current_tick = self.current_tick;
+        for state in self.regions.values_mut() {
+            if let Some(interest) = state.interest_option_mut() {
+                interest.prune_stale(current_tick, max_staleness);
+            }
+        }
+
         // Collect ready jobs
         let mut jobs = Vec::new();
         for (&pos, state) in &self.regions {
-            let interval = self.config.intervals.get(state.fidelity());
+            let effective_fidelity = self.effective_fidelity(state);
+            let interval = self.config.intervals.get(effective_fidelity);
             if state.is_ready(interval) {
-                let environment = if state.environment_active() {
-                    environment_hint_for_fidelity(state.fidelity())
-                } else {
-                    EnvironmentHint::NONE
-                };
+                let environment = self.compute_environment_hint(state, effective_fidelity);
+                let priority = state.effective_priority_with_interest(&self.config.interest);
 
                 jobs.push(SimulationJob::new(
                     pos,
-                    state.fidelity(),
+                    effective_fidelity,
                     state.accumulated(),
                     state.distance(),
                     environment,
-                    state.effective_priority(),
+                    priority,
                 ));
             }
         }
@@ -182,15 +215,50 @@ impl SimulationScheduler {
             jobs.truncate(self.config.max_jobs_per_tick);
         }
 
-        // Consume time for returned jobs
+        // Consume time for returned jobs (use job's already-computed fidelity)
         for job in &jobs {
             if let Some(state) = self.regions.get_mut(&job.position()) {
-                let interval = self.config.intervals.get(state.fidelity());
+                let interval = self.config.intervals.get(job.fidelity());
                 state.consume_interval(interval);
             }
         }
 
         jobs
+    }
+
+    /// Compute effective fidelity, potentially promoted by interest.
+    fn effective_fidelity(&self, state: &RegionState) -> Fidelity {
+        if !self.config.interest.can_promote_dormant {
+            return state.fidelity();
+        }
+
+        if state.fidelity() == Fidelity::Dormant && state.has_interest() {
+            Fidelity::Distant
+        } else {
+            state.fidelity()
+        }
+    }
+
+    /// Compute environment hints based on fidelity and interest.
+    fn compute_environment_hint(&self, state: &RegionState, fidelity: Fidelity) -> EnvironmentHint {
+        if !state.environment_active() {
+            return EnvironmentHint::NONE;
+        }
+
+        let base = environment_hint_for_fidelity(fidelity);
+        let summary = state.interest_summary();
+
+        EnvironmentHint {
+            scalar_fields: base.scalar_fields
+                || (summary.has_scalar_fields
+                    && summary.total_score >= self.config.interest.scalar_field_threshold),
+            vector_fields: base.vector_fields
+                || (summary.has_vector_fields
+                    && summary.total_score >= self.config.interest.vector_field_threshold),
+            hazard_spread: base.hazard_spread
+                || (summary.has_hazards
+                    && summary.total_score >= self.config.interest.hazard_threshold),
+        }
     }
 
     /// Get the fidelity assigned to a region, if tracked.
@@ -247,6 +315,146 @@ impl SimulationScheduler {
     pub fn iter_regions(&self) -> impl Iterator<Item = (ChunkPos, &RegionState)> {
         self.regions.iter().map(|(&pos, state)| (pos, state))
     }
+
+    // ==================== Interest Management ====================
+
+    /// Set interest for a region with a specific category and weight.
+    ///
+    /// Creates interest tracking for the region if needed.
+    /// Setting weight to 0 or negative removes that interest entry.
+    pub fn set_interest(&mut self, pos: ChunkPos, category: InterestCategory, weight: f32) {
+        if let Some(state) = self.regions.get_mut(&pos) {
+            state
+                .interest_mut()
+                .set(category, weight, self.current_tick);
+        }
+    }
+
+    /// Remove a specific interest category from a region.
+    pub fn remove_interest(&mut self, pos: ChunkPos, category: InterestCategory) -> bool {
+        if let Some(state) = self.regions.get_mut(&pos) {
+            state.interest_mut().remove(category)
+        } else {
+            false
+        }
+    }
+
+    /// Clear all interest for a region.
+    pub fn clear_region_interest(&mut self, pos: ChunkPos) {
+        if let Some(state) = self.regions.get_mut(&pos) {
+            state.clear_interest();
+        }
+    }
+
+    /// Clear all interest for all regions.
+    pub fn clear_all_interest(&mut self) {
+        for state in self.regions.values_mut() {
+            state.clear_interest();
+        }
+    }
+
+    /// Get read-only access to a region's interest tracking.
+    #[must_use]
+    pub fn get_interest(&self, pos: ChunkPos) -> Option<&RegionInterest> {
+        self.regions.get(&pos).and_then(|s| s.interest())
+    }
+
+    /// Get an interest summary for a region.
+    #[must_use]
+    pub fn interest_summary(&self, pos: ChunkPos) -> InterestSummary {
+        self.regions
+            .get(&pos)
+            .map_or_else(InterestSummary::default, RegionState::interest_summary)
+    }
+
+    /// Check if a region has any active interest.
+    #[must_use]
+    pub fn has_interest(&self, pos: ChunkPos) -> bool {
+        self.regions
+            .get(&pos)
+            .is_some_and(RegionState::has_interest)
+    }
+
+    /// Get the interest score for a region, if any.
+    #[must_use]
+    pub fn interest_score(&self, pos: ChunkPos) -> Option<f32> {
+        self.regions.get(&pos).and_then(RegionState::interest_score)
+    }
+
+    /// Query all regions with interest above a threshold.
+    ///
+    /// Returns positions sorted deterministically (by coordinates).
+    #[must_use]
+    pub fn regions_with_interest(&self, min_score: f32) -> Vec<ChunkPos> {
+        let mut result: Vec<_> = self
+            .regions
+            .iter()
+            .filter(|(_, state)| state.interest_score().is_some_and(|s| s >= min_score))
+            .map(|(&pos, _)| pos)
+            .collect();
+        result.sort_by_key(|p| (p.x(), p.y(), p.z()));
+        result
+    }
+
+    /// Count regions with active interest by category.
+    #[must_use]
+    pub fn interest_counts(&self) -> InterestCounts {
+        let mut counts = InterestCounts::default();
+        for state in self.regions.values() {
+            let summary = state.interest_summary();
+            if summary.is_active() {
+                counts.total += 1;
+                if summary.has_scalar_fields {
+                    counts.with_scalar_fields += 1;
+                }
+                if summary.has_vector_fields {
+                    counts.with_vector_fields += 1;
+                }
+                if summary.has_hazards {
+                    counts.with_hazards += 1;
+                }
+            }
+        }
+        counts
+    }
+
+    /// Manually trigger interest decay for all regions.
+    ///
+    /// Useful when you want to decay without advancing the tick counter.
+    pub fn decay_all_interest(&mut self, factor: f32) {
+        for state in self.regions.values_mut() {
+            if let Some(interest) = state.interest_option_mut() {
+                interest.decay_all(factor);
+            }
+        }
+    }
+
+    /// Manually prune stale interest entries from all regions.
+    ///
+    /// Returns the total number of entries removed.
+    pub fn prune_stale_interest(&mut self, max_staleness: u64) -> usize {
+        let current_tick = self.current_tick;
+        let mut total_removed = 0;
+        for state in self.regions.values_mut() {
+            if let Some(interest) = state.interest_option_mut() {
+                total_removed += interest.prune_stale(current_tick, max_staleness);
+            }
+        }
+        total_removed
+    }
+}
+
+/// Summary counts of interest across all regions.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct InterestCounts {
+    /// Total regions with active interest.
+    pub total: usize,
+    /// Regions with scalar field interest.
+    pub with_scalar_fields: usize,
+    /// Regions with vector field interest.
+    pub with_vector_fields: usize,
+    /// Regions with hazard interest.
+    pub with_hazards: usize,
 }
 
 /// Determine environment hints based on fidelity level.
@@ -603,6 +811,421 @@ mod tests {
                     assert!(!job.environment().any_active());
                 }
             }
+        }
+    }
+
+    // ==================== Interest Management Tests ====================
+
+    mod interest_tests {
+        use super::*;
+        use crate::environment::{FieldChannel, HazardKind, VectorFieldChannel};
+
+        fn scheduler_with_interest_config() -> SimulationScheduler {
+            let mut config = SchedulerConfig::default();
+            config.interest.decay_factor = 1.0; // No decay by default in tests
+            SimulationScheduler::new(config)
+        }
+
+        #[test]
+        fn set_and_get_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.8);
+
+            assert!(scheduler.has_interest(pos));
+            let score = scheduler.interest_score(pos).unwrap();
+            assert!((score - 0.8).abs() < f32::EPSILON);
+        }
+
+        #[test]
+        fn set_interest_on_untracked_region() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+
+            scheduler.set_interest(pos, InterestCategory::Structural, 0.5);
+
+            assert!(!scheduler.has_interest(pos));
+        }
+
+        #[test]
+        fn remove_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.8);
+            assert!(scheduler.has_interest(pos));
+
+            assert!(scheduler.remove_interest(pos, InterestCategory::Hazard(HazardKind::Fire)));
+            assert!(!scheduler.has_interest(pos));
+        }
+
+        #[test]
+        fn clear_region_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.8);
+            scheduler.set_interest(pos, InterestCategory::Structural, 0.5);
+
+            scheduler.clear_region_interest(pos);
+            assert!(!scheduler.has_interest(pos));
+        }
+
+        #[test]
+        fn clear_all_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            scheduler.add_region(ChunkPos::new(0, 0, 0));
+            scheduler.add_region(ChunkPos::new(1, 0, 0));
+
+            scheduler.set_interest(
+                ChunkPos::new(0, 0, 0),
+                InterestCategory::Hazard(HazardKind::Fire),
+                0.8,
+            );
+            scheduler.set_interest(ChunkPos::new(1, 0, 0), InterestCategory::Structural, 0.5);
+
+            scheduler.clear_all_interest();
+
+            assert!(!scheduler.has_interest(ChunkPos::new(0, 0, 0)));
+            assert!(!scheduler.has_interest(ChunkPos::new(1, 0, 0)));
+        }
+
+        #[test]
+        fn interest_summary() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.8);
+            scheduler.set_interest(
+                pos,
+                InterestCategory::ScalarField(FieldChannel::Temperature),
+                0.3,
+            );
+
+            let summary = scheduler.interest_summary(pos);
+            assert!(summary.is_active());
+            assert!(summary.has_hazards);
+            assert!(summary.has_scalar_fields);
+            assert!(!summary.has_vector_fields);
+            assert!((summary.total_score - 1.1).abs() < f32::EPSILON);
+        }
+
+        #[test]
+        fn regions_with_interest_deterministic() {
+            let mut scheduler = scheduler_with_interest_config();
+
+            // Add regions in random order
+            scheduler.add_region(ChunkPos::new(5, 0, 0));
+            scheduler.add_region(ChunkPos::new(1, 0, 0));
+            scheduler.add_region(ChunkPos::new(3, 0, 0));
+            scheduler.add_region(ChunkPos::new(2, 0, 0));
+
+            scheduler.set_interest(
+                ChunkPos::new(5, 0, 0),
+                InterestCategory::Hazard(HazardKind::Fire),
+                0.5,
+            );
+            scheduler.set_interest(ChunkPos::new(1, 0, 0), InterestCategory::Structural, 0.5);
+            scheduler.set_interest(ChunkPos::new(3, 0, 0), InterestCategory::Fluid, 0.5);
+
+            let regions = scheduler.regions_with_interest(0.1);
+
+            assert_eq!(regions.len(), 3);
+            assert_eq!(regions[0], ChunkPos::new(1, 0, 0));
+            assert_eq!(regions[1], ChunkPos::new(3, 0, 0));
+            assert_eq!(regions[2], ChunkPos::new(5, 0, 0));
+        }
+
+        #[test]
+        fn interest_counts() {
+            let mut scheduler = scheduler_with_interest_config();
+            scheduler.add_region(ChunkPos::new(0, 0, 0));
+            scheduler.add_region(ChunkPos::new(1, 0, 0));
+            scheduler.add_region(ChunkPos::new(2, 0, 0));
+
+            scheduler.set_interest(
+                ChunkPos::new(0, 0, 0),
+                InterestCategory::Hazard(HazardKind::Fire),
+                0.5,
+            );
+            scheduler.set_interest(
+                ChunkPos::new(1, 0, 0),
+                InterestCategory::ScalarField(FieldChannel::Temperature),
+                0.5,
+            );
+            scheduler.set_interest(
+                ChunkPos::new(2, 0, 0),
+                InterestCategory::VectorField(VectorFieldChannel::Wind),
+                0.5,
+            );
+
+            let counts = scheduler.interest_counts();
+            assert_eq!(counts.total, 3);
+            assert_eq!(counts.with_hazards, 1);
+            assert_eq!(counts.with_scalar_fields, 1);
+            assert_eq!(counts.with_vector_fields, 1);
+        }
+
+        #[test]
+        fn interest_boosts_priority() {
+            let mut scheduler = scheduler_with_interest_config();
+            // Two regions at same fidelity level (both Near)
+            let near1 = ChunkPos::new(3, 0, 0);
+            let near2 = ChunkPos::new(5, 0, 0);
+
+            scheduler.add_region(near1);
+            scheduler.add_region(near2);
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+            scheduler.set_environment_active(near1, true);
+            scheduler.set_environment_active(near2, true);
+
+            // Give near2 (farther) high interest - should now come before near1
+            scheduler.set_interest(near2, InterestCategory::Hazard(HazardKind::Fire), 2.0);
+
+            let jobs = scheduler.tick(10.0);
+
+            // near2 should appear before near1 due to interest boost overcoming distance
+            let near1_idx = jobs.iter().position(|j| j.position() == near1).unwrap();
+            let near2_idx = jobs.iter().position(|j| j.position() == near2).unwrap();
+            assert!(near2_idx < near1_idx);
+        }
+
+        #[test]
+        fn interest_promotes_dormant_to_distant() {
+            let mut config = SchedulerConfig::default();
+            config.interest.can_promote_dormant = true;
+            let mut scheduler = SimulationScheduler::new(config);
+
+            let far = ChunkPos::new(100, 0, 0); // Way beyond distant threshold
+            scheduler.add_region(far);
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+            scheduler.set_environment_active(far, true);
+
+            // Without interest, should be dormant (2.0s interval)
+            assert_eq!(scheduler.get_fidelity(far), Some(Fidelity::Dormant));
+
+            // Add interest
+            scheduler.set_interest(far, InterestCategory::Hazard(HazardKind::Fire), 0.5);
+
+            // Should tick at distant interval (0.5s) due to promotion
+            let jobs = scheduler.tick(0.6);
+            assert_eq!(jobs.len(), 1);
+            assert_eq!(jobs[0].fidelity(), Fidelity::Distant);
+        }
+
+        #[test]
+        fn interest_enables_hazard_hint_on_distant() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(10, 0, 0); // Distant fidelity
+            scheduler.add_region(pos);
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+            scheduler.set_environment_active(pos, true);
+
+            // Add hazard interest
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.5);
+
+            let jobs = scheduler.tick(10.0);
+            let job = jobs.iter().find(|j| j.position() == pos).unwrap();
+
+            // Distant normally wouldn't have hazard_spread, but interest enables it
+            assert!(job.environment().hazard_spread);
+        }
+
+        #[test]
+        fn interest_enables_vector_field_hint() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(10, 0, 0); // Distant fidelity
+            scheduler.add_region(pos);
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+            scheduler.set_environment_active(pos, true);
+
+            // Distant normally has scalar only, no vector
+            let jobs = scheduler.tick(10.0);
+            let job = jobs.iter().find(|j| j.position() == pos).unwrap();
+            assert!(!job.environment().vector_fields);
+
+            // Add vector field interest
+            scheduler.set_interest(
+                pos,
+                InterestCategory::VectorField(VectorFieldChannel::Wind),
+                0.5,
+            );
+
+            let jobs = scheduler.tick(10.0);
+            let job = jobs.iter().find(|j| j.position() == pos).unwrap();
+            assert!(job.environment().vector_fields);
+        }
+
+        #[test]
+        fn decay_reduces_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 1.0);
+
+            scheduler.decay_all_interest(0.5);
+            let score = scheduler.interest_score(pos).unwrap();
+            assert!((score - 0.5).abs() < f32::EPSILON);
+
+            scheduler.decay_all_interest(0.5);
+            let score = scheduler.interest_score(pos).unwrap();
+            assert!((score - 0.25).abs() < f32::EPSILON);
+        }
+
+        #[test]
+        fn tick_applies_configured_decay() {
+            let mut config = SchedulerConfig::default();
+            config.interest.decay_factor = 0.9;
+            let mut scheduler = SimulationScheduler::new(config);
+
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 1.0);
+
+            let _ = scheduler.tick(0.1);
+            let score = scheduler.interest_score(pos).unwrap();
+            assert!((score - 0.9).abs() < f32::EPSILON);
+        }
+
+        #[test]
+        fn prune_stale_interest() {
+            let mut scheduler = scheduler_with_interest_config();
+            let pos = ChunkPos::new(0, 0, 0);
+            scheduler.add_region(pos);
+
+            scheduler.set_interest(pos, InterestCategory::Hazard(HazardKind::Fire), 0.5);
+
+            // Advance many ticks
+            for _ in 0..100 {
+                let _ = scheduler.tick(0.0);
+            }
+
+            // Now add fresh interest
+            scheduler.set_interest(pos, InterestCategory::Structural, 0.5);
+
+            // Prune with short staleness threshold
+            let removed = scheduler.prune_stale_interest(50);
+            assert_eq!(removed, 1);
+
+            // Fire should be gone, structural should remain
+            let summary = scheduler.interest_summary(pos);
+            assert!(!summary.has_hazards);
+            assert_eq!(summary.entry_count, 1);
+        }
+
+        #[test]
+        fn distance_only_behavior_unchanged() {
+            let mut scheduler = default_scheduler();
+            scheduler.add_region(ChunkPos::new(0, 0, 0));
+            scheduler.add_region(ChunkPos::new(5, 0, 0));
+            scheduler.add_region(ChunkPos::new(10, 0, 0));
+            scheduler.add_region(ChunkPos::new(50, 0, 0));
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+
+            // Without any interest set, behavior should match distance-based
+            assert_eq!(
+                scheduler.get_fidelity(ChunkPos::new(0, 0, 0)),
+                Some(Fidelity::Immediate)
+            );
+            assert_eq!(
+                scheduler.get_fidelity(ChunkPos::new(5, 0, 0)),
+                Some(Fidelity::Near)
+            );
+            assert_eq!(
+                scheduler.get_fidelity(ChunkPos::new(10, 0, 0)),
+                Some(Fidelity::Distant)
+            );
+            assert_eq!(
+                scheduler.get_fidelity(ChunkPos::new(50, 0, 0)),
+                Some(Fidelity::Dormant)
+            );
+
+            let jobs = scheduler.tick(10.0);
+
+            // Ordering should be by fidelity (higher first), then distance
+            let positions: Vec<_> = jobs.iter().map(SimulationJob::position).collect();
+            assert_eq!(positions[0], ChunkPos::new(0, 0, 0)); // Immediate, dist 0
+        }
+
+        #[test]
+        fn budget_with_interest_respected() {
+            let config = SchedulerConfig {
+                max_jobs_per_tick: 3,
+                ..Default::default()
+            };
+            let mut scheduler = SimulationScheduler::new(config);
+
+            for i in 0..10 {
+                scheduler.add_region(ChunkPos::new(i, 0, 0));
+                scheduler.set_environment_active(ChunkPos::new(i, 0, 0), true);
+            }
+            scheduler.set_observer(ChunkPos::new(0, 0, 0));
+
+            // Give high interest to distant regions
+            for i in 5..10 {
+                scheduler.set_interest(
+                    ChunkPos::new(i, 0, 0),
+                    InterestCategory::Hazard(HazardKind::Fire),
+                    10.0,
+                );
+            }
+
+            let jobs = scheduler.tick(10.0);
+            assert_eq!(jobs.len(), 3);
+        }
+
+        #[test]
+        fn deterministic_ordering_with_interest() {
+            let mut scheduler1 = scheduler_with_interest_config();
+            let mut scheduler2 = scheduler_with_interest_config();
+
+            // Add regions in different orders
+            for i in [3, 1, 4, 1, 5] {
+                scheduler1.add_region(ChunkPos::new(i, 0, 0));
+            }
+            for i in [5, 4, 1, 3, 1] {
+                scheduler2.add_region(ChunkPos::new(i, 0, 0));
+            }
+
+            // Same observer
+            scheduler1.set_observer(ChunkPos::new(0, 0, 0));
+            scheduler2.set_observer(ChunkPos::new(0, 0, 0));
+
+            // Same interests
+            for scheduler in [&mut scheduler1, &mut scheduler2] {
+                scheduler.set_interest(
+                    ChunkPos::new(5, 0, 0),
+                    InterestCategory::Hazard(HazardKind::Fire),
+                    0.5,
+                );
+                scheduler.set_interest(ChunkPos::new(3, 0, 0), InterestCategory::Structural, 0.3);
+            }
+
+            let jobs1 = scheduler1.tick(10.0);
+            let jobs2 = scheduler2.tick(10.0);
+
+            assert_eq!(jobs1.len(), jobs2.len());
+            for (j1, j2) in jobs1.iter().zip(jobs2.iter()) {
+                assert_eq!(j1.position(), j2.position());
+            }
+        }
+
+        #[test]
+        fn current_tick_increments() {
+            let mut scheduler = scheduler_with_interest_config();
+            scheduler.add_region(ChunkPos::new(0, 0, 0));
+
+            assert_eq!(scheduler.current_tick(), 0);
+            let _ = scheduler.tick(0.1);
+            assert_eq!(scheduler.current_tick(), 1);
+            let _ = scheduler.tick(0.1);
+            assert_eq!(scheduler.current_tick(), 2);
         }
     }
 }

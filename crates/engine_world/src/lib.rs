@@ -39,8 +39,9 @@ pub use environment::{
 
 // Re-export scheduler API at crate root for convenience
 pub use scheduler::{
-    EnvironmentHint, Fidelity, FidelityThresholds, RegionState, SchedulerConfig, SimulationJob,
-    SimulationScheduler, TickIntervals,
+    EnvironmentHint, Fidelity, FidelityThresholds, InterestCategory, InterestConfig,
+    InterestCounts, InterestEntry, InterestSummary, RegionInterest, RegionState, SchedulerConfig,
+    SimulationJob, SimulationScheduler, TickIntervals,
 };
 
 // Re-export world_state API at crate root for convenience

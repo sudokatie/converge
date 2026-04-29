@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Each channel represents a distinct scalar field that can vary per-cell
 /// within chunks. Fields can be used for gameplay mechanics, biome effects,
 /// and environmental hazards.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum FieldChannel {
     /// Temperature in arbitrary units. Affects player comfort, crop growth.

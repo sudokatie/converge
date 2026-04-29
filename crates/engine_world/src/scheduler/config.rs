@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::Fidelity;
+use super::interest::InterestConfig;
 
 /// Tick intervals for each fidelity level.
 ///
@@ -116,6 +117,8 @@ pub struct SchedulerConfig {
     pub thresholds: FidelityThresholds,
     /// Maximum simulation jobs to return per tick.
     pub max_jobs_per_tick: usize,
+    /// Interest-based relevance configuration.
+    pub interest: InterestConfig,
 }
 
 impl Default for SchedulerConfig {
@@ -124,6 +127,7 @@ impl Default for SchedulerConfig {
             intervals: TickIntervals::default(),
             thresholds: FidelityThresholds::default(),
             max_jobs_per_tick: 64,
+            interest: InterestConfig::default(),
         }
     }
 }
@@ -146,6 +150,7 @@ impl SchedulerConfig {
                 distant_radius: 16,
             },
             max_jobs_per_tick: 128,
+            interest: InterestConfig::default(),
         }
     }
 
@@ -166,6 +171,7 @@ impl SchedulerConfig {
                 distant_radius: 8,
             },
             max_jobs_per_tick: 32,
+            interest: InterestConfig::default(),
         }
     }
 }

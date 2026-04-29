@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// Each channel represents a distinct vector field that can vary per-cell
 /// within chunks. Vector fields store direction and magnitude for flow,
 /// forces, and directional effects.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum VectorFieldChannel {
     /// Wind velocity. Affects projectiles, particles, sound propagation.

@@ -1,11 +1,13 @@
 //! Per-region simulation state tracking.
 
 use super::Fidelity;
+use super::interest::{InterestConfig, InterestSummary, RegionInterest};
 
 /// Tracking state for a single region in the scheduler.
 ///
 /// Accumulates elapsed time since last simulation and tracks
-/// the current fidelity assignment for priority ordering.
+/// the current fidelity assignment for priority ordering. Optionally
+/// tracks interest-based relevance for field/hazard activity.
 #[derive(Clone, Debug)]
 pub struct RegionState {
     /// Current fidelity level based on observer distance.
@@ -18,6 +20,8 @@ pub struct RegionState {
     environment_active: bool,
     /// User-defined priority boost (added to base priority).
     priority_boost: i32,
+    /// Interest-based relevance tracking (optional, lazily allocated).
+    interest: Option<Box<RegionInterest>>,
 }
 
 impl RegionState {
@@ -30,6 +34,7 @@ impl RegionState {
             distance: i32::MAX,
             environment_active: false,
             priority_boost: 0,
+            interest: None,
         }
     }
 
@@ -125,6 +130,65 @@ impl RegionState {
         let boost_component = i64::from(self.priority_boost) * 10_000;
         fidelity_component + distance_component + boost_component
     }
+
+    /// Compute the effective priority including interest-based boost.
+    #[must_use]
+    pub fn effective_priority_with_interest(&self, config: &InterestConfig) -> i64 {
+        let base = self.effective_priority();
+        let interest_boost = self
+            .interest_score()
+            .map_or(0, |score| i64::from(config.priority_boost(score)));
+        base + interest_boost
+    }
+
+    /// Get the interest tracking, if any.
+    #[must_use]
+    pub fn interest(&self) -> Option<&RegionInterest> {
+        self.interest.as_deref()
+    }
+
+    /// Get mutable access to interest tracking, creating it if needed.
+    pub fn interest_mut(&mut self) -> &mut RegionInterest {
+        self.interest
+            .get_or_insert_with(|| Box::new(RegionInterest::new()))
+    }
+
+    /// Get optional mutable access to interest tracking without creating.
+    pub(crate) fn interest_option_mut(&mut self) -> Option<&mut RegionInterest> {
+        self.interest.as_deref_mut()
+    }
+
+    /// Check if this region has any interest tracked.
+    #[must_use]
+    pub fn has_interest(&self) -> bool {
+        self.interest.as_ref().is_some_and(|i| !i.is_empty())
+    }
+
+    /// Get the total interest score, or None if no interest is tracked.
+    #[must_use]
+    pub fn interest_score(&self) -> Option<f32> {
+        self.interest.as_ref().and_then(|i| {
+            let score = i.total_score();
+            if score > 0.0 { Some(score) } else { None }
+        })
+    }
+
+    /// Get a summary of interest state.
+    #[must_use]
+    pub fn interest_summary(&self) -> InterestSummary {
+        self.interest
+            .as_ref()
+            .map_or_else(InterestSummary::default, |i| {
+                InterestSummary::from_interest(i)
+            })
+    }
+
+    /// Clear all interest tracking.
+    pub fn clear_interest(&mut self) {
+        if let Some(interest) = &mut self.interest {
+            interest.clear();
+        }
+    }
 }
 
 impl Default for RegionState {
@@ -136,6 +200,8 @@ impl Default for RegionState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::environment::HazardKind;
+    use crate::scheduler::interest::InterestCategory;
 
     #[test]
     fn new_state_defaults() {
@@ -145,6 +211,7 @@ mod tests {
         assert_eq!(state.distance(), i32::MAX);
         assert!(!state.environment_active());
         assert_eq!(state.priority_boost(), 0);
+        assert!(!state.has_interest());
     }
 
     #[test]
@@ -250,5 +317,79 @@ mod tests {
 
         state.set_environment_active(false);
         assert!(!state.environment_active());
+    }
+
+    #[test]
+    fn interest_initially_none() {
+        let state = RegionState::new();
+        assert!(state.interest().is_none());
+        assert!(!state.has_interest());
+        assert!(state.interest_score().is_none());
+    }
+
+    #[test]
+    fn interest_mut_creates_tracking() {
+        let mut state = RegionState::new();
+        let interest = state.interest_mut();
+        interest.set(InterestCategory::Hazard(HazardKind::Fire), 0.8, 0);
+
+        assert!(state.has_interest());
+        assert!(state.interest().is_some());
+    }
+
+    #[test]
+    fn interest_score_calculation() {
+        let mut state = RegionState::new();
+        state
+            .interest_mut()
+            .set(InterestCategory::Hazard(HazardKind::Fire), 0.5, 0);
+        state
+            .interest_mut()
+            .set(InterestCategory::Structural, 0.3, 0);
+
+        let score = state.interest_score().unwrap();
+        assert!((score - 0.8).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn interest_priority_boost() {
+        let mut state = RegionState::new();
+        state.set_fidelity(Fidelity::Distant);
+        state.set_distance(50);
+        state
+            .interest_mut()
+            .set(InterestCategory::Hazard(HazardKind::Fire), 1.0, 0);
+
+        let config = InterestConfig::default();
+        let base_priority = state.effective_priority();
+        let with_interest = state.effective_priority_with_interest(&config);
+
+        assert!(with_interest > base_priority);
+        assert_eq!(with_interest - base_priority, 50_000);
+    }
+
+    #[test]
+    fn interest_summary_reflects_state() {
+        let mut state = RegionState::new();
+        state
+            .interest_mut()
+            .set(InterestCategory::Hazard(HazardKind::Fire), 0.8, 0);
+
+        let summary = state.interest_summary();
+        assert!(summary.is_active());
+        assert!(summary.has_hazards);
+        assert!(!summary.has_scalar_fields);
+    }
+
+    #[test]
+    fn clear_interest() {
+        let mut state = RegionState::new();
+        state
+            .interest_mut()
+            .set(InterestCategory::Structural, 0.5, 0);
+        assert!(state.has_interest());
+
+        state.clear_interest();
+        assert!(!state.has_interest());
     }
 }

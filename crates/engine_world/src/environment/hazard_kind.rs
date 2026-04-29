@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Types of environmental hazards that can propagate through the world.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum HazardKind {
     /// Fire spreads to flammable materials, decays without fuel.
