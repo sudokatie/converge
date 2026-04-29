@@ -2,6 +2,7 @@
 //!
 //! Provides chunk management, terrain generation, and world persistence.
 
+pub mod automation;
 pub mod chunk;
 pub mod environment;
 pub mod generation;
@@ -76,4 +77,12 @@ pub use megastructure::{
 pub use persistence::{
     JournalSnapshot, JournalStats, MutationJournal, MutationQuery, MutationReason, MutationRecord,
     MutationSource, Sequence,
+};
+
+// Re-export automation API at crate root for convenience
+pub use automation::{
+    AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,
+    AutomationSnapshot, ChangeKind, ChangePayload, DeviceChangePayload, DeviceConfig, DeviceDelta,
+    DeviceId, DeviceKind, LinkChangePayload, LinkId, MAX_PORTS, PendingSignal, PortId, PortState,
+    Revision, RevisionTracker, SignalValue, SpatialFilter, StateChange, TickResult,
 };
