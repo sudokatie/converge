@@ -110,3 +110,12 @@ pub use behavior_graph::{
     BehaviorTrigger, BlockFilter, CompareOp, EffectKind, EvalResult, EvaluatorConfig,
     EvaluatorStats, GraphEvaluator, GraphFingerprint, NodeId, TriggerContext, TriggerEvent,
 };
+
+// Re-export entity module at crate root for convenience
+pub mod entity;
+pub use entity::{
+    EquipmentFingerprint, EquipmentLoadout, EquipmentModule, FilterType, GrappleType, LoadoutError,
+    LoadoutTickResult, MAX_MODULES, ModuleCategory, ModuleConfig, ModuleEffect, ModuleId,
+    ModuleStatus, ModuleTickResult, ModuleTier, ResourceState, StatusEffect, StatusEffectManager,
+    StatusEffectType, TankContent,
+};

@@ -1,5 +1,5 @@
 //! Status effects system for entities
-//! 
+//!
 //! Implements spec 6.5.3 - status effects with duration, level, and tick behavior.
 
 use std::collections::HashMap;
@@ -49,7 +49,7 @@ impl StatusEffectType {
         )
     }
 
-    /// Get the tick interval for this effect (how often tick_effect runs)
+    /// Get the tick interval for this effect (how often `tick_effect` runs)
     pub fn tick_interval(&self) -> Duration {
         match self {
             StatusEffectType::Poison => Duration::from_millis(1250),
@@ -64,7 +64,7 @@ impl StatusEffectType {
 pub struct StatusEffect {
     /// The type of effect
     pub effect_type: StatusEffectType,
-    /// Effect level/amplifier (0 = level 1, 1 = level 2, etc.)
+    /// Effect level/amplifier (`0` = level 1, `1` = level 2, etc.)
     pub level: u8,
     /// Total duration of the effect
     pub duration: Duration,
@@ -121,10 +121,10 @@ impl StatusEffect {
         if !self.should_tick() {
             return TickResult::NoOp;
         }
-        
+
         self.last_tick = Instant::now();
-        let amplifier = self.level as f32 + 1.0;
-        
+        let amplifier = f32::from(self.level) + 1.0;
+
         match self.effect_type {
             StatusEffectType::Poison => {
                 // Poison deals 1 damage per level every 1.25 seconds
@@ -136,9 +136,7 @@ impl StatusEffect {
             }
             StatusEffectType::Regeneration => {
                 // Regeneration heals 1 HP per level every 2.5 seconds
-                TickResult::Heal {
-                    amount: amplifier,
-                }
+                TickResult::Heal { amount: amplifier }
             }
             StatusEffectType::Speed => {
                 // Speed increases movement by 20% per level
@@ -265,7 +263,7 @@ impl StatusEffectManager {
         // Tick all remaining effects
         self.effects
             .values_mut()
-            .map(|e| e.tick_effect())
+            .map(StatusEffect::tick_effect)
             .filter(|r| *r != TickResult::NoOp)
             .collect()
     }
@@ -279,7 +277,7 @@ impl StatusEffectManager {
     pub fn total_speed_modifier(&self) -> f32 {
         let mut modifier = 1.0;
         for effect in self.effects.values() {
-            let amplifier = effect.level as f32 + 1.0;
+            let amplifier = f32::from(effect.level) + 1.0;
             match effect.effect_type {
                 StatusEffectType::Speed => modifier *= 1.0 + (0.2 * amplifier),
                 StatusEffectType::Slowness => modifier *= 1.0 - (0.15 * amplifier).min(0.85),
@@ -293,7 +291,7 @@ impl StatusEffectManager {
     pub fn total_damage_modifier(&self) -> f32 {
         let mut modifier = 0.0;
         for effect in self.effects.values() {
-            let amplifier = effect.level as f32 + 1.0;
+            let amplifier = f32::from(effect.level) + 1.0;
             match effect.effect_type {
                 StatusEffectType::Strength => modifier += 3.0 * amplifier,
                 StatusEffectType::Weakness => modifier -= 4.0 * amplifier,
@@ -310,11 +308,7 @@ mod tests {
 
     #[test]
     fn test_effect_creation() {
-        let effect = StatusEffect::new(
-            StatusEffectType::Poison,
-            0,
-            Duration::from_secs(30),
-        );
+        let effect = StatusEffect::new(StatusEffectType::Poison, 0, Duration::from_secs(30));
         assert_eq!(effect.effect_type, StatusEffectType::Poison);
         assert_eq!(effect.level, 0);
         assert!(!effect.is_expired());
@@ -322,11 +316,7 @@ mod tests {
 
     #[test]
     fn test_effect_expiry() {
-        let effect = StatusEffect::new(
-            StatusEffectType::Speed,
-            0,
-            Duration::from_millis(1),
-        );
+        let effect = StatusEffect::new(StatusEffectType::Speed, 0, Duration::from_millis(1));
         std::thread::sleep(Duration::from_millis(5));
         assert!(effect.is_expired());
     }
