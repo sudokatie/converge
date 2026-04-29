@@ -9,6 +9,10 @@ pub mod ghost_block;
 pub mod lighting;
 mod renderer;
 pub mod sky;
+pub mod volumetric;
 pub mod voxel;
 
 pub use renderer::{TriangleRenderer, Vertex};
+pub use volumetric::{
+    LightShaft, LightShaftConfig, VolumeRegion, VolumeShape, VolumetricEffect, VolumetricEffectKind,
+};
