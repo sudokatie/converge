@@ -858,6 +858,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "engine_core",
+ "engine_world",
  "glam",
  "renet",
  "serde",

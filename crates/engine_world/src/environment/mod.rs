@@ -76,6 +76,8 @@ mod conduit_network;
 mod conduit_node;
 
 mod gravity;
+mod hazard_delta;
+mod hazard_simulation;
 mod rule_profile;
 
 pub use atmosphere_cell::AtmosphereCell;
@@ -148,6 +150,14 @@ pub use conduit_node::{ConduitNode, NodeRole};
 
 pub use gravity::{
     GravityModel, GravityProfile, MAX_GRAVITY_MAGNITUDE, MIN_GRAVITY_MAGNITUDE, STANDARD_GRAVITY,
+};
+pub use hazard_delta::{
+    ChunkHazardDelta, ChunkHazardSnapshot, HazardCellDelta, HazardDeltaJournal, HazardDeltaRecord,
+    HazardSnapshot,
+};
+pub use hazard_simulation::{
+    BoundarySpread, ChunkTickInput, ChunkTickOutput, HazardSimulator, SimulationTickResult,
+    TickStats, apply_chunk_delta, apply_snapshot, simulate_chunk_tick,
 };
 pub use rule_profile::{
     ProfileError, ProfileId, ProfileRegistry, RuleBundle, RuleOverrides, WorldRuleProfile,
