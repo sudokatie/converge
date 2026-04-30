@@ -5,11 +5,14 @@
 //! utility AI for survival prioritization, population director for spawn
 //! pressure, pacing, migration, and regional threat scaling, offline
 //! simulation for unloaded chunks, group AI primitives for packs,
-//! swarms, schools, patrols, and evacuation, and multi-domain navigation
-//! for voxel walking, swimming, climbing, flying, zero-G, and dynamic worlds.
+//! swarms, schools, patrols, and evacuation, multi-domain navigation
+//! for voxel walking, swimming, climbing, flying, zero-G, and dynamic worlds,
+//! and ecological simulation for food chains, resource zones, migration
+//! paths, and infestation fronts.
 
 pub mod behavior;
 pub mod creatures;
+pub mod ecology;
 pub mod faction;
 pub mod goal;
 pub mod group;
@@ -22,6 +25,12 @@ pub mod sensor;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
+pub use ecology::{
+    EcologyConfig, EcologyEvent, EcologyEventKind, EcologyFingerprint, EcologySimulator,
+    EcologySnapshot, EcologySummary, EcologyTickResult, FoodChain, InfestationFront,
+    InfestationFrontId, InfestationPhase, InfestationType, MigrationPath, MigrationPathId,
+    ResourceKind, ResourceZone, ResourceZoneId, TrophicLevelId, TrophicLink, TrophicRelation,
+};
 pub use faction::{
     Claim, ClaimKind, ClaimStrength, DiplomacyTable, Faction, FactionId, FactionMembership,
     FactionRegistry, FactionSnapshot, FactionSummary, FactionTag, Influence, MembershipKind,
