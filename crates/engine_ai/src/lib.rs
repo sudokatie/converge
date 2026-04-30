@@ -24,6 +24,7 @@ pub mod offline;
 pub mod pathfinding;
 pub mod population;
 pub mod sensor;
+pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
@@ -100,4 +101,13 @@ pub use sensor::{
     ObservationMemory, ObservationPriority, ObservationSet, OcclusionModel, SensorConfig,
     SensorKind, SensorProfile, SensorProfileId, SensorSnapshot, SensorSpec, SensorSuite,
     SensorSummary, Stimulus, StimulusEmitter, StimulusId, StimulusSource, StimulusSummary,
+};
+pub use territory_pressure::{
+    CollapseReason, ContestedFront, ContestedFrontId, ExpansionCandidate, ExpansionFailureReason,
+    FrontState, NestEvent, NestEventKind, NestExpansionCandidate, NestExpansionState,
+    NestExpansionSummary, NestExpansionTracker, NestFingerprint, NestId, NestKind, NestProjection,
+    NestSite, NestSnapshot, NestStage, NestStageTransition, NestTickResult, PressureConfig,
+    PressureEvent, PressureEventKind, PressureFingerprint, PressureKind, PressureProjection,
+    PressureSource, PressureSourceId, PressureSummary, PressureTickResult, PressureTrend,
+    RegionPressureSnapshot, TerritoryPressureTracker,
 };
