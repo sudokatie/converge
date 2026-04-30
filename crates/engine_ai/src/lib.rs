@@ -25,6 +25,7 @@ pub mod offline;
 pub mod pathfinding;
 pub mod population;
 pub mod sensor;
+pub mod settler;
 pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
@@ -109,6 +110,15 @@ pub use sensor::{
     ObservationMemory, ObservationPriority, ObservationSet, OcclusionModel, SensorConfig,
     SensorKind, SensorProfile, SensorProfileId, SensorSnapshot, SensorSpec, SensorSuite,
     SensorSummary, Stimulus, StimulusEmitter, StimulusId, StimulusSource, StimulusSummary,
+};
+pub use settler::{
+    AssignmentCandidate, AssignmentConfig, AssignmentEngine, AssignmentResult, CapabilityCategory,
+    CapabilityDef, CapabilityId, FailureReason, PriorityConfig, PriorityMode, PriorityScore,
+    RegionPriority, ReservationTable, Settler, SettlerEvent, SettlerEventKind, SettlerFingerprint,
+    SettlerId, SettlerManager, SettlerManagerConfig, SettlerProjection, SettlerRegistry,
+    SettlerSnapshot, SettlerStatus, SettlerSummary, SettlerTickResult, Skill, SkillLevel, SkillSet,
+    Task, TaskCategory, TaskDef, TaskDefId, TaskDefRegistry, TaskId, TaskPosition, TaskRegistry,
+    TaskStatus, WorkPriorities, capability_presets as settler_capability_presets, task_def_presets,
 };
 pub use territory_pressure::{
     CollapseReason, ContestedFront, ContestedFrontId, ExpansionCandidate, ExpansionFailureReason,
