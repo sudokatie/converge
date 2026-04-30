@@ -8,6 +8,7 @@ pub mod chunk;
 pub mod diagnostics;
 pub mod environment;
 pub mod generation;
+pub mod machine;
 pub mod manager;
 pub mod megastructure;
 pub mod persistence;
@@ -121,4 +122,13 @@ pub use entity::{
     LoadoutTickResult, MAX_MODULES, ModuleCategory, ModuleConfig, ModuleEffect, ModuleId,
     ModuleStatus, ModuleTickResult, ModuleTier, ResourceState, StatusEffect, StatusEffectManager,
     StatusEffectType, TankContent,
+};
+
+// Re-export machine API at crate root for convenience
+pub use machine::{
+    AtmosphereEffect, FaultKind, FluidPort, HeatConfig, MachineCategory, MachineConfig,
+    MachineEvent, MachineEventKind, MachineFingerprint, MachineId, MachineRegistry, MachineState,
+    MachineTickResult, MachineTickStats, MachineTier, MaintenanceState, PortDirection, PowerConfig,
+    ProcessDefinition, ProcessId, ProcessQueue, ProcessState, QueuedProcess, RegistryError,
+    RegistryQuery, RegistrySummary, ResourceRequirement, ResourceYield,
 };
