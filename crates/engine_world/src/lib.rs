@@ -86,8 +86,11 @@ pub use persistence::{
 pub use automation::{
     AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,
     AutomationSnapshot, ChangeKind, ChangePayload, DeviceChangePayload, DeviceConfig, DeviceDelta,
-    DeviceId, DeviceKind, LinkChangePayload, LinkId, MAX_PORTS, PendingSignal, PortId, PortState,
-    Revision, RevisionTracker, SignalValue, SpatialFilter, StateChange, TickResult,
+    DeviceId, DeviceKind, GateConfig, GateOp, LinkChangePayload, LinkId, MAX_PORTS, PendingSignal,
+    PortId, PortState, PrimitiveConfig, PrimitiveState, PumpConfig, PumpMode, PumpState,
+    RelayConfig, RelayMode, RelayState, Revision, RevisionTracker, SensorConfig, SensorState,
+    SensorType, SignalValue, SpatialFilter, StateChange, TickResult, TimerConfig, TimerMode,
+    TimerState, ValveConfig, ValveMode, ValveState,
 };
 
 // Re-export diagnostics API at crate root for convenience

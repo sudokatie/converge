@@ -42,6 +42,7 @@
 mod device;
 mod link;
 mod network;
+pub mod primitives;
 mod revision;
 mod signal;
 mod snapshot;
@@ -49,6 +50,11 @@ mod snapshot;
 pub use device::{AutomationDevice, DeviceConfig, DeviceId, DeviceKind, MAX_PORTS, PortState};
 pub use link::{AutomationLink, LinkId, PendingSignal};
 pub use network::{AutomationConfig, AutomationNetwork, TickResult};
+pub use primitives::{
+    GateConfig, GateOp, PrimitiveConfig, PrimitiveState, PumpConfig, PumpMode, PumpState,
+    RelayConfig, RelayMode, RelayState, SensorConfig, SensorState, SensorType, TimerConfig,
+    TimerMode, TimerState, ValveConfig, ValveMode, ValveState,
+};
 pub use revision::{
     ChangeKind, ChangePayload, DeviceChangePayload, LinkChangePayload, Revision, RevisionTracker,
     StateChange,
