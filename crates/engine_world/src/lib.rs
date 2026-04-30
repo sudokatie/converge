@@ -11,6 +11,7 @@ pub mod generation;
 pub mod machine;
 pub mod manager;
 pub mod megastructure;
+pub mod narrative;
 pub mod persistence;
 pub mod region_journal;
 pub mod replay;
@@ -131,4 +132,14 @@ pub use machine::{
     MachineTickResult, MachineTickStats, MachineTier, MaintenanceState, PortDirection, PowerConfig,
     ProcessDefinition, ProcessId, ProcessQueue, ProcessState, QueuedProcess, RegistryError,
     RegistryQuery, RegistrySummary, ResourceRequirement, ResourceYield,
+};
+
+// Re-export narrative API at crate root for convenience
+pub use narrative::{
+    ActiveEvent, AnomalyPreset, CooldownConfig, CooldownState, DisasterPreset, EventDefinition,
+    EventFingerprint, EventId, EventRegistry, NarrativeContext, NarrativeEventKind,
+    NarrativeOutput, NarrativeState, NarrativeTrigger, ObjectivePreset, ObjectiveStatus,
+    OutputKind, OutputPriority, OutputQueue, Preset, RadioPreset, RepeatMode, StateChecksum,
+    TickResult as NarrativeTickResult, TimedObjective, TriggerKind, TriggerPredicate,
+    TriggerResult,
 };
