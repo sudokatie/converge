@@ -17,6 +17,7 @@ pub mod ecology;
 pub mod faction;
 pub mod goal;
 pub mod group;
+pub mod lifecycle;
 pub mod memory;
 pub mod navigation;
 pub mod needs;
@@ -56,6 +57,13 @@ pub use group::{
     FormationConfig, Group, GroupDecision, GroupEvent, GroupEventKind, GroupId, GroupMember,
     GroupPreset, GroupRegistry, GroupRole, GroupSnapshot, GroupSummary, MemberId, PatrolRoute,
     PatrolRouteId, PatrolState, SafeZone, SerializableVec3, Waypoint, calculate_flocking,
+};
+pub use lifecycle::{
+    AgingConfig, CorpseState, DecayConfig as LifecycleDecayConfig, EggState, GrowthConfig,
+    GrowthPhase, HatchingConfig, IncubationConfig, LifecycleConfig, LifecycleEvent,
+    LifecycleEventKind, LifecycleFingerprint, LifecycleId, LifecycleProjection, LifecycleSnapshot,
+    LifecycleStage, LifecycleSummary, LifecycleTickResult, LifecycleTracker, LifecycleTrend,
+    LivingState, MetamorphosisConfig, MetamorphosisState, MetamorphosisTrigger,
 };
 pub use memory::{
     CreatureMemory, DangerCategory, DangerZoneMemory, DecayConfig, FoodCategory, FoodSourceMemory,
