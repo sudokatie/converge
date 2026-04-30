@@ -166,3 +166,12 @@ pub use region_graph::{
     RegionGraph, RegionGraphConfig, RegionId, RegionKind, RegionNode, RegionTag,
     ResourceAnnotation, TierSummary,
 };
+
+// Re-export topology API at crate root for convenience
+pub use generation::{
+    CellQuery, CellState, HazardType, MissionHook, NodeId as TopologyNodeId,
+    NodeRole as TopologyNodeRole, PathQuery, PlannerSummary, QueryResult, ResourceType, SegmentId,
+    SegmentKind, TopologyAnnotation, TopologyAnnotations, TopologyCell, TopologyChecksum,
+    TopologyConfig, TopologyConfigError, TopologyFingerprint, TopologyFingerprintBuilder,
+    TopologyKind, TopologyNode, TopologyPlanner, TopologySegment,
+};
