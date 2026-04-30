@@ -14,6 +14,7 @@ pub mod megastructure;
 pub mod mission;
 pub mod narrative;
 pub mod persistence;
+pub mod region_graph;
 pub mod region_journal;
 pub mod replay;
 pub mod sandbox;
@@ -154,4 +155,14 @@ pub use mission::{
     ObjectiveProgress, ObjectiveSpec, ObjectiveState, PenaltyDefinition, ProjectionSummary,
     RegistryError as MissionRegistryError, RepeatConfig, RewardDefinition, RiskLevel, ScopeConfig,
     TrackerSummary, register_presets,
+};
+
+// Re-export region_graph API at crate root for convenience
+pub use region_graph::{
+    ConfigError as RegionGraphConfigError, EdgeId, EdgeKind,
+    FingerprintBuilder as RegionFingerprintBuilder, GateKind, GateRequirement,
+    GraphChecksum as RegionGraphChecksum, GraphFingerprint as RegionGraphFingerprint, GraphSummary,
+    HazardAnnotation, KindWeights, MissionAnnotation, MissionRole, ProgressionTier, RegionEdge,
+    RegionGraph, RegionGraphConfig, RegionId, RegionKind, RegionNode, RegionTag,
+    ResourceAnnotation, TierSummary,
 };
