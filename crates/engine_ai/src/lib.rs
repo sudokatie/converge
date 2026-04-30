@@ -14,6 +14,7 @@
 pub mod behavior;
 pub mod creatures;
 pub mod ecology;
+pub mod emergency;
 pub mod faction;
 pub mod goal;
 pub mod group;
@@ -39,6 +40,14 @@ pub use ecology::{
     SustainabilityEventKind, SustainabilityFingerprint, SustainabilityPolicy, SustainabilityRating,
     SustainabilitySummary, SustainabilityTickResult, SustainabilityTracker, TrophicLevelId,
     TrophicLink, TrophicRelation,
+};
+pub use emergency::{
+    ActionStatus, Assignment, ContainmentZone, ContainmentZoneId, Emergency, EmergencyEvent,
+    EmergencyEventKind, EmergencyFingerprint, EmergencyId, EmergencyKind, EmergencyProjection,
+    EmergencySeverity, EmergencySnapshot, EmergencyStatus, EmergencySummary, EmergencyTypeId,
+    PlanStatus, Responder, ResponderId, ResponderRoleId, ResponderStatus, ResponseAction,
+    ResponseActionId, ResponseActionKind, ResponsePlan, ResponsePlanId, ResponseProtocolId,
+    ShelterZone, ShelterZoneId, create_standard_plan,
 };
 pub use faction::{
     Claim, ClaimKind, ClaimStrength, DiplomacyTable, Faction, FactionId, FactionMembership,
