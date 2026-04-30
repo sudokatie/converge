@@ -4,6 +4,7 @@ mod biome;
 mod biome_pipeline;
 mod caves;
 mod noise;
+pub mod structure_grammar;
 mod structures;
 mod terrain;
 pub mod topology;

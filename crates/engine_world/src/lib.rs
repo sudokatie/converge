@@ -175,3 +175,13 @@ pub use generation::{
     TopologyConfig, TopologyConfigError, TopologyFingerprint, TopologyFingerprintBuilder,
     TopologyKind, TopologyNode, TopologyPlanner, TopologySegment,
 };
+
+// Re-export structure_grammar API at crate root for convenience
+pub use generation::structure_grammar::{
+    Anchor, BlockPalette, BlockType, Bounds, ChildSymbol, ConnectorSummary, Direction,
+    GeneratedLayout, GenerationConfig, GenerationContext, GenerationResult, GrammarBuilder,
+    GrammarRule, LayoutChecksum, LayoutFingerprint, LayoutFingerprintBuilder, LayoutQuery,
+    LayoutQueryResult, LayoutSummary, Placement, PlacementId, PlacementRules, RuleExpansion,
+    RuleId, Socket, StructureGenerator, StructureGrammar, StructureTemplate, SymbolId, TemplateId,
+    TemplateKind, ValidationError, ValidationErrors, WeightedChoice, generate, generate_with_seed,
+};
