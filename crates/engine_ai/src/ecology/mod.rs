@@ -8,6 +8,16 @@
 //! - Infestation front propagation and containment
 //! - Summaries and projections for unloaded regions
 //! - Stable fingerprints for determinism verification
+//! - Resource sustainability tuning and harvest pressure tracking
+
+pub mod sustainability;
+
+pub use sustainability::{
+    CarryingCapacityConfig, DepletionBehavior, DepletionProjection, HarvestPressure,
+    RecoveryProjection, RegenerationMode, SustainabilityEvent, SustainabilityEventKind,
+    SustainabilityFingerprint, SustainabilityPolicy, SustainabilityRating, SustainabilitySummary,
+    SustainabilityTickResult, SustainabilityTracker,
+};
 
 use crate::population::SpeciesCapId;
 use serde::{Deserialize, Serialize};

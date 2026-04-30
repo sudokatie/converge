@@ -26,10 +26,14 @@ pub mod sensor;
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
 pub use ecology::{
-    EcologyConfig, EcologyEvent, EcologyEventKind, EcologyFingerprint, EcologySimulator,
-    EcologySnapshot, EcologySummary, EcologyTickResult, FoodChain, InfestationFront,
-    InfestationFrontId, InfestationPhase, InfestationType, MigrationPath, MigrationPathId,
-    ResourceKind, ResourceZone, ResourceZoneId, TrophicLevelId, TrophicLink, TrophicRelation,
+    CarryingCapacityConfig, DepletionBehavior, DepletionProjection, EcologyConfig, EcologyEvent,
+    EcologyEventKind, EcologyFingerprint, EcologySimulator, EcologySnapshot, EcologySummary,
+    EcologyTickResult, FoodChain, HarvestPressure, InfestationFront, InfestationFrontId,
+    InfestationPhase, InfestationType, MigrationPath, MigrationPathId, RecoveryProjection,
+    RegenerationMode, ResourceKind, ResourceZone, ResourceZoneId, SustainabilityEvent,
+    SustainabilityEventKind, SustainabilityFingerprint, SustainabilityPolicy, SustainabilityRating,
+    SustainabilitySummary, SustainabilityTickResult, SustainabilityTracker, TrophicLevelId,
+    TrophicLink, TrophicRelation,
 };
 pub use faction::{
     Claim, ClaimKind, ClaimStrength, DiplomacyTable, Faction, FactionId, FactionMembership,
