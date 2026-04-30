@@ -8,6 +8,7 @@ pub mod chunk;
 pub mod diagnostics;
 pub mod environment;
 pub mod generation;
+pub mod geology;
 pub mod machine;
 pub mod manager;
 pub mod megastructure;
@@ -184,4 +185,15 @@ pub use generation::structure_grammar::{
     LayoutQueryResult, LayoutSummary, Placement, PlacementId, PlacementRules, RuleExpansion,
     RuleId, Socket, StructureGenerator, StructureGrammar, StructureTemplate, SymbolId, TemplateId,
     TemplateKind, ValidationError, ValidationErrors, WeightedChoice, generate, generate_with_seed,
+};
+
+// Re-export geology API at crate root for convenience
+pub use geology::{
+    CrystalGrowthConfig, CrystalSeam, CrystalType, FaultConfig, FaultLine, FaultType, FeatureId,
+    FeatureKind, GeologicalLayer, GeologyChecksum, GeologyConfig, GeologyEvent, GeologyEventKind,
+    GeologyFields, GeologyFingerprint, GeologySimulator, GeologySummary, GeologyTickResult,
+    GeologyTickStats, LayerBoundary, LayerId, MagmaConfig, MagmaFlow, MagmaPocket, MagmaState,
+    MaterialId as GeoMaterialId, MineralDeposit, MineralType, PressureField,
+    ProjectionResult as GeologyProjectionResult, QuakeEvent, RockType, SlipState, StabilityField,
+    Stratum, StressAccumulator, TemperatureField, ThermalConfig, VolcanicEvent, VolcanicEventKind,
 };
