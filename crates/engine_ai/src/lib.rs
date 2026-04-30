@@ -7,8 +7,9 @@
 //! simulation for unloaded chunks, group AI primitives for packs,
 //! swarms, schools, patrols, and evacuation, multi-domain navigation
 //! for voxel walking, swimming, climbing, flying, zero-G, and dynamic worlds,
-//! and ecological simulation for food chains, resource zones, migration
-//! paths, and infestation fronts.
+//! ecological simulation for food chains, resource zones, migration
+//! paths, and infestation fronts, and creature memory for danger zones,
+//! food sources, and player traces.
 
 pub mod behavior;
 pub mod creatures;
@@ -16,6 +17,7 @@ pub mod ecology;
 pub mod faction;
 pub mod goal;
 pub mod group;
+pub mod memory;
 pub mod navigation;
 pub mod needs;
 pub mod offline;
@@ -53,6 +55,12 @@ pub use group::{
     FormationConfig, Group, GroupDecision, GroupEvent, GroupEventKind, GroupId, GroupMember,
     GroupPreset, GroupRegistry, GroupRole, GroupSnapshot, GroupSummary, MemberId, PatrolRoute,
     PatrolRouteId, PatrolState, SafeZone, SerializableVec3, Waypoint, calculate_flocking,
+};
+pub use memory::{
+    CreatureMemory, DangerCategory, DangerZoneMemory, DecayConfig, FoodCategory, FoodSourceMemory,
+    MemoryCategory, MemoryFingerprint, MemoryId, MemoryQuery, MemoryQueryBuilder, MemoryRecord,
+    MemorySnapshot, MemorySource, MemoryStoreConfig, MemorySummary, MemoryTag, PlayerTraceKind,
+    PlayerTraceMemory, QueryResult, RegionMemorySummary, RegionScope,
 };
 pub use navigation::{
     AgentCapabilities, AgentCapabilityId, CostModifier, DomainCost, DomainTransition, DynamicFrame,
