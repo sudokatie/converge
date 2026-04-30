@@ -11,6 +11,7 @@ pub mod generation;
 pub mod machine;
 pub mod manager;
 pub mod megastructure;
+pub mod mission;
 pub mod narrative;
 pub mod persistence;
 pub mod region_journal;
@@ -142,4 +143,15 @@ pub use narrative::{
     OutputKind, OutputPriority, OutputQueue, Preset, RadioPreset, RepeatMode, StateChecksum,
     TickResult as NarrativeTickResult, TimedObjective, TriggerKind, TriggerPredicate,
     TriggerResult,
+};
+
+// Re-export mission API at crate root for convenience
+pub use mission::{
+    ChecksumBuilder as MissionChecksumBuilder, ContractId, DeadlineConfig, ExpeditionContract,
+    FactionSource, MissionChecksum, MissionDefinition, MissionEvent, MissionEventHistory,
+    MissionEventKind, MissionEventPayload, MissionFingerprint, MissionId, MissionPreset,
+    MissionProgress, MissionQuery, MissionState, MissionTracker, ObjectiveId, ObjectiveKind,
+    ObjectiveProgress, ObjectiveSpec, ObjectiveState, PenaltyDefinition, ProjectionSummary,
+    RegistryError as MissionRegistryError, RepeatConfig, RewardDefinition, RiskLevel, ScopeConfig,
+    TrackerSummary, register_presets,
 };
