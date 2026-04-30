@@ -825,6 +825,7 @@ dependencies = [
 name = "engine_ai"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
  "engine_core",
  "glam",
  "serde",

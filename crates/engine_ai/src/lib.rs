@@ -50,11 +50,15 @@ pub use navigation::{
     SurfaceType, capability_presets,
 };
 pub use needs::{
-    ApplyResult, ColonySnapshot, ColonySummary, DecayMode, EffectCategory, EnvironmentSnapshot,
-    EnvironmentalTrigger, ImmunitySet, ManagedStatusSet, ModifierDef, Need, NeedConfig, NeedEvent,
-    NeedHistogram, NeedId, NeedProfile, NeedSet, NeedState, ProfileId, StackingBehavior,
+    ActiveAffliction, AfflictionCategory, AfflictionDef, AfflictionId, AfflictionRegistry,
+    AfflictionSet, AfflictionTickResult, ApplyResult, ColonySnapshot, ColonySummary, DecayMode,
+    EffectCategory, EnvironmentSnapshot, EnvironmentalTrigger, ExposureSnapshot, ExposureTrigger,
+    ImmunitySet, ManagedStatusSet, ModifierDef, Need, NeedConfig, NeedEvent, NeedHistogram, NeedId,
+    NeedProfile, NeedSet, NeedState, ProfileId, RecoveryMode, ResistanceSet, Severity,
+    SeverityChange, SeverityEffect, SeverityModifier, SeverityThresholds, StackingBehavior,
     StatusEffect, StatusEffectDef, StatusEffectId, StatusEffectRegistry, StatusModifier, StatusSet,
-    Threshold, ThresholdKind, evaluate_trigger, find_triggered_effects, presets,
+    Threshold, ThresholdKind, affliction_presets, evaluate_exposure, evaluate_trigger,
+    find_triggered_effects, presets, should_recover,
 };
 pub use offline::{
     AttentionLevel, LoadHandoff, OfflineConfig, OfflineEvent, OfflineEventKind, OfflineRegionId,

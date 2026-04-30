@@ -7,13 +7,25 @@
 //! The `framework` submodule provides a data-driven status effect system with
 //! configurable stacking behaviors, decay modes, immunity tracking, and
 //! environmental triggers for automatic effect application.
+//!
+//! The `affliction` submodule provides a condition/affliction system for
+//! long-term progressive effects like frostbite, bends, infection, spores,
+//! radiation sickness, and fatigue, with severity levels, exposure tracking,
+//! resistance/immunity, and symptom outputs.
 
+mod affliction;
 mod effect;
 mod framework;
 mod need;
 mod profile;
 mod summary;
 
+pub use affliction::{
+    ActiveAffliction, AfflictionCategory, AfflictionDef, AfflictionId, AfflictionRegistry,
+    AfflictionSet, AfflictionTickResult, ExposureSnapshot, ExposureTrigger, RecoveryMode,
+    ResistanceSet, Severity, SeverityChange, SeverityEffect, SeverityModifier, SeverityThresholds,
+    evaluate_exposure, presets as affliction_presets, should_recover,
+};
 pub use effect::{StatusEffect, StatusEffectId, StatusModifier, StatusSet};
 pub use framework::{
     ApplyResult, DecayMode, EffectCategory, EnvironmentSnapshot, EnvironmentalTrigger, ImmunitySet,

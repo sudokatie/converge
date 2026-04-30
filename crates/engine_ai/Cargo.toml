@@ -7,6 +7,7 @@ authors.workspace = true
 description = "AI system for the Lattice game engine"
 
 [dependencies]
+crc32fast.workspace = true
 engine_core = { path = "../engine_core" }
 glam.workspace = true
 serde.workspace = true
