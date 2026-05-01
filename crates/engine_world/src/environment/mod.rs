@@ -60,6 +60,7 @@ mod chunk_fluids;
 mod fluid_cell;
 mod fluid_kind;
 mod fluid_transport;
+mod sparse_fluid;
 
 mod chunk_structural;
 mod structural_cell;
@@ -118,6 +119,12 @@ pub use fluid_kind::FluidKind;
 pub use fluid_transport::{
     BoundaryOutflow, FluidDelta, FluidResistanceMap, FluidTransportConfig, FluidTransportResult,
     apply_fluid_deltas, transport_step,
+};
+pub use sparse_fluid::{
+    FlowLink, PressureEqualizationPlan, PressureEqualizationStep, SparseFluidConfig,
+    SparseFluidEntry, SparseFluidFingerprint, SparseFluidPos, SparseFluidRegion, SparseFluidResult,
+    SparseFluidSummary, SparseFluidValidation, apply_equalization, apply_flows, compute_flow_links,
+    plan_pressure_equalization, sparse_fluid_step,
 };
 
 pub use chunk_structural::ChunkStructural;
