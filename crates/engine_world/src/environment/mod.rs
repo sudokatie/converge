@@ -76,6 +76,7 @@ mod conduit_kind;
 mod conduit_network;
 mod conduit_node;
 
+mod deformable_terrain;
 mod gravity;
 mod hazard_delta;
 mod hazard_simulation;
@@ -178,4 +179,15 @@ pub use thermal_radiation::{
     ThermalRadiationResult, ThermalRadiationSummary, ThermalRadiationValidation,
     apply_ambient_exchange, apply_radiation_exchanges, compute_radiation_transfer,
     plan_radiation_exchanges, thermal_radiation_step,
+};
+
+pub use deformable_terrain::{
+    DEFAULT_DUCTILITY, DEFAULT_FRACTURE_THRESHOLD, DEFAULT_HARDNESS, DeformableTerrainConfig,
+    DeformableTerrainFingerprint, DeformableTerrainRegion, DeformableTerrainResult,
+    DeformableTerrainSummary, DeformableTerrainValidation, FractureEvent, FractureLink, MAX_DAMAGE,
+    MAX_DEFORMATION, MAX_DUCTILITY, MAX_FRACTURE_THRESHOLD, MAX_HARDNESS, MAX_STRAIN,
+    MAX_STRESS as TERRAIN_MAX_STRESS, MIN_DUCTILITY, MIN_FRACTURE_THRESHOLD, MIN_HARDNESS,
+    StressPropagation, TerrainCell, TerrainEntry, TerrainPos, apply_deformation_from_damage,
+    apply_stress_propagation, apply_stress_relaxation, check_fractures, deformable_terrain_step,
+    plan_stress_propagation, propagate_fractures,
 };
