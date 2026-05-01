@@ -52,7 +52,20 @@
 //! - [`MigrationFixture`]: Test fixture for versioned world state
 //! - [`InvariantCheck`]: Post-migration invariant validation
 //! - [`MigrationExecutor`]: Migration planning and execution
+//!
+//! # Admin Tools
+//!
+//! For replayable world repair and moderation:
+//!
+//! - [`AdminOpId`]: Deterministic operation identifier
+//! - [`AdminMetadata`]: Authorization and context for operations
+//! - [`AdminOp`]: Admin operation variants (repair, fill, quarantine, moderation)
+//! - [`AdminRecord`]: Logged operation with outcome
+//! - [`AdminLog`]: Append-only deterministic operation log
+//! - [`AdminQuery`]: Query builder for filtering records
+//! - [`DryRunResult`]: Planning result before execution
 
+mod admin_tools;
 mod chunk_delta;
 mod multi_state_chunk;
 mod multi_state_region;
@@ -63,6 +76,13 @@ mod schema_migration;
 mod state_id;
 mod world_meta;
 
+pub use admin_tools::{
+    AdminLog, AdminLogStats, AdminMetadata, AdminOp, AdminOpId, AdminQuery, AdminRecord, AuthLevel,
+    BlockFillSpec, BlockReplaceSpec, DryRunResult, MAX_BLOCK_REGION_SIZE, MAX_REGION_BOUND_CHUNKS,
+    MarkerCategory, ModerationAction, OpCategory, OpOutcome, PlayerModerationRecord,
+    QuarantineSeverity, QuarantineStatus, RegionMarker, ReplayResult, TeleportDestination,
+    ValidationResult, WorldBounds,
+};
 pub use chunk_delta::{ChunkDelta, DeltaIndex, DeltaStats};
 pub use multi_state_chunk::{MultiStateChunk, StateFallback};
 pub use multi_state_region::{

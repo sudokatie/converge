@@ -95,6 +95,15 @@ pub use persistence::{
     apply_block_remap, apply_block_remap_delta, compute_plan_fingerprint,
 };
 
+// Re-export admin tools API at crate root for convenience
+pub use persistence::{
+    AdminLog, AdminLogStats, AdminMetadata, AdminOp, AdminOpId, AdminQuery, AdminRecord, AuthLevel,
+    BlockFillSpec, BlockReplaceSpec, DryRunResult, MAX_BLOCK_REGION_SIZE, MAX_REGION_BOUND_CHUNKS,
+    MarkerCategory, ModerationAction, OpCategory, OpOutcome, PlayerModerationRecord,
+    QuarantineSeverity, QuarantineStatus, RegionMarker, ReplayResult as AdminReplayResult,
+    TeleportDestination, ValidationResult as AdminValidationResult, WorldBounds,
+};
+
 // Re-export automation API at crate root for convenience
 pub use automation::{
     AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,
