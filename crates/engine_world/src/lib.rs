@@ -104,6 +104,13 @@ pub use persistence::{
     TeleportDestination, ValidationResult as AdminValidationResult, WorldBounds,
 };
 
+// Re-export regional backup API at crate root for convenience
+pub use persistence::{
+    BackupId, BackupIssue, BackupIssueKind, BackupIssueSeverity, BackupManifest, BackupMetadata,
+    BackupSummary, ChunkEntry, RegionalBackup, RestoreOp, RestorePlan, RestoreResult,
+    apply_restore, compute_restore_delta, verify_against_backup,
+};
+
 // Re-export automation API at crate root for convenience
 pub use automation::{
     AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,

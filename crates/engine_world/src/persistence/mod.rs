@@ -42,6 +42,19 @@
 //! - [`RepairPlan`]: Bounded repair operations
 //! - [`RepairAnalyzer`]: Issue detection and repair planning
 //!
+//! # Regional Backup/Restore
+//!
+//! For deterministic partial world rollback:
+//!
+//! - [`BackupId`]: Deterministic identifier for backup snapshots
+//! - [`BackupMetadata`]: Context and provenance for a backup
+//! - [`ChunkEntry`]: Per-chunk data with position and checksum
+//! - [`BackupManifest`]: Summary of backup contents and fingerprint
+//! - [`RegionalBackup`]: Complete backup with manifest and chunk data
+//! - [`RestorePlan`]: Planned restore operations with issue detection
+//! - [`RestoreResult`]: Outcome of applied restore operations
+//! - [`BackupIssue`]: Issues encountered during backup/restore
+//!
 //! # Schema Migration
 //!
 //! For long-lived world saves and version upgrades:
@@ -71,6 +84,7 @@ mod multi_state_chunk;
 mod multi_state_region;
 mod mutation_journal;
 mod region;
+mod regional_backup;
 mod save_repair;
 mod schema_migration;
 mod state_id;
@@ -94,6 +108,11 @@ pub use mutation_journal::{
 };
 pub use region::{
     REGION_SIZE, Region, RegionError, chunk_to_local, chunk_to_region, region_filename,
+};
+pub use regional_backup::{
+    BackupId, BackupIssue, BackupIssueKind, BackupIssueSeverity, BackupManifest, BackupMetadata,
+    BackupSummary, ChunkEntry, RegionalBackup, RestoreOp, RestorePlan, RestoreResult,
+    apply_restore, compute_restore_delta, verify_against_backup,
 };
 pub use save_repair::{
     ChunkChecksum, ChunkDiff, DiffSummary, FingerprintBuilder, IssueCategory, IssueSeverity,
