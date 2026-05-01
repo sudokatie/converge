@@ -15,6 +15,7 @@ pub mod sky;
 pub mod visibility;
 pub mod volumetric;
 pub mod voxel;
+pub mod weather;
 
 pub use curvature::{
     CurvatureBatch, CurvatureBody, CurvatureBodyKind, CurvatureBodyUniform, CurvatureClipConfig,
@@ -60,4 +61,17 @@ pub use visibility::{
 };
 pub use volumetric::{
     LightShaft, LightShaftConfig, VolumeRegion, VolumeShape, VolumetricEffect, VolumetricEffectKind,
+};
+pub use weather::{
+    ColorOverTime, CurvePreset, CurvePreview, DistributionPreview, EmissionMode, EmitterConfig,
+    EmitterConfigUniform, Keyframe, OverTimeCurve, ParticleBatch, ParticleInstance,
+    ParticleSampler, SampledParticle, SimulationSpace, SpawnPlan, SpawnShape, SpawnShapeKind,
+    SpawnShapeUniform, ValidationResult, ValueRange, VelocityMode, WeatherEffect,
+    WeatherEffectUniform, WeatherKind, WeatherPreset, WeatherSummary, compute_effect_fingerprint,
+    compute_emitter_fingerprint, compute_fingerprint as compute_weather_fingerprint,
+    create_from_preset as create_weather_from_preset, create_layered as create_weather_layered,
+    deserialize_config as deserialize_weather_config, filter_active as filter_weather_active,
+    plan_spawns, position_hash as weather_position_hash, sample_turbulence,
+    serialize_config as serialize_weather_config, sort_by_kind as sort_weather_by_kind,
+    sort_by_spawn_rate,
 };

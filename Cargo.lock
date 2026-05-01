@@ -897,12 +897,14 @@ name = "engine_render"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "bincode",
  "bytemuck",
  "engine_core",
  "engine_world",
  "glam",
  "image",
  "pollster",
+ "serde",
  "thiserror 2.0.18",
  "tracing",
  "wgpu 24.0.5",
