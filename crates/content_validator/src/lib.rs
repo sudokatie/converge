@@ -1,6 +1,9 @@
 //! Content validation library for Lattice game data files.
 //!
 //! Validates items, recipes, blocks, creatures, and biomes defined in RON files.
+//! Also provides asset manifest generation and versioning for content packs.
+
+pub mod manifest;
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;

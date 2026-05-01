@@ -490,8 +490,10 @@ name = "content_validator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "crc32fast",
  "ron",
  "serde",
+ "serde_json",
  "tempfile",
  "thiserror 2.0.18",
 ]
