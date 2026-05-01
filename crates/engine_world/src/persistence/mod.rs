@@ -41,6 +41,17 @@
 //! - [`RepairIssue`]: Categorized repairable issues
 //! - [`RepairPlan`]: Bounded repair operations
 //! - [`RepairAnalyzer`]: Issue detection and repair planning
+//!
+//! # Schema Migration
+//!
+//! For long-lived world saves and version upgrades:
+//!
+//! - [`SchemaVersion`]: Semantic version for persistence format
+//! - [`MigrationStep`]: Single migration transformation
+//! - [`MigrationPlan`]: Ordered sequence of migration steps
+//! - [`MigrationFixture`]: Test fixture for versioned world state
+//! - [`InvariantCheck`]: Post-migration invariant validation
+//! - [`MigrationExecutor`]: Migration planning and execution
 
 mod chunk_delta;
 mod multi_state_chunk;
@@ -48,6 +59,7 @@ mod multi_state_region;
 mod mutation_journal;
 mod region;
 mod save_repair;
+mod schema_migration;
 mod state_id;
 mod world_meta;
 
@@ -68,6 +80,12 @@ pub use save_repair::{
     RepairAnalyzer, RepairIssue, RepairOp, RepairPlan, RepairResult, SnapshotDiff,
     SnapshotFingerprint, apply_repairs, compute_chunks_fingerprint, compute_meta_fingerprint,
     verify_checksums,
+};
+pub use schema_migration::{
+    ChunkFixture, CompatibilityReport, InvariantCheck, InvariantKind, InvariantResult, MetaFixture,
+    MigrationError, MigrationExecutor, MigrationFixture, MigrationKind, MigrationPlan,
+    MigrationResult, MigrationStep, MigrationStepResult, MultiStateFixture, SchemaVersion,
+    apply_block_remap, apply_block_remap_delta, compute_plan_fingerprint,
 };
 pub use state_id::{StateId, StateKind};
 pub use world_meta::{WorldError, WorldMeta, WorldPersistence};

@@ -87,6 +87,14 @@ pub use persistence::{
     MutationSource, Sequence,
 };
 
+// Re-export schema migration API at crate root for convenience
+pub use persistence::{
+    ChunkFixture, CompatibilityReport, InvariantCheck, InvariantKind, InvariantResult, MetaFixture,
+    MigrationError, MigrationExecutor, MigrationFixture, MigrationKind, MigrationPlan,
+    MigrationResult, MigrationStep, MigrationStepResult, MultiStateFixture, SchemaVersion,
+    apply_block_remap, apply_block_remap_delta, compute_plan_fingerprint,
+};
+
 // Re-export automation API at crate root for convenience
 pub use automation::{
     AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,
