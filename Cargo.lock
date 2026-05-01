@@ -838,10 +838,14 @@ dependencies = [
 name = "engine_audio"
 version = "0.1.0"
 dependencies = [
+ "approx",
+ "bincode",
+ "crc32fast",
  "engine_core",
  "glam",
  "kira",
  "rand",
+ "serde",
  "thiserror 2.0.18",
  "tracing",
 ]
