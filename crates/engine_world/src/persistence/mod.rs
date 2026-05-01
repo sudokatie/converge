@@ -30,12 +30,24 @@
 //! - [`MutationReason`]: Semantic reason for mutations
 //! - [`MutationQuery`]: Query builder for filtering records
 //! - [`JournalSnapshot`]: Late-join state snapshot with pending mutations
+//!
+//! # Save Diff/Repair
+//!
+//! For savegame comparison and recovery:
+//!
+//! - [`SnapshotFingerprint`]: Stable fingerprint for world state
+//! - [`ChunkChecksum`]: CRC32 checksum for individual chunks
+//! - [`SnapshotDiff`]: Detected differences between snapshots
+//! - [`RepairIssue`]: Categorized repairable issues
+//! - [`RepairPlan`]: Bounded repair operations
+//! - [`RepairAnalyzer`]: Issue detection and repair planning
 
 mod chunk_delta;
 mod multi_state_chunk;
 mod multi_state_region;
 mod mutation_journal;
 mod region;
+mod save_repair;
 mod state_id;
 mod world_meta;
 
@@ -50,6 +62,12 @@ pub use mutation_journal::{
 };
 pub use region::{
     REGION_SIZE, Region, RegionError, chunk_to_local, chunk_to_region, region_filename,
+};
+pub use save_repair::{
+    ChunkChecksum, ChunkDiff, DiffSummary, FingerprintBuilder, IssueCategory, IssueSeverity,
+    RepairAnalyzer, RepairIssue, RepairOp, RepairPlan, RepairResult, SnapshotDiff,
+    SnapshotFingerprint, apply_repairs, compute_chunks_fingerprint, compute_meta_fingerprint,
+    verify_checksums,
 };
 pub use state_id::{StateId, StateKind};
 pub use world_meta::{WorldError, WorldMeta, WorldPersistence};
