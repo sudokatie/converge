@@ -855,11 +855,13 @@ name = "engine_core"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "bincode",
  "bumpalo",
  "glam",
  "puffin",
  "ron",
  "serde",
+ "serde_json",
  "tempfile",
  "thiserror 2.0.18",
  "tracing",
