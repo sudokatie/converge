@@ -80,6 +80,7 @@ mod gravity;
 mod hazard_delta;
 mod hazard_simulation;
 mod rule_profile;
+mod thermal_radiation;
 
 pub use atmosphere_cell::AtmosphereCell;
 pub use atmosphere_config::{
@@ -168,4 +169,13 @@ pub use hazard_simulation::{
 };
 pub use rule_profile::{
     ProfileError, ProfileId, ProfileRegistry, RuleBundle, RuleOverrides, WorldRuleProfile,
+};
+pub use thermal_radiation::{
+    DEFAULT_AMBIENT, DEFAULT_THERMAL_MASS, KELVIN_OFFSET, MAX_EMISSIVITY,
+    MAX_TEMPERATURE as THERMAL_MAX_TEMP, MIN_EMISSIVITY, MIN_TEMPERATURE as THERMAL_MIN_TEMP,
+    RadiationExchange, STEFAN_BOLTZMANN, ThermalCell, ThermalEntry, ThermalPos,
+    ThermalRadiationConfig, ThermalRadiationFingerprint, ThermalRadiationRegion,
+    ThermalRadiationResult, ThermalRadiationSummary, ThermalRadiationValidation,
+    apply_ambient_exchange, apply_radiation_exchanges, compute_radiation_transfer,
+    plan_radiation_exchanges, thermal_radiation_step,
 };
