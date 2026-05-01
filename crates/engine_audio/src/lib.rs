@@ -9,6 +9,7 @@
 
 mod ambient;
 mod combat_music;
+mod dynamic_music;
 mod effects;
 mod manager;
 mod music;
@@ -22,6 +23,13 @@ pub use ambient::{
 };
 pub use combat_music::{
     COMBAT_COOLDOWN_SECS, COMBAT_RADIUS, CombatMusicController, CombatMusicState,
+};
+pub use dynamic_music::{
+    DEFAULT_FADE_IN_SECS, DEFAULT_FADE_OUT_SECS, DEFAULT_HYSTERESIS_SECS, DynamicMusicController,
+    EnvironmentPressure, LAYER_ACTIVE_THRESHOLD, LayerConfig, LayerMix, LayerProfile, LayerState,
+    MAX_ACTIVE_LAYERS, MixLayer, MusicLayerKind, compute_mix_fingerprint,
+    compute_profile_fingerprint, deserialize_mix, deserialize_pressure, deserialize_profile,
+    serialize_mix, serialize_pressure, serialize_profile,
 };
 pub use effects::{
     AmbientSoundEvent, AudioEffectsExt, BlockSoundEvent, CombatSoundEvent, SoundEffects,
