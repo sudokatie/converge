@@ -8,5 +8,6 @@ pub mod game_pack;
 pub mod logging;
 pub mod math;
 pub mod memory;
+pub mod mod_sandbox;
 pub mod platform;
 pub mod profiling;
