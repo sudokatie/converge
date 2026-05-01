@@ -9,6 +9,7 @@ pub mod distortion;
 pub mod fog;
 pub mod ghost_block;
 pub mod lighting;
+pub mod photo_mode;
 pub mod post_process;
 mod renderer;
 pub mod sky;
@@ -35,6 +36,20 @@ pub use distortion::{
     ScreenDistortionUniform, compute_fingerprint, convert, create_from_preset, create_layered,
     exponential_falloff, linear_falloff, position_hash, radial_wave, sine_wave, smooth_falloff,
     sort_by_priority, spiral_wave,
+};
+pub use photo_mode::{
+    BokehShape, CameraKeyframe, CameraPath, CameraPathUniform, CompositionGuide,
+    CompositionGuideUniform, DofResult, DofUniform, EasingFunction, FilterUniform,
+    InterpolatedCamera, LoopMode, PathBuilder, PathPlayback, PhotoBatch, PhotoFilter,
+    PhotoInstanceUniform, PhotoSampler, PhotoSettings, PhotoSettingsUniform, PreviewConfig,
+    ShotType, SubjectFraming, TimeControl, ValidationResult as PhotoValidationResult,
+    calculate_dof, compute_fingerprint as compute_photo_fingerprint, compute_keyframe_fingerprint,
+    compute_path_fingerprint, compute_preview_fingerprint, compute_settings_fingerprint,
+    convert as convert_photo, create_dolly_zoom_path, create_orbit_path,
+    deserialize_config as deserialize_photo_config, distance_for_shot_type, easing_derivative,
+    filter_keyframes_in_range, fov_for_shot_type, halton, lerp_eased,
+    position_hash as photo_position_hash, sample_curve, serialize_config as serialize_photo_config,
+    sort_paths_by_duration, sort_paths_by_keyframe_count, validate_config as validate_photo_config,
 };
 pub use post_process::{
     BlendWeights, Environment, PostBatch, PostBlendMode, PostCameraState, PostEffect,
