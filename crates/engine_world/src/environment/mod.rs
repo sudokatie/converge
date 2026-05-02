@@ -81,6 +81,7 @@ mod deformable_terrain;
 mod gravity;
 mod hazard_delta;
 mod hazard_simulation;
+mod regional_climate;
 mod rule_profile;
 mod thermal_radiation;
 
@@ -197,4 +198,17 @@ pub use deformable_terrain::{
     StressPropagation, TerrainCell, TerrainEntry, TerrainPos, apply_deformation_from_damage,
     apply_stress_propagation, apply_stress_relaxation, check_fractures, deformable_terrain_step,
     plan_stress_propagation, propagate_fractures,
+};
+
+pub use regional_climate::{
+    BiomeType, ClimateCell, ClimateProjection, ClimateRegion, ClimateRegionId,
+    DEFAULT_BASE_HUMIDITY, DEFAULT_BASE_MOISTURE, DEFAULT_BASE_PRESSURE, DEFAULT_BASE_TEMPERATURE,
+    MAX_HUMIDITY, MAX_MOISTURE, MAX_PRESSURE as CLIMATE_MAX_PRESSURE,
+    MAX_TEMPERATURE as CLIMATE_MAX_TEMP, MIN_HUMIDITY, MIN_MOISTURE,
+    MIN_PRESSURE as CLIMATE_MIN_PRESSURE, MIN_TEMPERATURE as CLIMATE_MIN_TEMP, MoistureTransport,
+    PrecipitationEvent, RegionNeighbors, RegionalClimateConfig, RegionalClimateFingerprint,
+    RegionalClimateResult, RegionalClimateSnapshot, RegionalClimateSummary,
+    RegionalClimateValidation, SeasonalCycle, WindVector, apply_evaporation,
+    apply_moisture_transports, apply_precipitation, apply_seasonal_temperature,
+    compute_precipitation, plan_moisture_transports, regional_climate_step,
 };
