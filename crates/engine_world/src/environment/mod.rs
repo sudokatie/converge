@@ -42,6 +42,7 @@
 mod atmosphere_cell;
 mod atmosphere_config;
 mod atmosphere_layer;
+mod cellular_automata;
 mod channel;
 mod chunk_atmosphere;
 mod chunk_fields;
@@ -89,6 +90,12 @@ pub use atmosphere_config::{
     layer_from_material,
 };
 pub use atmosphere_layer::AtmosphereLayer;
+pub use cellular_automata::{
+    AutomataCell, AutomataConfig, AutomataDelta, AutomataEntry, AutomataFingerprint, AutomataKind,
+    AutomataPlan, AutomataPos, AutomataRegion, AutomataResistance, AutomataResult, AutomataRule,
+    AutomataSummary, AutomataValidation, DeltaKind, Neighborhood, apply_automata_plan,
+    automata_step, plan_automata_step,
+};
 pub use channel::FieldChannel;
 pub use chunk_atmosphere::{AtmosphereSample, ChunkAtmosphere};
 pub use chunk_fields::{ChannelData, ChunkFields};
