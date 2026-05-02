@@ -101,6 +101,7 @@ mod regional_backup;
 mod save_repair;
 mod schema_migration;
 mod state_id;
+mod time_loop;
 mod world_meta;
 
 pub use admin_tools::{
@@ -147,4 +148,12 @@ pub use schema_migration::{
     apply_block_remap, apply_block_remap_delta, compute_plan_fingerprint,
 };
 pub use state_id::{StateId, StateKind};
+pub use time_loop::{
+    CommitAction, CommitPlan, ConflictResolutionAction, ExitEvaluation, ExitReason, LoopExitRule,
+    LoopIterationId, LoopIterationState, LoopLifecycleState, LoopPlanAction, LoopResetMode,
+    LoopResetPlan, LoopRules, LoopWindow, ParadoxConflict, ParadoxDetector, ParadoxGuardPolicy,
+    ParadoxKind, ParadoxReport, ParadoxResolutionResult, PersistentLoopDeltas, ProtectedViolation,
+    ResolvedParadox, TimeLoopDefinition, TimeLoopError, TimeLoopFingerprint, TimeLoopId,
+    TimeLoopRuntime, TimeLoopSnapshot, TimeLoopSummary, TimeLoopValidationError, TimelineId,
+};
 pub use world_meta::{WorldError, WorldMeta, WorldPersistence};

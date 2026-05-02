@@ -327,6 +327,15 @@ pub use persistence::{
     merge_diff,
 };
 
+// Re-export time loop API at crate root for convenience
+pub use persistence::{
+    LoopExitRule, LoopIterationId, LoopIterationState, LoopLifecycleState, LoopPlanAction,
+    LoopResetMode, LoopResetPlan, LoopRules, LoopWindow, ParadoxConflict, ParadoxDetector,
+    ParadoxGuardPolicy, ParadoxKind, ParadoxReport, PersistentLoopDeltas, TimeLoopDefinition,
+    TimeLoopFingerprint, TimeLoopId, TimeLoopRuntime, TimeLoopSnapshot, TimeLoopSummary,
+    TimeLoopValidationError, TimelineId,
+};
+
 // Re-export admin tools API at crate root for convenience
 pub use persistence::{
     AdminLog, AdminLogStats, AdminMetadata, AdminOp, AdminOpId, AdminQuery, AdminRecord, AuthLevel,
