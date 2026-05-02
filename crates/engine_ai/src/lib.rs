@@ -13,6 +13,7 @@
 
 pub mod behavior;
 pub mod creatures;
+pub mod disease;
 pub mod ecology;
 pub mod emergency;
 pub mod faction;
@@ -31,6 +32,18 @@ pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
+pub use disease::{
+    ActiveInfection, ContaminationRegistry, ContaminationSource, ContaminationZone,
+    ContaminationZoneId, CreateZoneRequest, CrossRegionSpread, DiseaseConfig, DiseaseEvent,
+    DiseaseEventKind, DiseaseFingerprint, DiseaseProjection, DiseaseRegionId, DiseaseSnapshot,
+    DiseaseSummary, DiseaseTickEvents, DiseaseTickResult, DiseaseTracker, EvolutionEvent,
+    ExposureEvent, ExposureSource, HostId, HostInfectionState, HostSpreadInfo, HostTickResult,
+    ImmunityRecord, InfectionSpreadInfo, InfectionStage, MutationConfig, MutationContext,
+    MutationResult, MutationTracker, PathogenCategory, PathogenDef, PathogenId, PathogenRegistry,
+    PathogenReservoir, PathogenTraits, RegionPopulation, ResistanceProfile, SpreadConfig,
+    SpreadPlan, SpreadPlanSummary, SpreadPlanner, SpreadRoute, StageTransition, StrainId,
+    TraitBounds, TraitChanges, pathogen_presets,
+};
 pub use ecology::{
     CarryingCapacityConfig, CompetitorRelation, DepletionBehavior, DepletionProjection,
     EcologyConfig, EcologyEvent, EcologyEventKind, EcologyFingerprint, EcologySimulator,
