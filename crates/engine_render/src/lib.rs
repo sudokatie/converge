@@ -10,6 +10,7 @@ pub mod fog;
 pub mod ghost_block;
 pub mod lighting;
 pub mod photo_mode;
+pub mod portal_culling;
 pub mod post_process;
 mod renderer;
 pub mod sky;
@@ -89,4 +90,12 @@ pub use weather::{
     plan_spawns, position_hash as weather_position_hash, sample_turbulence,
     serialize_config as serialize_weather_config, sort_by_kind as sort_weather_by_kind,
     sort_by_spawn_rate,
+};
+
+pub use portal_culling::{
+    CullPlan, CullPlanner, CullPlannerConfig, CullRegion, CullRegionId, CullRegionSet,
+    CullRegionState, CullResult, CullStatistics, Frustum, Plane, RenderPass, RenderPassId,
+    compute_fingerprint as compute_portal_cull_fingerprint, cull_aabb, cull_sphere,
+    filter_visible_passes, group_regions_by_zone, sort_passes_by_depth, sort_regions_by_depth,
+    sort_regions_by_distance,
 };

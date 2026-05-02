@@ -914,6 +914,7 @@ dependencies = [
  "image",
  "pollster",
  "serde",
+ "serde_json",
  "thiserror 2.0.18",
  "tracing",
  "wgpu 24.0.5",
@@ -1615,6 +1616,7 @@ dependencies = [
  "ron",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror 2.0.18",
  "tracing",
 ]

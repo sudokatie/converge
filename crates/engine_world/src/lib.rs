@@ -444,3 +444,13 @@ pub use geology::{
     ProjectionResult as GeologyProjectionResult, QuakeEvent, RockType, SlipState, StabilityField,
     Stratum, StressAccumulator, TemperatureField, ThermalConfig, VolcanicEvent, VolcanicEventKind,
 };
+
+// Re-export portal API at crate root for convenience
+pub mod portal;
+pub use portal::{
+    PathfindQuery, Portal, PortalEndpoint, PortalFingerprint, PortalFingerprintBuilder,
+    PortalFlags, PortalGraph, PortalGraphChecksum, PortalId, PortalShape, PortalSide,
+    PortalTransform, PortalValidationError, PortalValidationErrors, ReachabilityQuery,
+    TraversalConfig, TraversalId, TraversalPath, TraversalResult, TraversalStats, TraversalStep,
+    ZoneDistanceMap, ZoneId, ZoneMetadata,
+};

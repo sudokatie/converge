@@ -321,9 +321,8 @@ mod tests {
 
     #[test]
     fn test_save_and_load_file() {
-        let dir = std::env::temp_dir().join("lattice_entity_test");
-        let _ = std::fs::create_dir_all(&dir);
-        let path = dir.join("entities.json");
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("entities.json");
 
         let world = make_test_world();
         let data = EntitySaveData::from_world(&world);
@@ -333,15 +332,12 @@ mod tests {
 
         assert_eq!(loaded.entities.len(), 2);
         assert_eq!(loaded.version, EntitySaveData::VERSION);
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_version_mismatch() {
-        let dir = std::env::temp_dir().join("lattice_version_test");
-        let _ = std::fs::create_dir_all(&dir);
-        let path = dir.join("bad_version.json");
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bad_version.json");
 
         let bad_data = r#"{"version": 999, "entities": []}"#;
         std::fs::write(&path, bad_data).unwrap();
@@ -351,8 +347,6 @@ mod tests {
             result,
             Err(EntitySaveError::VersionMismatch { .. })
         ));
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
