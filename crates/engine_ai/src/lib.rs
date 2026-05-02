@@ -13,6 +13,7 @@
 
 pub mod behavior;
 pub mod creatures;
+pub mod curved_world;
 pub mod disease;
 pub mod ecology;
 pub mod emergency;
@@ -32,6 +33,14 @@ pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
+pub use curved_world::{
+    ConnectivityChangeType, CurvedConnectivityChange, CurvedGridCell, CurvedNodeAnnotation,
+    CurvedPassabilityChange, CurvedPath, CurvedPathFailure, CurvedPathLimitExceeded,
+    CurvedPathLimitType, CurvedPathResult, CurvedPathfinder, CurvedPathfindingConfig,
+    CurvedPosition, CurvedSurfaceConfig, CurvedSurfaceId, CurvedSurfaceSummary, CurvedWaypoint,
+    CurvedWorldFingerprint, CurvedWorldProjection, CurvedWorldSnapshot, SurfaceGeometry,
+    TangentBasis,
+};
 pub use disease::{
     ActiveInfection, ContaminationRegistry, ContaminationSource, ContaminationZone,
     ContaminationZoneId, CreateZoneRequest, CrossRegionSpread, DiseaseConfig, DiseaseEvent,
