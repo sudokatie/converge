@@ -318,6 +318,14 @@ pub use persistence::{
     apply_block_remap, apply_block_remap_delta, compute_plan_fingerprint,
 };
 
+// Re-export parallel reality API at crate root for convenience
+pub use persistence::{
+    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureSwap,
+    MergeResult, MergeStrategy, RealityBranch, RealityChecksum, RealityChecksumBuilder,
+    RealityDiff, RealityDiffSummary, RealityError, RealityId, RealityRegistry,
+    RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot, merge_diff,
+};
+
 // Re-export admin tools API at crate root for convenience
 pub use persistence::{
     AdminLog, AdminLogStats, AdminMetadata, AdminOp, AdminOpId, AdminQuery, AdminRecord, AuthLevel,

@@ -77,12 +77,25 @@
 //! - [`AdminLog`]: Append-only deterministic operation log
 //! - [`AdminQuery`]: Query builder for filtering records
 //! - [`DryRunResult`]: Planning result before execution
+//!
+//! # Parallel Reality Diff/Merge
+//!
+//! For Fracture-style reality swaps and multi-timeline management:
+//!
+//! - [`RealityId`]: Unique identifier for a parallel reality
+//! - [`RealityBranch`]: Metadata about a reality branch
+//! - [`RealityRegistry`]: Registry of all realities and relationships
+//! - [`RealityDiff`]: Differences between two realities
+//! - [`MergeStrategy`]: Conflict resolution strategies
+//! - [`FracturePoint`]: Marked location where reality swap can occur
+//! - [`FractureSwap`]: Atomic swap operation between realities
 
 mod admin_tools;
 mod chunk_delta;
 mod multi_state_chunk;
 mod multi_state_region;
 mod mutation_journal;
+mod parallel_reality;
 mod region;
 mod regional_backup;
 mod save_repair;
@@ -105,6 +118,12 @@ pub use multi_state_region::{
 pub use mutation_journal::{
     JournalSnapshot, JournalStats, MutationJournal, MutationQuery, MutationReason, MutationRecord,
     MutationSource, Sequence,
+};
+pub use parallel_reality::{
+    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureSwap,
+    MergeResult, MergeStrategy, RealityBranch, RealityChecksum, RealityChecksumBuilder,
+    RealityDiff, RealityDiffSummary, RealityError, RealityId, RealityRegistry,
+    RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot, merge_diff,
 };
 pub use region::{
     REGION_SIZE, Region, RegionError, chunk_to_local, chunk_to_region, region_filename,
