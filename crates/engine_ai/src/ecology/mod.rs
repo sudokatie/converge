@@ -9,9 +9,17 @@
 //! - Summaries and projections for unloaded regions
 //! - Stable fingerprints for determinism verification
 //! - Resource sustainability tuning and harvest pressure tracking
+//! - Multi-species population ecosystem balancing over time
 
+pub mod ecosystem;
 pub mod sustainability;
 
+pub use ecosystem::{
+    CompetitorRelation, EcosystemConfig, EcosystemEvent, EcosystemEventKind, EcosystemFingerprint,
+    EcosystemProjection, EcosystemRegion, EcosystemRegionId, EcosystemSimulator, EcosystemSummary,
+    EcosystemTickResult, MigrationCorridor, Population, PopulationKey, PredatorPreyRelation,
+    Species, SpeciesId, TrophicRole,
+};
 pub use sustainability::{
     CarryingCapacityConfig, DepletionBehavior, DepletionProjection, HarvestPressure,
     RecoveryProjection, RegenerationMode, SustainabilityEvent, SustainabilityEventKind,

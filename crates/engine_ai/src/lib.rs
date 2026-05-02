@@ -32,14 +32,18 @@ pub mod territory_pressure;
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
 pub use creatures::{PassiveAI, PassiveState};
 pub use ecology::{
-    CarryingCapacityConfig, DepletionBehavior, DepletionProjection, EcologyConfig, EcologyEvent,
-    EcologyEventKind, EcologyFingerprint, EcologySimulator, EcologySnapshot, EcologySummary,
-    EcologyTickResult, FoodChain, HarvestPressure, InfestationFront, InfestationFrontId,
-    InfestationPhase, InfestationType, MigrationPath, MigrationPathId, RecoveryProjection,
-    RegenerationMode, ResourceKind, ResourceZone, ResourceZoneId, SustainabilityEvent,
-    SustainabilityEventKind, SustainabilityFingerprint, SustainabilityPolicy, SustainabilityRating,
-    SustainabilitySummary, SustainabilityTickResult, SustainabilityTracker, TrophicLevelId,
-    TrophicLink, TrophicRelation,
+    CarryingCapacityConfig, CompetitorRelation, DepletionBehavior, DepletionProjection,
+    EcologyConfig, EcologyEvent, EcologyEventKind, EcologyFingerprint, EcologySimulator,
+    EcologySnapshot, EcologySummary, EcologyTickResult, EcosystemConfig, EcosystemEvent,
+    EcosystemEventKind, EcosystemFingerprint, EcosystemProjection, EcosystemRegion,
+    EcosystemRegionId, EcosystemSimulator, EcosystemSummary, EcosystemTickResult, FoodChain,
+    HarvestPressure, InfestationFront, InfestationFrontId, InfestationPhase, InfestationType,
+    MigrationCorridor, MigrationPath, MigrationPathId, Population, PopulationKey,
+    PredatorPreyRelation, RecoveryProjection, RegenerationMode, ResourceKind, ResourceZone,
+    ResourceZoneId, Species, SpeciesId, SustainabilityEvent, SustainabilityEventKind,
+    SustainabilityFingerprint, SustainabilityPolicy, SustainabilityRating, SustainabilitySummary,
+    SustainabilityTickResult, SustainabilityTracker, TrophicLevelId, TrophicLink, TrophicRelation,
+    TrophicRole,
 };
 pub use emergency::{
     ActionStatus, Assignment, ContainmentZone, ContainmentZoneId, Emergency, EmergencyEvent,
