@@ -120,10 +120,11 @@ pub use mutation_journal::{
     MutationSource, Sequence,
 };
 pub use parallel_reality::{
-    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureSwap,
-    MergeResult, MergeStrategy, RealityBranch, RealityChecksum, RealityChecksumBuilder,
-    RealityDiff, RealityDiffSummary, RealityError, RealityId, RealityRegistry,
-    RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot, merge_diff,
+    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureRegistry,
+    FractureRegistrySummary, FractureSwap, MergeResult, MergeStrategy, RealityBranch,
+    RealityChecksum, RealityChecksumBuilder, RealityDiff, RealityDiffSummary, RealityError,
+    RealityId, RealityRegistry, RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot,
+    merge_diff,
 };
 pub use region::{
     REGION_SIZE, Region, RegionError, chunk_to_local, chunk_to_region, region_filename,

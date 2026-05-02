@@ -320,10 +320,11 @@ pub use persistence::{
 
 // Re-export parallel reality API at crate root for convenience
 pub use persistence::{
-    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureSwap,
-    MergeResult, MergeStrategy, RealityBranch, RealityChecksum, RealityChecksumBuilder,
-    RealityDiff, RealityDiffSummary, RealityError, RealityId, RealityRegistry,
-    RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot, merge_diff,
+    ChunkConflict, ChunkDiffEntry, ConflictResolution, FractureId, FracturePoint, FractureRegistry,
+    FractureRegistrySummary, FractureSwap, MergeResult, MergeStrategy, RealityBranch,
+    RealityChecksum, RealityChecksumBuilder, RealityDiff, RealityDiffSummary, RealityError,
+    RealityId, RealityRegistry, RealityRegistrySummary, RealityTag, ResolvedConflict, SwapSnapshot,
+    merge_diff,
 };
 
 // Re-export admin tools API at crate root for convenience

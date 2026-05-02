@@ -1236,6 +1236,197 @@ impl SwapSnapshot {
     }
 }
 
+/// Registry for managing fracture points.
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct FractureRegistry {
+    /// All registered fracture points.
+    fractures: BTreeMap<FractureId, FracturePoint>,
+
+    /// Next available fracture ID.
+    next_id: u32,
+
+    /// Spatial index: chunk -> fractures affecting it.
+    chunk_index: HashMap<ChunkPos, BTreeSet<FractureId>>,
+}
+
+impl FractureRegistry {
+    /// Create a new empty registry.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Register a new fracture point.
+    ///
+    /// Returns the assigned fracture ID.
+    pub fn register(
+        &mut self,
+        position: engine_core::coords::WorldPos,
+        radius: u32,
+        source: RealityId,
+        target: RealityId,
+        tick: u64,
+    ) -> FractureId {
+        let id = FractureId::new(self.next_id);
+        self.next_id = self.next_id.saturating_add(1);
+
+        let fracture = FracturePoint::new(id, position, radius, source, target, tick);
+        self.fractures.insert(id, fracture);
+
+        id
+    }
+
+    /// Get a fracture by ID.
+    #[must_use]
+    pub fn get(&self, id: FractureId) -> Option<&FracturePoint> {
+        self.fractures.get(&id)
+    }
+
+    /// Get a mutable reference to a fracture.
+    pub fn get_mut(&mut self, id: FractureId) -> Option<&mut FracturePoint> {
+        self.fractures.get_mut(&id)
+    }
+
+    /// Remove a fracture by ID.
+    ///
+    /// Returns the removed fracture if it existed.
+    pub fn remove(&mut self, id: FractureId) -> Option<FracturePoint> {
+        if let Some(fracture) = self.fractures.remove(&id) {
+            for chunks in self.chunk_index.values_mut() {
+                chunks.remove(&id);
+            }
+            Some(fracture)
+        } else {
+            None
+        }
+    }
+
+    /// Check if a fracture exists.
+    #[must_use]
+    pub fn contains(&self, id: FractureId) -> bool {
+        self.fractures.contains_key(&id)
+    }
+
+    /// Get the number of fractures.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.fractures.len()
+    }
+
+    /// Check if the registry is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.fractures.is_empty()
+    }
+
+    /// Iterate over all fractures.
+    pub fn iter(&self) -> impl Iterator<Item = (&FractureId, &FracturePoint)> {
+        self.fractures.iter()
+    }
+
+    /// Get all active fractures.
+    pub fn active(&self) -> impl Iterator<Item = &FracturePoint> {
+        self.fractures.values().filter(|f| f.active)
+    }
+
+    /// Get all expired fractures at a given tick.
+    pub fn expired(&self, tick: u64) -> impl Iterator<Item = &FracturePoint> {
+        self.fractures.values().filter(move |f| f.is_expired(tick))
+    }
+
+    /// Prune all expired fractures.
+    ///
+    /// Returns the number of fractures removed.
+    pub fn prune_expired(&mut self, tick: u64) -> usize {
+        let to_remove: Vec<_> = self
+            .fractures
+            .iter()
+            .filter(|(_, f)| f.is_expired(tick))
+            .map(|(id, _)| *id)
+            .collect();
+
+        let count = to_remove.len();
+        for id in to_remove {
+            self.remove(id);
+        }
+        count
+    }
+
+    /// Deactivate a fracture.
+    pub fn deactivate(&mut self, id: FractureId) -> bool {
+        if let Some(fracture) = self.fractures.get_mut(&id) {
+            fracture.active = false;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Index a chunk as affected by a fracture.
+    pub fn index_chunk(&mut self, chunk: ChunkPos, fracture_id: FractureId) {
+        self.chunk_index
+            .entry(chunk)
+            .or_default()
+            .insert(fracture_id);
+    }
+
+    /// Get fractures affecting a chunk.
+    #[must_use]
+    pub fn fractures_at_chunk(&self, chunk: ChunkPos) -> Option<&BTreeSet<FractureId>> {
+        self.chunk_index.get(&chunk)
+    }
+
+    /// Get fractures connecting two realities.
+    pub fn fractures_between(
+        &self,
+        source: RealityId,
+        target: RealityId,
+    ) -> impl Iterator<Item = &FracturePoint> {
+        self.fractures.values().filter(move |f| {
+            (f.source == source && f.target == target) || (f.source == target && f.target == source)
+        })
+    }
+
+    /// Compute a stable fingerprint for the registry.
+    #[must_use]
+    pub fn fingerprint(&self) -> u64 {
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+
+        for (id, fracture) in &self.fractures {
+            id.hash(&mut hasher);
+            fracture.fingerprint().hash(&mut hasher);
+        }
+        self.next_id.hash(&mut hasher);
+
+        hasher.finish()
+    }
+
+    /// Get a summary of the registry.
+    #[must_use]
+    pub fn summary(&self) -> FractureRegistrySummary {
+        let active_count = self.fractures.values().filter(|f| f.active).count();
+        let indexed_chunks = self.chunk_index.len();
+
+        FractureRegistrySummary {
+            total_fractures: self.fractures.len(),
+            active_fractures: active_count,
+            indexed_chunks,
+        }
+    }
+}
+
+/// Summary of fracture registry state.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FractureRegistrySummary {
+    /// Total number of fractures.
+    pub total_fractures: usize,
+    /// Number of active fractures.
+    pub active_fractures: usize,
+    /// Number of indexed chunks.
+    pub indexed_chunks: usize,
+}
+
 /// Checksum builder for parallel reality state.
 #[derive(Clone, Debug, Default)]
 pub struct RealityChecksumBuilder {
@@ -1760,5 +1951,369 @@ mod tests {
         assert_eq!(summary.source_only_chunks, 1);
         assert_eq!(summary.target_only_chunks, 0);
         assert_eq!(summary.conflict_count, 0);
+    }
+
+    #[test]
+    fn test_fracture_registry_new() {
+        let registry = FractureRegistry::new();
+        assert!(registry.is_empty());
+        assert_eq!(registry.len(), 0);
+    }
+
+    #[test]
+    fn test_fracture_registry_register() {
+        let mut registry = FractureRegistry::new();
+        let id = registry.register(
+            engine_core::coords::WorldPos::new(100, 50, 100),
+            16,
+            RealityId::ROOT,
+            RealityId::new(1),
+            1000,
+        );
+
+        assert_eq!(id, FractureId::new(0));
+        assert!(registry.contains(id));
+        assert_eq!(registry.len(), 1);
+
+        let fracture = registry.get(id).unwrap();
+        assert!(fracture.active);
+        assert_eq!(fracture.radius, 16);
+    }
+
+    #[test]
+    fn test_fracture_registry_remove() {
+        let mut registry = FractureRegistry::new();
+        let id = registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+
+        let removed = registry.remove(id);
+        assert!(removed.is_some());
+        assert!(!registry.contains(id));
+        assert!(registry.is_empty());
+    }
+
+    #[test]
+    fn test_fracture_registry_deactivate() {
+        let mut registry = FractureRegistry::new();
+        let id = registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+
+        assert!(registry.deactivate(id));
+        assert!(!registry.get(id).unwrap().active);
+    }
+
+    #[test]
+    fn test_fracture_registry_prune_expired() {
+        let mut registry = FractureRegistry::new();
+        let id = registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            1000,
+        );
+
+        if let Some(f) = registry.get_mut(id) {
+            f.duration_ticks = Some(100);
+        }
+
+        assert_eq!(registry.prune_expired(1050), 0);
+        assert_eq!(registry.prune_expired(1100), 1);
+        assert!(registry.is_empty());
+    }
+
+    #[test]
+    fn test_fracture_registry_chunk_index() {
+        let mut registry = FractureRegistry::new();
+        let id = registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+
+        let chunk = ChunkPos::new(0, 0, 0);
+        registry.index_chunk(chunk, id);
+
+        let fractures = registry.fractures_at_chunk(chunk).unwrap();
+        assert!(fractures.contains(&id));
+    }
+
+    #[test]
+    fn test_fracture_registry_fractures_between() {
+        let mut registry = FractureRegistry::new();
+        registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+        registry.register(
+            engine_core::coords::WorldPos::new(100, 0, 0),
+            8,
+            RealityId::new(1),
+            RealityId::new(2),
+            0,
+        );
+
+        let between_root_and_1: Vec<_> = registry
+            .fractures_between(RealityId::ROOT, RealityId::new(1))
+            .collect();
+        assert_eq!(between_root_and_1.len(), 1);
+
+        let between_1_and_2: Vec<_> = registry
+            .fractures_between(RealityId::new(1), RealityId::new(2))
+            .collect();
+        assert_eq!(between_1_and_2.len(), 1);
+    }
+
+    #[test]
+    fn test_fracture_registry_summary() {
+        let mut registry = FractureRegistry::new();
+        let id1 = registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+        registry.register(
+            engine_core::coords::WorldPos::new(100, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(2),
+            0,
+        );
+        registry.deactivate(id1);
+
+        let summary = registry.summary();
+        assert_eq!(summary.total_fractures, 2);
+        assert_eq!(summary.active_fractures, 1);
+    }
+
+    #[test]
+    fn test_fracture_point_serde_roundtrip() {
+        let fracture = FracturePoint::new(
+            FractureId::new(42),
+            engine_core::coords::WorldPos::new(100, 50, 100),
+            16,
+            RealityId::ROOT,
+            RealityId::new(1),
+            1000,
+        )
+        .with_duration(500);
+
+        let serialized = bincode::serialize(&fracture).unwrap();
+        let deserialized: FracturePoint = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(fracture.id, deserialized.id);
+        assert_eq!(fracture.position, deserialized.position);
+        assert_eq!(fracture.radius, deserialized.radius);
+        assert_eq!(fracture.duration_ticks, deserialized.duration_ticks);
+        assert_eq!(fracture.fingerprint(), deserialized.fingerprint());
+    }
+
+    #[test]
+    fn test_fracture_swap_serde_roundtrip() {
+        let mut swap = FractureSwap::new(FractureId::new(1), 1000);
+        swap.add_chunk(ChunkPos::new(0, 0, 0));
+        swap.add_chunk(ChunkPos::new(1, 0, 0));
+
+        let serialized = bincode::serialize(&swap).unwrap();
+        let deserialized: FractureSwap = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(swap.fracture, deserialized.fracture);
+        assert_eq!(swap.affected_chunks, deserialized.affected_chunks);
+        assert_eq!(swap.fingerprint(), deserialized.fingerprint());
+    }
+
+    #[test]
+    fn test_swap_snapshot_serde_roundtrip() {
+        let mut snapshot = SwapSnapshot::new(RealityId::new(1), 1000);
+        let mut delta = ChunkDelta::new();
+        delta.set(LocalPos::new(5, 5, 5), STONE);
+        snapshot.add_chunk(ChunkPos::new(0, 0, 0), delta);
+
+        let serialized = bincode::serialize(&snapshot).unwrap();
+        let deserialized: SwapSnapshot = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(snapshot.previous_active, deserialized.previous_active);
+        assert_eq!(snapshot.snapshot_tick, deserialized.snapshot_tick);
+        assert_eq!(snapshot.chunk_count(), deserialized.chunk_count());
+        assert_eq!(snapshot.fingerprint(), deserialized.fingerprint());
+    }
+
+    #[test]
+    fn test_merge_result_serde_roundtrip() {
+        let mut result = MergeResult::success(MergeStrategy::TargetWins);
+        let mut delta = ChunkDelta::new();
+        delta.set(LocalPos::new(0, 0, 0), STONE);
+        result.add_chunk(ChunkPos::new(0, 0, 0), delta);
+
+        let serialized = bincode::serialize(&result).unwrap();
+        let deserialized: MergeResult = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(result.success, deserialized.success);
+        assert_eq!(result.strategy, deserialized.strategy);
+        assert_eq!(result.fingerprint(), deserialized.fingerprint());
+    }
+
+    #[test]
+    fn test_fracture_registry_serde_roundtrip() {
+        let mut registry = FractureRegistry::new();
+        registry.register(
+            engine_core::coords::WorldPos::new(0, 0, 0),
+            8,
+            RealityId::ROOT,
+            RealityId::new(1),
+            0,
+        );
+        registry.register(
+            engine_core::coords::WorldPos::new(100, 0, 0),
+            16,
+            RealityId::new(1),
+            RealityId::new(2),
+            500,
+        );
+
+        let serialized = bincode::serialize(&registry).unwrap();
+        let deserialized: FractureRegistry = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(registry.len(), deserialized.len());
+        assert_eq!(registry.fingerprint(), deserialized.fingerprint());
+    }
+
+    #[test]
+    fn test_reality_tag_serde_roundtrip() {
+        let tags = [
+            RealityTag::Primary,
+            RealityTag::Alternative,
+            RealityTag::Temporary,
+            RealityTag::TimeLoop { iteration: 42 },
+            RealityTag::Phased { phase: 128 },
+            RealityTag::Snapshot,
+            RealityTag::Abandoned,
+        ];
+
+        for tag in tags {
+            let serialized = bincode::serialize(&tag).unwrap();
+            let deserialized: RealityTag = bincode::deserialize(&serialized).unwrap();
+            assert_eq!(tag, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_merge_strategy_serde_roundtrip() {
+        let strategies = [
+            MergeStrategy::SourceWins,
+            MergeStrategy::TargetWins,
+            MergeStrategy::FailOnConflict,
+            MergeStrategy::OlderWins,
+            MergeStrategy::NewerWins,
+            MergeStrategy::LayeredMerge,
+        ];
+
+        for strategy in strategies {
+            let serialized = bincode::serialize(&strategy).unwrap();
+            let deserialized: MergeStrategy = bincode::deserialize(&serialized).unwrap();
+            assert_eq!(strategy, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_reality_checksum_serde_roundtrip() {
+        let checksum = RealityChecksum(0xDEAD_BEEF_CAFE_BABE);
+        let serialized = bincode::serialize(&checksum).unwrap();
+        let deserialized: RealityChecksum = bincode::deserialize(&serialized).unwrap();
+        assert_eq!(checksum, deserialized);
+    }
+
+    #[test]
+    fn test_reality_checksum_display() {
+        let checksum = RealityChecksum(0x0000_0000_0000_1234);
+        assert_eq!(format!("{checksum}"), "0000000000001234");
+    }
+
+    #[test]
+    fn test_chunk_conflict_serde_roundtrip() {
+        let mut conflict = ChunkConflict::new(ChunkPos::new(5, 10, 15));
+        conflict.add_block(LocalPos::new(0, 0, 0), STONE, BlockId(100));
+        conflict.add_block(LocalPos::new(1, 1, 1), BlockId(50), BlockId(60));
+
+        let serialized = bincode::serialize(&conflict).unwrap();
+        let deserialized: ChunkConflict = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(conflict.pos, deserialized.pos);
+        assert_eq!(conflict.conflict_count(), deserialized.conflict_count());
+    }
+
+    #[test]
+    fn test_resolved_conflict_serde_roundtrip() {
+        let resolved = ResolvedConflict {
+            pos: ChunkPos::new(1, 2, 3),
+            local: LocalPos::new(5, 5, 5),
+            source_value: STONE,
+            target_value: BlockId(100),
+            resolved_value: STONE,
+            resolution: ConflictResolution::SourceChosen,
+        };
+
+        let serialized = bincode::serialize(&resolved).unwrap();
+        let deserialized: ResolvedConflict = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(resolved, deserialized);
+    }
+
+    #[test]
+    fn test_fracture_registry_fingerprint_deterministic() {
+        let build = || {
+            let mut registry = FractureRegistry::new();
+            registry.register(
+                engine_core::coords::WorldPos::new(0, 0, 0),
+                8,
+                RealityId::ROOT,
+                RealityId::new(1),
+                0,
+            );
+            registry.fingerprint()
+        };
+
+        assert_eq!(build(), build());
+    }
+
+    #[test]
+    fn test_registry_children_of() {
+        let mut registry = RealityRegistry::new();
+        let a = registry.fork(RealityId::ROOT, "a", 0).unwrap();
+        let _b = registry.fork(RealityId::ROOT, "b", 100).unwrap();
+        let _c = registry.fork(a, "c", 200).unwrap();
+
+        let root_children = registry.children_of(RealityId::ROOT).unwrap();
+        assert_eq!(root_children.len(), 2);
+
+        let a_children = registry.children_of(a).unwrap();
+        assert_eq!(a_children.len(), 1);
+    }
+
+    #[test]
+    fn test_prune_resets_active_to_root() {
+        let mut registry = RealityRegistry::new();
+        let a = registry.fork(RealityId::ROOT, "a", 0).unwrap();
+        registry.set_active(a).unwrap();
+
+        registry.prune(a).unwrap();
+        assert_eq!(registry.active(), RealityId::ROOT);
     }
 }
