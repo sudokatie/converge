@@ -12,6 +12,7 @@
 //! food sources, and player traces.
 
 pub mod behavior;
+pub mod colony;
 pub mod creatures;
 pub mod curved_world;
 pub mod disease;
@@ -34,6 +35,20 @@ pub mod social;
 pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
+pub use colony::{
+    CascadeConfig, ColonyConfig, ColonyFingerprint, ColonyId, ColonyManager, ColonyProjection,
+    ColonyStateSnapshot, ColonyStateSummary, ColonyTickResult, Failure, FailureEvent,
+    FailureEventKind, FailureEventLog, FailureFingerprint, FailureId, FailureProjection,
+    FailureRegistry, FailureSeverity, FailureStatus, FailureSummary, FailureTrigger, Job,
+    JobCategory, JobDef, JobDefId, JobDefRegistry, JobEvent, JobEventKind, JobFailureReason, JobId,
+    JobPriority, JobRegistry, JobStatus, LogisticsEvent, LogisticsEventKind, LogisticsFingerprint,
+    LogisticsProjection, LogisticsSummary, MitigationAction, Rating, RatingCategory,
+    ResourceAmount, ResourceBalance, ResourceId, Route, RouteId, RouteRegistry, Shelter,
+    ShelterCoverage, ShelterFingerprint, ShelterId, ShelterRatings, ShelterRecommendation,
+    ShelterRegistry, ShelterWeights, SkillId, StorageNode, StorageNodeId, StorageRegistry,
+    Transfer, TransferId, TransferRegistry, TransferStatus, Worker, WorkerCapability, WorkerId,
+    WorkerRegistry, WorkerSkillSet, generate_recommendations, job_presets, suggest_mitigations,
+};
 pub use creatures::{PassiveAI, PassiveState};
 pub use curved_world::{
     ConnectivityChangeType, CurvedConnectivityChange, CurvedGridCell, CurvedNodeAnnotation,
