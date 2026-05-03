@@ -352,6 +352,17 @@ pub use persistence::{
     apply_restore, compute_restore_delta, verify_against_backup,
 };
 
+// Re-export moving world rebase API at crate root for convenience
+pub use persistence::{
+    AnchorFrameId, ChunkCategory, ChunkMapping, ChunkMappingEntry, MovingWorldId, MovingWorldPose,
+    MovingWorldRegistry, RebaseBounds, RebaseConfig, RebaseFingerprint, RebaseFingerprintBuilder,
+    RebaseId, RebaseIssue, RebaseIssueKind, RebaseMode, RebaseOffset, RebasePlan, RebaseResult,
+    RebaseState, RebaseSummary, RebaseValidationError, apply_rebase_plan, collect_chunk_positions,
+    collect_chunk_positions_sorted, compute_chunk_checksum, compute_rebase_plan, detect_chunk_diff,
+    detect_missing_chunks, detect_stale_chunks, local_to_world, rebased_position,
+    validate_rebase_plan, world_to_local,
+};
+
 // Re-export automation API at crate root for convenience
 pub use automation::{
     AutomationConfig, AutomationDeltaBatch, AutomationDevice, AutomationLink, AutomationNetwork,

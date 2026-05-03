@@ -92,6 +92,7 @@
 
 mod admin_tools;
 mod chunk_delta;
+mod moving_world_rebase;
 mod multi_state_chunk;
 mod multi_state_region;
 mod mutation_journal;
@@ -112,6 +113,15 @@ pub use admin_tools::{
     ValidationResult, WorldBounds,
 };
 pub use chunk_delta::{ChunkDelta, DeltaIndex, DeltaStats};
+pub use moving_world_rebase::{
+    AnchorFrameId, ChunkCategory, ChunkMapping, ChunkMappingEntry, MovingWorldId, MovingWorldPose,
+    MovingWorldRegistry, RebaseBounds, RebaseConfig, RebaseFingerprint, RebaseFingerprintBuilder,
+    RebaseId, RebaseIssue, RebaseIssueKind, RebaseMode, RebaseOffset, RebasePlan, RebaseResult,
+    RebaseState, RebaseSummary, RebaseValidationError, apply_rebase_plan, collect_chunk_positions,
+    collect_chunk_positions_sorted, compute_chunk_checksum, compute_rebase_plan, detect_chunk_diff,
+    detect_missing_chunks, detect_stale_chunks, local_to_world, rebased_position,
+    validate_rebase_plan, world_to_local,
+};
 pub use multi_state_chunk::{MultiStateChunk, StateFallback};
 pub use multi_state_region::{
     MultiStateRegion, MultiStateRegionError, RegionStats, multi_state_region_filename,
