@@ -26,6 +26,7 @@ pub mod navigation;
 pub mod needs;
 pub mod offline;
 pub mod pathfinding;
+pub mod planner;
 pub mod population;
 pub mod sensor;
 pub mod settler;
@@ -132,6 +133,16 @@ pub use offline::{
     StalenessInfo, StepResult, UnloadHandoff, UnloadReason,
 };
 pub use pathfinding::{AStar, AStarConfig, NavMesh, NavMeshConfig, PathResult};
+pub use planner::{
+    ActionCost, ActionDef, ActionDefId, ActionInstanceId, ActionRegistry, ActionUtility,
+    ActiveIntent, ActorId, ActorPlanAssignment, BeliefFingerprint, BeliefState, ExecutionConfig,
+    ExecutionFailure, FactId, FactModification, FactRequirement, FactValue, FactionScopeId, Intent,
+    IntentId, IntentParams, IntentPriority, IntentSet, IntentTag, LocationId, PartialReason, Plan,
+    PlanEvent, PlanFailure, PlanFingerprint, PlanId, PlanResult, PlanSelectionMode, PlanState,
+    PlanStatus as PlannerPlanStatus, PlanTracker, PlanTrackerFingerprint, PlannedAction, Planner,
+    PlannerConfig, PlannerLimit, PlannerSnapshot, PlannerStats, PlannerSummary, ResourceTypeId,
+    RiskLevel, StepState, StepStatus,
+};
 pub use population::{
     DespawnBudget, DespawnReason, GroupCap, GroupCapId, MigrationConfig, MigrationPhase,
     MigrationRoute, MigrationRouteId, MigrationStatus, MigrationWave, MigrationWaveId,
