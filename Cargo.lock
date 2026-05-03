@@ -893,6 +893,7 @@ name = "engine_physics"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "bincode",
  "engine_core",
  "glam",
  "serde",

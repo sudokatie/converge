@@ -8,3 +8,4 @@ pub mod constraint;
 pub mod raycast;
 pub mod reference_frame;
 pub mod simulation;
+pub mod volume;
