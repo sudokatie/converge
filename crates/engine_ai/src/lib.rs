@@ -30,6 +30,7 @@ pub mod planner;
 pub mod population;
 pub mod sensor;
 pub mod settler;
+pub mod social;
 pub mod territory_pressure;
 
 pub use behavior::{BehaviorNode, BehaviorTree, Blackboard, NodeStatus};
@@ -165,6 +166,19 @@ pub use settler::{
     SettlerSnapshot, SettlerStatus, SettlerSummary, SettlerTickResult, Skill, SkillLevel, SkillSet,
     Task, TaskCategory, TaskDef, TaskDefId, TaskDefRegistry, TaskId, TaskPosition, TaskRegistry,
     TaskStatus, WorkPriorities, capability_presets as settler_capability_presets, task_def_presets,
+};
+pub use social::{
+    AgentMorale, AgentPanic, BetrayalEvent, BetrayalEventKind, BetrayalFactors,
+    BetrayalFingerprint, BetrayalId, BetrayalIncident, BetrayalKind, BetrayalProfile,
+    BetrayalResolution, BetrayalRisk, BetrayalSeverity, BetrayalStatus, BetrayalTracker,
+    DiplomacyEvent, DiplomacyEventKind, DiplomacyFingerprint, DiplomacyId, DiplomacyTracker,
+    DiplomaticRelation, DiplomaticStance, FactionSocialSummary, GrievanceLevel, GroupMorale,
+    LoyaltyLevel, MoraleEvent, MoraleEventKind, MoraleFactors, MoraleFingerprint, MoraleLevel,
+    MoraleProjection, MoraleTracker, PanicCascade, PanicEvent, PanicEventStatus, PanicFingerprint,
+    PanicId, PanicLevel, PanicProjection, PanicSource, PanicTracker, PanicTrackingEvent,
+    PanicTrackingEventKind, SocialAgentId, SocialFactionId, SocialFingerprint, SocialGroupId,
+    SocialProjection, SocialSnapshot, SocialSummary, SocialTrend, StanceCounts, SuspicionLevel,
+    Treaty, TreatyId, TreatyKind, TreatyStatus, TrustLevel,
 };
 pub use territory_pressure::{
     CollapseReason, ContestedFront, ContestedFrontId, ExpansionCandidate, ExpansionFailureReason,
