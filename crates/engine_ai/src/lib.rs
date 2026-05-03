@@ -15,6 +15,7 @@ pub mod behavior;
 pub mod colony;
 pub mod creatures;
 pub mod curved_world;
+pub mod director;
 pub mod disease;
 pub mod ecology;
 pub mod emergency;
@@ -57,6 +58,18 @@ pub use curved_world::{
     CurvedPosition, CurvedSurfaceConfig, CurvedSurfaceId, CurvedSurfaceSummary, CurvedWaypoint,
     CurvedWorldFingerprint, CurvedWorldProjection, CurvedWorldSnapshot, SurfaceGeometry,
     TangentBasis,
+};
+pub use director::{
+    CompetenceCategory, CompetenceConfig, CompetenceSignal, CompetenceSignalId, CompetenceSummary,
+    CompetenceTracker, CompetenceTrend, DirectorConfig, DirectorEvent, DirectorEventKind,
+    DirectorEventLog, DirectorId, DirectorProjection, DirectorSnapshot, DirectorSummary,
+    DirectorTrend, DisasterCategory, DisasterHistory, DisasterHistoryConfig,
+    DisasterHistorySummary, DisasterId, DisasterRecord, DisasterSeverity, PacingLevel,
+    PacingProfileDef, PacingProfileId, PacingProfileRegistry, PacingState, PacingSummary,
+    PacingThresholds, ProjectionFactors, Recommendation, RecommendationCategory, RecommendationId,
+    RecommendationPriority, RecommendationQueue, ShelterQualityAssessment, ShelterQualityFactor,
+    ShelterQualityInput, ShelterQualitySummary, StockpileCategory, StockpilePressureInput,
+    StockpileStatus, StockpileSummary, pacing_presets,
 };
 pub use disease::{
     ActiveInfection, ContaminationRegistry, ContaminationSource, ContaminationZone,
